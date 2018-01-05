@@ -1,6 +1,6 @@
 ## MiniLexer
 
-A tiny-teeny-weeny lexer written in Swift available as a Swift Package.  
+A teeny-tiny-weeny lexer written in Swift available as a Swift Package.  
 Should be present in any programmer-who-likes-to-write-quick-script's toolbelt.
 
 Sample usage:
