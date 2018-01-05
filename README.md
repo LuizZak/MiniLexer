@@ -11,6 +11,7 @@ let lexer = Lexer(input: text)
 
 do {
     let oneTwoThree = try lexer.parseInt()
+    lexer.skipWhitespace()
     let test = try lexer.nextIdent()
     
     print("\(oneTwoThree) \(test)")
