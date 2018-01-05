@@ -1,5 +1,5 @@
 import XCTest
-@testable import MiniLexer
+import MiniLexer
 
 class LexerTests: XCTestCase {
     
@@ -20,7 +20,7 @@ class LexerTests: XCTestCase {
         
         XCTAssertEqual(try lexer.next(), "a")
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputSource.index(after: lexer.inputSource.startIndex))
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(after: lexer.inputString.startIndex))
         
         XCTAssertEqual(try lexer.next(), "b")
         XCTAssertEqual(try lexer.next(), "c")
@@ -45,7 +45,7 @@ class LexerTests: XCTestCase {
     
     func testAdvance() throws {
         let lexer = Lexer(input: "abc")
-        let expectedIndex = lexer.inputSource.index(after: lexer.inputSource.startIndex)
+        let expectedIndex = lexer.inputString.index(after: lexer.inputString.startIndex)
         
         try lexer.advance()
         
@@ -122,7 +122,7 @@ class LexerTests: XCTestCase {
         
         lexer.advance(while: { $0 == "a" })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputSource.index(lexer.inputSource.startIndex, offsetBy: 5))
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 5))
         XCTAssertEqual(try lexer.peek(), "b")
     }
     
@@ -131,7 +131,7 @@ class LexerTests: XCTestCase {
         
         lexer.advance(until: { $0 == "b" })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputSource.index(lexer.inputSource.startIndex, offsetBy: 5))
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 5))
         XCTAssertEqual(try lexer.peek(), "b")
     }
     
@@ -140,7 +140,7 @@ class LexerTests: XCTestCase {
         
         let consumed = lexer.consume(while: { $0 == "a" })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputSource.index(lexer.inputSource.startIndex, offsetBy: 5))
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 5))
         XCTAssertEqual(consumed, "aaaaa")
     }
     
@@ -149,7 +149,7 @@ class LexerTests: XCTestCase {
         
         let consumed = lexer.consume(until: { $0 == "b" })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputSource.index(lexer.inputSource.startIndex, offsetBy: 5))
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 5))
         XCTAssertEqual(consumed, "aaaaa")
     }
     
@@ -158,7 +158,7 @@ class LexerTests: XCTestCase {
         
         lexer.advance(while: { _ in true })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputSource.endIndex)
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.endIndex)
     }
     
     func testAdvanceUntilRespectsEndOfString() {
@@ -166,7 +166,7 @@ class LexerTests: XCTestCase {
         
         lexer.advance(until: { _ in false })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputSource.endIndex)
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.endIndex)
     }
     
     func testConsumeWhileRespectsEndOfString() {
