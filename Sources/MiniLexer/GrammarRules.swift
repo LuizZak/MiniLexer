@@ -284,11 +284,29 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             return subs.reduce(Substring(), +)
             
         case .or(let rules):
-            guard let rule = rules.first(where: { $0.canConsume(from: lexer) }) else {
+            var sub: Substring?
+            var indexAfter: Lexer.Index?
+            for rule in rules {
+                do {
+                    let res = try lexer.withTemporaryIndex { () -> (Substring, Lexer.Index) in
+                        try lexer.withIndexAfter {
+                            try rule.consume(from: lexer)
+                        }
+                    }
+                    
+                    (sub, indexAfter) = (res.0, res.1)
+                } catch {
+                    
+                }
+            }
+            
+            guard case let (result?, index?) = (sub, indexAfter) else {
                 throw LexerError.syntaxError("Failed to parse with rule \(ruleDescription)")
             }
             
-            return try rule.consume(from: lexer)
+            lexer.inputIndex = index
+            
+            return result
             
         case .directSequence, .sequence:
             fatalError("Should have handled .directSequence/.sequence case at top")
@@ -346,6 +364,8 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                         // This will aid in avoiding extreme recursions.
                         _=try rule.consume(from: lexer)
                         return true
+                        
+//                        lexer.skipWhitespace()
                     } catch {
                         return false
                     }

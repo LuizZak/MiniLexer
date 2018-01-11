@@ -390,6 +390,37 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try propertyModifierList.consume(from: lexer5))
     }
     
+    func testGramarRuleLookahead() throws {
+        // test:
+        //   ('a' ident) | ('a' number) | ('a' | '@keyword')
+        //
+        // ident:
+        //   [a-zA-Z] [a-zA-Z0-9]*
+        //
+        // number:
+        //   [0-9]+
+        //
+        
+        let number: GrammarRule =
+            .digit+
+        
+        let ident: GrammarRule =
+            (.letter) .. (.letter | .digit)*
+        
+        let test =
+            ("a" .. ident) | ("a" .. number) | ("a" .. .keyword("@keyword"))
+        
+        let lexer1 = Lexer(input: "a 123")
+        let lexer2 = Lexer(input: "a abc")
+        let lexer3 = Lexer(input: "a @keyword")
+        let lexer4 = Lexer(input: "a _abc")
+        
+        XCTAssertEqual("a 123", try test.consume(from: lexer1))
+        XCTAssertEqual("a abc", try test.consume(from: lexer2))
+        XCTAssertEqual("a @keyword", try test.consume(from: lexer3))
+        XCTAssertThrowsError(try test.consume(from: lexer4))
+    }
+    
     func testGrammarRulePerformance() {
         // With non-recursive modifierList
         
