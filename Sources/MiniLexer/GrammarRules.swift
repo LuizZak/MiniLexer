@@ -90,6 +90,28 @@ public class RecursiveGrammarRule: LexerGrammarRule {
     }
 }
 
+/// Specifies basic grammar rules that can be used to create potent grammar parsers.
+///
+/// - digit: A digit from [0-9].
+/// - letter: A lowercase or uppercase letter [a-zA-Z]
+/// - whitespace: A whitespace specifier [\s\t\r\n]
+/// - char: A single unicode character
+/// - keyword: A string keyword
+/// - recursive: A grammar rule that has a recursion on itself
+/// - namedRule: Encapsulates a grammar rule with a semantic name, useful during
+///     debugging.
+/// - optional: Parses a rule if it's available, but safely ignores if not.
+/// - oneOrMore: Attempts to parse one or more instances of a rule until it cannot
+/// anymore. Fails if at least one instance of the rule cannot be parsed.
+/// - zeroOrMore: Attempts to parse zero or more instances of a rule until it cannot
+/// anymore. Safely bails if a first parsing instance cannot be parsed.
+/// - or: Attempts to parse one of the grammar rules specified on an array.
+/// Always tries to parse from the first to the last rule on the array.
+/// - sequence: Attempts to parse a sequence of grammar rules, ignoring any whitespace
+/// between the rules.
+/// - directSequence: Attempts to parse a sequence of rules taking into consideration
+/// any whitespace between the tokens. Fails if an unexpected whitespace is found
+/// between rules.
 public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, ExpressibleByArrayLiteral {
     case digit
     case letter

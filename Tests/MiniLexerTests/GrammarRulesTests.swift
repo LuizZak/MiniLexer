@@ -260,6 +260,46 @@ public class GrammarRuleTests: XCTestCase {
         }
     }
     
+    func testGrammarRuleOperatorSequence() {
+        let rule1 = GrammarRule.digit
+        let rule2 = GrammarRule.letter
+        let oneOrMore = rule1 .. rule2
+        
+        switch oneOrMore {
+        case .sequence(let ar):
+            XCTAssertEqual(ar.count, 2)
+            
+            if case .digit = ar[0], case .letter = ar[1] {
+                // Success!
+                return
+            }
+            
+            XCTFail("Failed to generate proper sequence operands")
+            break
+        default:
+            XCTFail("Expected '..' operator to compose as .sequence")
+        }
+    }
+    
+    func testGrammarRuleOperatorSequenceCollapseSequential() {
+        let oneOrMore: GrammarRule = .digit .. .letter .. .char("@")
+        
+        switch oneOrMore {
+        case .sequence(let ar):
+            XCTAssertEqual(ar.count, 3)
+            
+            if case .digit = ar[0], case .letter = ar[1], case .char("@") = ar[2] {
+                // Success!
+                return
+            }
+            
+            XCTFail("Failed to generate proper sequence operands")
+            break
+        default:
+            XCTFail("Expected '..' operator to compose as .sequence")
+        }
+    }
+    
     func testRecursiveGrammarRuleCreate() throws {
         let rule = RecursiveGrammarRule.create(named: "list") { (rec) -> GrammarRule in
             return .sequence([.letter, [",", .recursive(rec)]*])
@@ -362,12 +402,16 @@ public class GrammarRuleTests: XCTestCase {
         //   [a-zA-Z_] [a-zA-Z_0-9]*
         //
         
-        let ident: GrammarRule = [.letter | "_", (.letter | "_" | .digit)*]
-        let modifier: GrammarRule = .namedRule(name: "modifier", ident)
+        let ident: GrammarRule =
+            (.letter | "_") .. (.letter | "_" | .digit)*
+        let modifier: GrammarRule =
+            .namedRule(name: "modifier", ident)
         
-        let modifierList: GrammarRule = [modifier, [",", modifier]*]
+        let modifierList: GrammarRule =
+            modifier .. ("," .. modifier)*
         
-        let propertyModifierList: GrammarRule = ["(", modifierList, ")"]
+        let propertyModifierList: GrammarRule =
+            "(" .. modifierList .. ")"
         
         measure {
             for _ in 0...100 {
@@ -393,14 +437,14 @@ public class GrammarRuleTests: XCTestCase {
         //   [a-zA-Z_] [a-zA-Z_0-9]*
         //
         
-        let ident: GrammarRule = [.letter | "_", (.letter | "_" | .digit)*]
+        let ident: GrammarRule = (.letter | "_") .. (.letter | "_" | .digit)*
         let modifier: GrammarRule = .namedRule(name: "modifier", ident)
         
         let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
-            .sequence([modifier, [",", .recursive($0)]*])
+            modifier .. ("," .. .recursive($0))*
         }
         
-        let propertyModifierList: GrammarRule = ["(", modifierList, ")"]
+        let propertyModifierList: GrammarRule = "(" .. modifierList .. ")"
         
         measure {
             for _ in 0...100 {
