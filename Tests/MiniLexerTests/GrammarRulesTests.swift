@@ -272,15 +272,15 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try rule.consume(from: lexer2))
     }
     
-    func testGrammarRuleComplex() throws {
+    func testGrammarRuleComplexNonRecursive() throws {
         // Tests a fully flexed complex grammar for a list of items enclosed
-        // within parens
+        // within parens, avoiding a recursive rule
         //
         // propertyModifierList:
         //   '(' modifierList ')'
         //
         // modifierList:
-        //   modifier (',' modifierList)*
+        //   modifier (',' modifier)*
         //
         // modifier:
         //   ident
@@ -307,7 +307,79 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try propertyModifierList.consume(from: lexer2))
     }
     
+    func testGrammarRuleComplexRecursive() throws {
+        // Tests a fully flexed complex grammar for a list of items enclosed
+        // within parens, including a recursive rule
+        //
+        // propertyModifierList:
+        //   '(' modifierList ')'
+        //
+        // modifierList:
+        //   modifier (',' modifier)*
+        //
+        // modifier:
+        //   ident
+        //
+        // ident:
+        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //
+        
+        // Arrange
+        let ident: GrammarRule = [.letter | "_", (.letter | "_" | .digit)*]
+        let modifier: GrammarRule = .namedRule(name: "modifier", ident)
+        
+        let modifierList: GrammarRule = [modifier, [",", modifier]*]
+        
+        let propertyModifierList: GrammarRule = ["(", modifierList, ")"]
+        
+        let lexer1 = Lexer(input: "(mod1, mod2)")
+        let lexer2 = Lexer(input: "()")
+        let lexer3 = Lexer(input: "(mod1, )")
+        let lexer4 = Lexer(input: "(mod1, ")
+        let lexer5 = Lexer(input: "( ")
+        
+        // Act/assert
+        XCTAssertEqual("(mod1, mod2)", try propertyModifierList.consume(from: lexer1))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer2))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer3))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer4))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer5))
+    }
+    
     func testGrammarRulePerformance() {
+        // With non-recursive modifierList
+        
+        // propertyModifierList:
+        //   '(' modifierList ')'
+        //
+        // modifierList:
+        //   modifier (',' modifier)*
+        //
+        // modifier:
+        //   ident
+        //
+        // ident:
+        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //
+        
+        let ident: GrammarRule = [.letter | "_", (.letter | "_" | .digit)*]
+        let modifier: GrammarRule = .namedRule(name: "modifier", ident)
+        
+        let modifierList: GrammarRule = [modifier, [",", modifier]*]
+        
+        let propertyModifierList: GrammarRule = ["(", modifierList, ")"]
+        
+        measure {
+            for _ in 0...100 {
+                let lexer = Lexer(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                _=try! propertyModifierList.consume(from: lexer)
+            }
+        }
+    }
+    
+    func testGrammarRuleRecursivePerformance() {
+        // With recursive modifierList
+        
         // propertyModifierList:
         //   '(' modifierList ')'
         //
