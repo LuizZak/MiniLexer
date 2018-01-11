@@ -77,7 +77,7 @@ public class URLParser {
                         if peek == ":" {
                             return
                         }
-                        throw LexerError.invalidCharacter("Expected Scheme")
+                        throw LexerError.unexpectedCharacter(peek, "Expected Scheme")
                     }
                     
                     try lexer.advance()
@@ -122,7 +122,7 @@ public class URLParser {
             // Detect port
             if lexer.safeIsNextChar(equalTo: ":") {
                 try lexer.advance() // Skip ':'
-                port = try lexer.parseInt(skippingWhitespace: false)
+                port = try lexer.lexInt(skippingWhitespace: false)
             }
             
             // End here, without path
@@ -409,7 +409,7 @@ public extension Lexer {
     /// ```
     @inline(__always)
     public func decOctet() throws {
-        let i = try parseInt(skippingWhitespace: false)
+        let i = try lexInt(skippingWhitespace: false)
         if i < 0 || i > 255 {
             throw LexerError.miscellaneous("Expected integer between 0 and 255, found \(i) instead.")
         }

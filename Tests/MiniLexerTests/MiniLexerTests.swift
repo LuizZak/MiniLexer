@@ -86,9 +86,9 @@ class LexerTests: XCTestCase {
     func testPeekIdent() throws {
         let lexer = Lexer(input: "abc def")
         
-        let peek1 = try lexer.peekIdent()
+        let peek1 = try lexer.peekIdentifier()
         try lexer.advanceLength(4)
-        let peek2 = try lexer.peekIdent()
+        let peek2 = try lexer.peekIdentifier()
         
         XCTAssertEqual(peek1, "abc")
         XCTAssertEqual(peek2, "def")
