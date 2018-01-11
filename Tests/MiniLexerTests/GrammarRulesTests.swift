@@ -365,12 +365,16 @@ public class GrammarRuleTests: XCTestCase {
         //
         
         // Arrange
-        let ident: GrammarRule = [.letter | "_", (.letter | "_" | .digit)*]
-        let modifier: GrammarRule = .namedRule(name: "modifier", ident)
+        let ident: GrammarRule =
+            (.letter | "_") .. (.letter | "_" | .digit)*
+        let modifier: GrammarRule =
+            .namedRule(name: "modifier", ident)
         
-        let modifierList: GrammarRule = [modifier, [",", modifier]*]
+        let modifierList: GrammarRule =
+            modifier .. ("," .. modifier)*
         
-        let propertyModifierList: GrammarRule = ["(", modifierList, ")"]
+        let propertyModifierList =
+            "(" .. modifierList .. ")"
         
         let lexer1 = Lexer(input: "(mod1, mod2)")
         let lexer2 = Lexer(input: "()")
@@ -407,10 +411,10 @@ public class GrammarRuleTests: XCTestCase {
         let modifier: GrammarRule =
             .namedRule(name: "modifier", ident)
         
-        let modifierList: GrammarRule =
+        let modifierList =
             modifier .. ("," .. modifier)*
         
-        let propertyModifierList: GrammarRule =
+        let propertyModifierList =
             "(" .. modifierList .. ")"
         
         measure {
@@ -437,14 +441,18 @@ public class GrammarRuleTests: XCTestCase {
         //   [a-zA-Z_] [a-zA-Z_0-9]*
         //
         
-        let ident: GrammarRule = (.letter | "_") .. (.letter | "_" | .digit)*
-        let modifier: GrammarRule = .namedRule(name: "modifier", ident)
+        let ident: GrammarRule =
+            (.letter | "_") .. (.letter | "_" | .digit)*
+        
+        let modifier: GrammarRule =
+            .namedRule(name: "modifier", ident)
         
         let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
             modifier .. ("," .. .recursive($0))*
         }
         
-        let propertyModifierList: GrammarRule = "(" .. modifierList .. ")"
+        let propertyModifierList =
+            "(" .. modifierList .. ")"
         
         measure {
             for _ in 0...100 {
