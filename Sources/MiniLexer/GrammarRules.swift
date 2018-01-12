@@ -296,12 +296,6 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             }
             
         case .keyword:
-//            return lexer.withTemporaryIndex {
-//                lexer.skipWhitespace()
-//                let kw = lexer.consume(until: Lexer.isWhitespace)
-//                return kw == str
-//            }
-            
             return !lexer.isEof()
             
         case .namedRule(_, let rule),
