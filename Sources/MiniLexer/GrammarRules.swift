@@ -9,7 +9,10 @@ public protocol LexerGrammarRule {
     /// Consumes the required rule from a lexer
     func consume(from lexer: Lexer) throws -> Result
     
-    /// Whether this rule can consume its required data from a given lexer
+    /// Whether this rule can consume its required data from a given lexer.
+    /// May not indicate a call to `consume(from:)` will be successful, that is,
+    /// if `false`, indicates a call to `consume(from:)` will definitely fail,
+    /// but if `true`, indicates a call to `consume(from:)` may be successful.
     func canConsume(from lexer: Lexer) -> Bool
 }
 
@@ -222,7 +225,7 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
         }
         
         if !canConsume(from: lexer) {
-            throw LexerError.unexpectedCharacter(try lexer.peek(), "Expected \(self.ruleDescription)")
+            throw lexer.unexpectedCharacterError(char: try lexer.peek(), "Expected \(self.ruleDescription)")
         }
         
         switch self {
@@ -254,13 +257,13 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             
         case .keyword(let str):
             lexer.skipWhitespace()
-            let kw = lexer.consume(until: Lexer.isWhitespace)
             
-            if kw != str {
-                throw LexerError.unexpectedString("Expected \(str), found \(kw)")
+            return try lexer.consumeString { lexer in
+                if !lexer.advanceIf(equals: str) {
+                    let kw = lexer.consume(until: Lexer.isWhitespace)
+                    throw lexer.unexpectedStringError("Expected \(str), found \(kw)")
+                }
             }
-            
-            return kw
             
         case .recursive(let rec):
             return try rec.consume(from: lexer)
@@ -295,6 +298,7 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                     }
                     
                     (sub, indexAfter) = (res.0, res.1)
+                    break
                 } catch {
                     
                 }
@@ -328,12 +332,14 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                 return lexer.safeIsNextChar(equalTo: ch)
             }
             
-        case .keyword(let str):
-            return lexer.withTemporaryIndex {
-                lexer.skipWhitespace()
-                let kw = lexer.consume(until: Lexer.isWhitespace)
-                return kw == str
-            }
+        case .keyword:
+//            return lexer.withTemporaryIndex {
+//                lexer.skipWhitespace()
+//                let kw = lexer.consume(until: Lexer.isWhitespace)
+//                return kw == str
+//            }
+            
+            return !lexer.isEof()
             
         case .namedRule(_, let rule),
              .oneOrMore(let rule):
@@ -364,8 +370,6 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                         // This will aid in avoiding extreme recursions.
                         _=try rule.consume(from: lexer)
                         return true
-                        
-//                        lexer.skipWhitespace()
                     } catch {
                         return false
                     }

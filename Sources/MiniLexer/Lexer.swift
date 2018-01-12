@@ -119,6 +119,22 @@ public final class Lexer {
         return try changes()
     }
     
+    /// Attempts to perform throwable changes to the parser while inside a given
+    /// closure. In case the changes fail, the state of the parser is rewind back
+    /// and the error is rethrown.
+    /// In case the `changes` block succeed, the method returns its return value
+    /// and doesn't rewind.
+    @inline(__always)
+    public func rewindOnFailure<T>(changes: () throws -> T) rethrows -> T {
+        let index = inputIndex
+        do {
+            return try changes()
+        } catch {
+            inputIndex = index
+            throw error
+        }
+    }
+    
     /// Performs an operation, retuning the index of the read head after the
     /// operation is completed.
     ///
@@ -175,8 +191,16 @@ public final class Lexer {
     }
     
     // MARK: Error methods
-    public func unexpectedCharacterError(char: Atom, _ message: String) -> Error {
-        return LexerError.unexpectedCharacter(char, message)
+    public func unexpectedCharacterError(offset: Lexer.Index? = nil, char: Atom, _ message: String) -> Error {
+        let offset = offset ?? inputIndex
+        
+        return LexerError.unexpectedCharacter(offset, char, message: message)
+    }
+    
+    public func unexpectedStringError(offset: Lexer.Index? = nil, _ message: String) -> Error {
+        let offset = offset ?? inputIndex
+        
+        return LexerError.unexpectedString(offset, message: message)
     }
     
     public func syntaxError(_ message: String) -> Error {
@@ -264,9 +288,25 @@ extension Lexer {
     }
 }
 
-public enum LexerError: Error {
-    case unexpectedCharacter(Lexer.Atom, String)
-    case unexpectedString(String)
+public enum LexerError: Error, CustomStringConvertible {
+    public var description: String {
+        switch self {
+        case let .unexpectedCharacter(offset, _, message: message):
+            return "Error at \(offset): \(message)"
+        case let .unexpectedString(offset, message: message):
+            return "Error at \(offset): \(message)"
+        case .syntaxError(let message),
+             .endOfStringError(let message),
+             .notFound(let message),
+             .miscellaneous(let message):
+            return "Error: \(message)"
+        case .genericParseError:
+            return "An internal error during parsing was raised"
+        }
+    }
+    
+    case unexpectedCharacter(Lexer.Index, Lexer.Atom, message: String)
+    case unexpectedString(Lexer.Index, message: String)
     case syntaxError(String)
     case endOfStringError(String)
     case notFound(String)

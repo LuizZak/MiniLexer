@@ -112,7 +112,7 @@ public extension Lexer {
     /// error is thrown.
     public func expect(match: String, options: String.CompareOptions = .literal) throws {
         if !advanceIf(equals: match, options: options) {
-            throw LexerError.unexpectedString("Expected '\(match)'")
+            throw unexpectedStringError("Expected '\(match)'")
         }
     }
 }

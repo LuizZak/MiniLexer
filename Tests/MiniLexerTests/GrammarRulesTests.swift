@@ -51,7 +51,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("test", try rule.consume(from: lexer1))
         XCTAssertEqual("test", try rule.consume(from: lexer2))
         XCTAssertThrowsError(try rule.consume(from: lexer3))
-        XCTAssertThrowsError(try rule.consume(from: lexer4))
+        XCTAssertEqual("test", try rule.consume(from: lexer4))
         XCTAssertEqual("test", rule.ruleDescription)
     }
     
@@ -94,6 +94,31 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("[0-9] | [a-zA-Z]", rule.ruleDescription)
     }
     
+    func testGramarRuleOrStopsAtFirstMatchFound() throws {
+        // test:
+        //   ('@keyword' [0-9]+) | ('@keyword' 'abc') | ('@keyword' | 'a')
+        //
+        // ident:
+        //   [a-zA-Z] [a-zA-Z0-9]*
+        //
+        // number:
+        //   [0-9]+
+        //
+        
+        let test =
+            (.keyword("@keyword") .. .digit+) | (.keyword("@keyword") .. .keyword("abc")) | (.keyword("@keyword") .. "a")
+        
+        let lexer1 = Lexer(input: "@keyword 123")
+        let lexer2 = Lexer(input: "@keyword abc")
+        let lexer3 = Lexer(input: "@keyword a")
+        let lexer4 = Lexer(input: "@keyword _abc")
+        
+        XCTAssertEqual("@keyword 123", try test.consume(from: lexer1))
+        XCTAssertEqual("@keyword abc", try test.consume(from: lexer2))
+        XCTAssertEqual("@keyword a", try test.consume(from: lexer3))
+        XCTAssertThrowsError(try test.consume(from: lexer4))
+    }
+    
     func testGrammarRuleOneOrMoreOr() throws {
         let rule = GrammarRule.oneOrMore(.or([.digit, .letter]))
         let lexer1 = Lexer(input: "ab123")
@@ -112,6 +137,13 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("1", try rule.consume(from: lexer1))
         XCTAssertEqual("", try rule.consume(from: lexer2))
         XCTAssertEqual("[0-9]?", rule.ruleDescription)
+    }
+    
+    func testGrammarRuleOptionalRuleDescriptionWithMany() throws {
+        XCTAssertEqual("[0-9]?", GrammarRule.optional(.digit).ruleDescription)
+        XCTAssertEqual("([0-9])?", GrammarRule.optional(.sequence([.digit])).ruleDescription)
+        XCTAssertEqual("([0-9] [a-zA-Z])?", GrammarRule.optional(.sequence([.digit, .letter])).ruleDescription)
+        XCTAssertEqual("([0-9][a-zA-Z])?", GrammarRule.optional(.directSequence([.digit, .letter])).ruleDescription)
     }
     
     func testGrammarRuleSequence() throws {
@@ -312,6 +344,14 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try rule.consume(from: lexer2))
     }
     
+    func testRecursiveGrammarRuleDescription() {
+        let rule1 = RecursiveGrammarRule(ruleName: "rule_rec1", rule: .digit)
+        let rule2 = RecursiveGrammarRule(ruleName: "rule_rec2", rule: .recursive(rule1))
+        
+        XCTAssertEqual("[0-9]", rule1.ruleDescription)
+        XCTAssertEqual("rule_rec1", rule2.ruleDescription)
+    }
+    
     func testGrammarRuleComplexNonRecursive() throws {
         // Tests a fully flexed complex grammar for a list of items enclosed
         // within parens, avoiding a recursive rule
@@ -333,9 +373,8 @@ public class GrammarRuleTests: XCTestCase {
         let ident: GrammarRule = [.letter | "_", (.letter | "_" | .digit)*]
         let modifier: GrammarRule = .namedRule(name: "modifier", ident)
         
-        let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
-            .sequence([modifier, [",", .recursive($0)]*])
-        }
+        let modifierList: GrammarRule =
+            modifier .. ("," .. modifier)*
         
         let propertyModifierList: GrammarRule = ["(", modifierList, ")"]
         
@@ -370,8 +409,9 @@ public class GrammarRuleTests: XCTestCase {
         let modifier: GrammarRule =
             .namedRule(name: "modifier", ident)
         
-        let modifierList: GrammarRule =
-            modifier .. ("," .. modifier)*
+        let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
+            .sequence([modifier, [",", .recursive($0)]*])
+        }
         
         let propertyModifierList =
             "(" .. modifierList .. ")"
@@ -388,6 +428,58 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try propertyModifierList.consume(from: lexer3))
         XCTAssertThrowsError(try propertyModifierList.consume(from: lexer4))
         XCTAssertThrowsError(try propertyModifierList.consume(from: lexer5))
+    }
+    
+    func testGrammarRuleComplexRecursiveWithLookaheadWithKeyword() throws {
+        // Tests a recursive lookahead parsing
+        //
+        // propertyModifierList:
+        //   '(' modifierList ')'
+        //
+        // modifierList:
+        //   modifier (',' modifier)*
+        //
+        // modifier:
+        //   compound
+        //
+        // compound:
+        //   ('@keyword' 'abc') | ('@keyword' number) | ('@keyword' | 'a')
+        //
+        // number:
+        //   [0-9]+
+        //
+        
+        // Arrange
+        let number: GrammarRule =
+            .digit+
+        
+        let compound =
+            (.keyword("@keyword") .. .keyword("abc")) | (.keyword("@keyword") .. number) | (.keyword("@keyword") .. "a")
+        
+        let modifier: GrammarRule =
+            .namedRule(name: "modifier", compound)
+        
+        let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
+            modifier .. ("," .. .recursive($0))*
+        }
+        
+        let propertyModifierList =
+            "(" .. modifierList .. ")"
+        
+        let lexer1 = Lexer(input: "(@keyword 123, @keyword abc, @keyword a)")
+        let lexer2 = Lexer(input: "(@keyword mod, @keyword 123, @keyword a, @keyword abc)")
+        let lexer3 = Lexer(input: "(@keyword ace)")
+        let lexer4 = Lexer(input: "(@keyword b)")
+        let lexer5 = Lexer(input: "(mod1, ")
+        let lexer6 = Lexer(input: "( ")
+        
+        // Act/assert
+        XCTAssertEqual("(@keyword 123, @keyword abc, @keyword a)", try propertyModifierList.consume(from: lexer1))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer2))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer3))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer4))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer5))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer6))
     }
     
     func testGramarRuleLookahead() throws {
@@ -418,6 +510,37 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("a 123", try test.consume(from: lexer1))
         XCTAssertEqual("a abc", try test.consume(from: lexer2))
         XCTAssertEqual("a @keyword", try test.consume(from: lexer3))
+        XCTAssertThrowsError(try test.consume(from: lexer4))
+    }
+    
+    func testGramarRuleLookaheadWithKeyword() throws {
+        // test:
+        //   ('@keyword' ident) | ('@keyword' number) | ('@keyword' | '@a')
+        //
+        // ident:
+        //   [a-zA-Z] [a-zA-Z0-9]*
+        //
+        // number:
+        //   [0-9]+
+        //
+        
+        let number: GrammarRule =
+            .digit+
+        
+        let ident: GrammarRule =
+            (.letter) .. (.letter | .digit)*
+        
+        let test =
+            (.keyword("@keyword") .. ident) | (.keyword("@keyword") .. number) | (.keyword("@keyword") .. "a")
+        
+        let lexer1 = Lexer(input: "@keyword 123")
+        let lexer2 = Lexer(input: "@keyword abc")
+        let lexer3 = Lexer(input: "@keyword a")
+        let lexer4 = Lexer(input: "@keyword _abc")
+        
+        XCTAssertEqual("@keyword 123", try test.consume(from: lexer1))
+        XCTAssertEqual("@keyword abc", try test.consume(from: lexer2))
+        XCTAssertEqual("@keyword a", try test.consume(from: lexer3))
         XCTAssertThrowsError(try test.consume(from: lexer4))
     }
     

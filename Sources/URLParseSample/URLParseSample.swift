@@ -77,7 +77,7 @@ public class URLParser {
                         if peek == ":" {
                             return
                         }
-                        throw LexerError.unexpectedCharacter(peek, "Expected Scheme")
+                        throw lexer.unexpectedCharacterError(char: peek, "Expected Scheme")
                     }
                     
                     try lexer.advance()
