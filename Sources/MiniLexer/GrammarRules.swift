@@ -209,7 +209,11 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                 return Substring()
             }
             
-            return try lexer.consumeCharAsSubstring()
+            do {
+                return try subRule.consume(from: lexer)
+            } catch {
+                return Substring()
+            }
             
         case .char(let ch):
             lexer.skipWhitespace()

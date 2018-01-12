@@ -139,13 +139,15 @@ public class GrammarRuleTests: XCTestCase {
     }
     
     func testGrammarRuleOptional() throws {
-        let rule = GrammarRule.optional(.digit)
-        let lexer1 = Lexer(input: "12")
-        let lexer2 = Lexer(input: "")
+        let rule = GrammarRule.optional(.keyword("abc"))
+        let lexer1 = Lexer(input: "abc")
+        let lexer2 = Lexer(input: "ab")
+        let lexer3 = Lexer(input: "")
         
-        XCTAssertEqual("1", try rule.consume(from: lexer1))
+        XCTAssertEqual("abc", try rule.consume(from: lexer1))
         XCTAssertEqual("", try rule.consume(from: lexer2))
-        XCTAssertEqual("[0-9]?", rule.ruleDescription)
+        XCTAssertEqual("", try rule.consume(from: lexer3))
+        XCTAssertEqual("abc?", rule.ruleDescription)
     }
     
     func testGrammarRuleOptionalRuleDescriptionWithMany() throws {
@@ -597,7 +599,7 @@ public class GrammarRuleTests: XCTestCase {
         }
     }
     
-    func testGrammarRuleRecursivePerformance() {
+    func testGrammarRuleRecursiveWithZeroOrMorePerformance() {
         // With recursive modifierList
         
         // propertyModifierList:
@@ -621,6 +623,43 @@ public class GrammarRuleTests: XCTestCase {
         
         let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
             modifier .. ("," .. .recursive($0))*
+        }
+        
+        let propertyModifierList =
+            "(" .. modifierList .. ")"
+        
+        measure {
+            for _ in 0...100 {
+                let lexer = Lexer(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                _=try! propertyModifierList.consume(from: lexer)
+            }
+        }
+    }
+    
+    func testGrammarRuleRecursiveWithOptionalPerformance() {
+        // With recursive modifierList
+        
+        // propertyModifierList:
+        //   '(' modifierList ')'
+        //
+        // modifierList:
+        //   modifier (',' modifierList)?
+        //
+        // modifier:
+        //   ident
+        //
+        // ident:
+        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //
+        
+        let ident: GrammarRule =
+            (.letter | "_") .. (.letter | "_" | .digit)*
+        
+        let modifier: GrammarRule =
+            .namedRule(name: "modifier", ident)
+        
+        let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
+            modifier .. .optional("," .. .recursive($0))
         }
         
         let propertyModifierList =
