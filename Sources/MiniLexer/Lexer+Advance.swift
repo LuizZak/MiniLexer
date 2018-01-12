@@ -30,13 +30,9 @@ public extension Lexer {
     /// By default, the lexer does a `literal`, character-by-character match,
     /// which can be overriden by specifying the `options` parameter.
     public func advanceIf(equals: String, options: String.CompareOptions = .literal) -> Bool {
-        guard let current = inputIndex.samePosition(in: inputString) else {
-            return false
-        }
-        
-        if let range = inputString.range(of: equals, options: options, range: current..<inputString.endIndex) {
+        if let range = inputString.range(of: equals, options: options, range: inputIndex..<inputString.endIndex) {
             // Match! Advance stream and proceed...
-            if range.lowerBound == current {
+            if range.lowerBound == inputIndex {
                 inputIndex = range.upperBound
                 
                 return true

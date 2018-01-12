@@ -49,11 +49,11 @@ public extension Lexer {
     ///
     ///     identifier  = [a-zA-Z_] [a-zA-Z_0-9]*
     public func lexIdentifier() throws -> Substring {
-        if try !Lexer.isLetter(peek()) {
-            throw unexpectedCharacterError(char: unsafePeek(), "Expected identifier starting with a letter")
+        return try consumeString { lexer in
+            try lexer.advance(validatingCurrent: { Lexer.isLetter($0) || $0 == "_" })
+            
+            lexer.advance(while: { Lexer.isAlphanumeric($0) || $0 == "_" } )
         }
-        
-        return consume(while: Lexer.isAlphanumeric)
     }
     
     /// Attempts to lex an identifier from the current buffer, throwing an error
