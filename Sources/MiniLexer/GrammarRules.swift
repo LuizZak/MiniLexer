@@ -18,61 +18,29 @@ public protocol LexerGrammarRule {
 
 /// Allows recursion into a `GrammarRule` node
 public class RecursiveGrammarRule: LexerGrammarRule {
-    private var _rule: InnerRule
+    private var _rule: GrammarRule
     
     public var ruleName: String
     
     public var ruleDescription: String {
-        switch _rule {
-        case .rule(let r):
-            return r.ruleDescription
-        case .recursive(let r):
-            return r.ruleDescription
-        }
-    }
-    
-    public init(ruleName: String, rule: RecursiveGrammarRule) {
-        self.ruleName = ruleName
-        self._rule = .recursive(rule)
+        return _rule.ruleDescription
     }
     
     public init(ruleName: String, rule: GrammarRule) {
         self.ruleName = ruleName
-        self._rule = .rule(rule)
+        self._rule = rule
     }
     
     public func setRule(rule: GrammarRule) {
-        self._rule = .rule(rule)
-    }
-    
-    public func setRule(rule: [GrammarRule]) {
-        self._rule = .rule(.sequence(rule))
-    }
-    
-    public func setRule(rule: GrammarRule...) {
-        self._rule = .rule(.sequence(rule))
-    }
-    
-    public func setRecursive(rule: RecursiveGrammarRule) {
-        self._rule = .recursive(rule)
+        self._rule = rule
     }
     
     public func consume(from lexer: Lexer) throws -> Substring {
-        switch _rule {
-        case .rule(let r):
-            return try r.consume(from: lexer)
-        case .recursive(let r):
-            return try r.consume(from: lexer)
-        }
+        return try _rule.consume(from: lexer)
     }
     
     public func canConsume(from lexer: Lexer) -> Bool {
-        switch _rule {
-        case .rule(let r):
-            return r.canConsume(from: lexer)
-        case .recursive(let r):
-            return r.canConsume(from: lexer)
-        }
+        return _rule.canConsume(from: lexer)
     }
     
     /// Calls a block that takes a recursive grammar rule and must return a grammar
@@ -85,11 +53,6 @@ public class RecursiveGrammarRule: LexerGrammarRule {
         let recursive = GrammarRule.recursive(_recursive)
         
         return recursive
-    }
-    
-    private enum InnerRule {
-        case rule(GrammarRule)
-        case recursive(RecursiveGrammarRule)
     }
 }
 
@@ -363,19 +326,19 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             
         case .sequence(let rules):
             return lexer.withTemporaryIndex {
-                for rule in rules {
-                    do {
-                        // If the first consumer works, assume the remaining will
-                        // as well and try on.
-                        // This will aid in avoiding extreme recursions.
-                        _=try rule.consume(from: lexer)
-                        return true
-                    } catch {
-                        return false
-                    }
+                // If the first consumer works, assume the remaining will
+                // as well and try on.
+                // This will aid in avoiding extreme recursions.
+                guard let rule = rules.first else {
+                    return false
                 }
                 
-                return true
+                do {
+                    _=try rule.consume(from: lexer)
+                    return true
+                } catch {
+                    return false
+                }
             }
             
         case .directSequence(let rules):

@@ -3,6 +3,17 @@ import MiniLexer
 
 class LexerTests: XCTestCase {
     
+    func testInitState() {
+        let lexer1 = Lexer(input: "abc")
+        let lexer2 = Lexer(input: "abc", index: "abc".index(after: "abc".startIndex))
+        
+        XCTAssertEqual(lexer1.inputString, "abc")
+        XCTAssertEqual(lexer1.inputIndex, "abc".startIndex)
+        
+        XCTAssertEqual(lexer2.inputString, "abc")
+        XCTAssertEqual(lexer2.inputIndex, "abc".index(after: "abc".startIndex))
+    }
+    
     func testIsEof() throws {
         let lexer = Lexer(input: "abc")
         
@@ -55,6 +66,42 @@ class LexerTests: XCTestCase {
         
         XCTAssertEqual(peek1, "abc")
         XCTAssertEqual(peek2, "def")
+    }
+    
+    func testPeekForward() throws {
+        let lexer = Lexer(input: "abc")
+        
+        XCTAssertEqual("b", try lexer.peekForward())
+        XCTAssertEqual("c", try lexer.peekForward(count: 2))
+    }
+    
+    func testPeekForwardFailsWithErrorWhenPastEndOfString() {
+        let lexer = Lexer(input: "abc")
+        
+        XCTAssertThrowsError(try lexer.peekForward(count: 4))
+    }
+    
+    func testFindNext() throws {
+        let lexer = Lexer(input: "abc")
+        
+        XCTAssertEqual(lexer.findNext("a"), lexer.inputString.startIndex)
+        XCTAssertEqual(lexer.findNext("c"), lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2))
+        XCTAssertNil(lexer.findNext("0"))
+    }
+    
+    func testSkipToNext() throws {
+        let lexer = Lexer(input: "abc")
+        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        
+        try lexer.skipToNext("c")
+        
+        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+    }
+    
+    func testSkipToNextFailsIfNotFound() {
+        let lexer = Lexer(input: "abc")
+        
+        XCTAssertThrowsError(try lexer.skipToNext("0"))
     }
     
     func testNext() throws {

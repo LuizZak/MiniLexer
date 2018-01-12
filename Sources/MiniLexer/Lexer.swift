@@ -152,11 +152,6 @@ public final class Lexer {
     }
     
     @inline(__always)
-    public static func isStringDelimiter(_ c: Atom) -> Bool {
-        return c == "\"" || c == "\'"
-    }
-    
-    @inline(__always)
     public static func isWhitespace(_ c: Atom) -> Bool {
         return c == " " || c == "\r" || c == "\n" || c == "\t"
     }
@@ -210,52 +205,6 @@ public final class Lexer {
     public func endOfStringError(_ message: String = "Reached unexpected end of input string") -> Error {
         return LexerError.endOfStringError(message)
     }
-}
-
-// MARK: - String-typed number parsing methods
-extension Lexer {
-    @inline(__always)
-    public func parseIntString(skippingWhitespace: Bool = true) throws -> Substring {
-        if skippingWhitespace {
-            skipWhitespace()
-        }
-        
-        if !Lexer.isDigit(try peek()) {
-            throw unexpectedCharacterError(char: unsafePeek(), "Expected digit for integer")
-        }
-        
-        return consume(while: Lexer.isDigit)
-    }
-    
-    @inline(__always)
-    public func parseFloatString(skippingWhitespace: Bool = true) throws -> String {
-        if skippingWhitespace {
-            skipWhitespace()
-        }
-        
-        // (0-9)+('.'(0..9)+)
-        if !Lexer.isDigit(try peek()) {
-            throw unexpectedCharacterError(char: unsafePeek(), "Expected digit for float")
-        }
-        
-        let start = inputIndex
-        
-        advance(while: Lexer.isDigit)
-        
-        if safeIsNextChar(equalTo: ".") {
-            unsafeAdvance()
-            
-            // Expect more digits
-            if !Lexer.isDigit(try peek()) {
-                throw unexpectedCharacterError(char: unsafePeek(), "Expected digit for float")
-            }
-            
-            advance(while: Lexer.isDigit)
-        }
-        
-        return String(inputString[start..<inputIndex]) // Consume the entire offset
-    }
-    
 }
 
 // MARK: - Find/skip to next methods

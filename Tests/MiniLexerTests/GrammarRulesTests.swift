@@ -6,7 +6,10 @@ public class GrammarRuleTests: XCTestCase {
     func testGrammarRuleDigit() throws {
         let rule = GrammarRule.digit
         let lexer = Lexer(input: "123")
+        let lexer2 = Lexer(input: "abc")
         
+        XCTAssert(rule.canConsume(from: lexer))
+        XCTAssertFalse(rule.canConsume(from: lexer2))
         XCTAssertEqual("1", try rule.consume(from: lexer))
         XCTAssertEqual("[0-9]", rule.ruleDescription)
     }
@@ -14,7 +17,10 @@ public class GrammarRuleTests: XCTestCase {
     func testGrammarRuleLetter() throws {
         let rule = GrammarRule.letter
         let lexer = Lexer(input: "abc")
+        let lexer2 = Lexer(input: "1")
         
+        XCTAssert(rule.canConsume(from: lexer))
+        XCTAssertFalse(rule.canConsume(from: lexer2))
         XCTAssertEqual("a", try rule.consume(from: lexer))
         XCTAssertEqual("[a-zA-Z]", rule.ruleDescription)
     }
@@ -22,7 +28,10 @@ public class GrammarRuleTests: XCTestCase {
     func testGrammarRuleWhitespace() throws {
         let rule = GrammarRule.whitespace
         let lexer = Lexer(input: " ")
+        let lexer2 = Lexer(input: "1")
         
+        XCTAssert(rule.canConsume(from: lexer))
+        XCTAssertFalse(rule.canConsume(from: lexer2))
         XCTAssertEqual(" ", try rule.consume(from: lexer))
         XCTAssertEqual("[\\s\\t\\r\\n]", rule.ruleDescription)
     }
@@ -151,6 +160,8 @@ public class GrammarRuleTests: XCTestCase {
         let lexer1 = Lexer(input: "a 1")
         let lexer2 = Lexer(input: "aa 2")
         
+        XCTAssert(rule.canConsume(from: lexer1))
+        XCTAssert(rule.canConsume(from: lexer2))
         XCTAssertEqual("a 1", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertEqual("[a-zA-Z] [0-9]", rule.ruleDescription)
@@ -159,10 +170,17 @@ public class GrammarRuleTests: XCTestCase {
     func testGrammarRuleDirectSequence() throws {
         let rule = GrammarRule.directSequence([.letter, .digit])
         let lexer1 = Lexer(input: "a1")
-        let lexer2 = Lexer(input: "aa2")
+        let lexer2 = Lexer(input: "a 1")
+        let lexer3 = Lexer(input: "aa2")
+        let lexer4 = Lexer(input: " a2")
         
+        XCTAssert(rule.canConsume(from: lexer1))
+        XCTAssert(rule.canConsume(from: lexer2)) // TODO: these two could be easy to check as false,
+        XCTAssert(rule.canConsume(from: lexer3)) // should we ignore possible recursions and do it anyway?
+        XCTAssertFalse(rule.canConsume(from: lexer4))
         XCTAssertEqual("a1", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
+        XCTAssertThrowsError(try rule.consume(from: lexer3))
         XCTAssertEqual("[a-zA-Z][0-9]", rule.ruleDescription)
     }
     

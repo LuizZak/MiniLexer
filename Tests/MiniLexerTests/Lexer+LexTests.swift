@@ -6,8 +6,12 @@ class Lexer_LexTests: XCTestCase {
     func testLexInt() throws {
         XCTAssertEqual(123, try lexerTest("123") { try $0.lexInt() })
         XCTAssertEqual(123, try lexerTest("123a") { try $0.lexInt() })
+        XCTAssertEqual(1234, try lexerTest("1234") { try $0.lexInt(minLength: 4) })
+        XCTAssertEqual(123, try lexerTest("  123") { try $0.lexInt(skippingWhitespace: true) })
         XCTAssertThrowsError(try lexerTest("abc") { try $0.lexInt() })
         XCTAssertThrowsError(try lexerTest("") { try $0.lexInt() })
+        XCTAssertThrowsError(try lexerTest("12") { try $0.lexInt(minLength: 4) })
+        XCTAssertThrowsError(try lexerTest("  123") { try $0.lexInt(skippingWhitespace: false) })
     }
     
     func testLexIdentifier() throws {
