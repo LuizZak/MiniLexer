@@ -9,7 +9,10 @@ let package = Package(
         // Products define the executables and libraries produced by a package, and make them visible to other packages.
         .library(
             name: "MiniLexer",
-            targets: ["MiniLexer"])
+            targets: ["MiniLexer"]),
+        .library(
+            name: "MiniParser",
+            targets: ["MiniParser"])
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -21,6 +24,9 @@ let package = Package(
         .target(
             name: "MiniLexer",
             dependencies: []),
+        .target(
+            name: "MiniParser",
+            dependencies: ["MiniLexer"]),
         .target(
             name: "URLParseSample",
             dependencies: ["MiniLexer"]),

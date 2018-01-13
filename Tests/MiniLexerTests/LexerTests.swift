@@ -145,4 +145,20 @@ class LexerTests: XCTestCase {
         XCTAssertEqual(char, "c")
         XCTAssertEqual(lexer.inputIndex, prevIndex)
     }
+    
+    func testWithTemporaryIndexRewindsOnError() throws {
+        let lexer = Lexer(input: "abc")
+        let prevIndex = lexer.inputIndex
+        
+        do {
+            try lexer.withTemporaryIndex { () -> Void in
+                try lexer.advance()
+                throw lexer.endOfStringError()
+            }
+        } catch {
+            
+        }
+        
+        XCTAssertEqual(lexer.inputIndex, prevIndex)
+    }
 }

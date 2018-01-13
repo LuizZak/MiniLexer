@@ -1,5 +1,3 @@
-import Foundation
-
 /// Class capable of parsing tokens out of a string.
 /// Currently presents support to parse some simple time formats,
 /// single/double-quoted strings, and floating point numbers.

@@ -64,9 +64,9 @@ public extension Lexer {
         
         if n < min || n > max {
             if min == max {
-                throw LexerError.miscellaneous("Expected \(min) of rounds, received \(n)")
+                throw LexerError.miscellaneous("Expected \(min) rounds, received \(n)")
             }
-            throw LexerError.miscellaneous("Expected between \(min) and \(max) of rounds, received \(n)")
+            throw LexerError.miscellaneous("Expected between \(min) and \(max) rounds, received \(n)")
         }
     }
     

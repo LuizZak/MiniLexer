@@ -336,3 +336,35 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
         }
     }
 }
+
+extension RecursiveGrammarRule: Equatable {
+    public static func ==(lhs: RecursiveGrammarRule, rhs: RecursiveGrammarRule) -> Bool {
+        return lhs === rhs
+    }
+}
+
+extension GrammarRule: Equatable {
+    public static func ==(lhs: GrammarRule, rhs: GrammarRule) -> Bool {
+        switch (lhs, rhs) {
+        case (.digit, .digit), (.letter, .letter), (.whitespace, .whitespace):
+            return true
+        case let (.char(l), .char(r)):
+            return l == r
+        case let (.keyword(l), .keyword(r)):
+            return l == r
+        case let (.recursive(l), .recursive(r)):
+            return l == r
+        case let (.namedRule(_, l), .namedRule(_, r)),
+             let (.optional(l), .optional(r)),
+             let (.oneOrMore(l), .oneOrMore(r)),
+             let (.zeroOrMore(l), .zeroOrMore(r)):
+            return l == r
+        case let (.or(l), .or(r)),
+             let (.sequence(l), .sequence(r)),
+             let (.directSequence(l), .directSequence(r)):
+            return l == r
+        default:
+            return false
+        }
+    }
+}

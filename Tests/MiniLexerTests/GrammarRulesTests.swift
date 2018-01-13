@@ -12,6 +12,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertFalse(rule.canConsume(from: lexer2))
         XCTAssertEqual("1", try rule.consume(from: lexer))
         XCTAssertEqual("[0-9]", rule.ruleDescription)
+        XCTAssertEqual(rule, .digit)
     }
     
     func testGrammarRuleLetter() throws {
@@ -23,6 +24,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertFalse(rule.canConsume(from: lexer2))
         XCTAssertEqual("a", try rule.consume(from: lexer))
         XCTAssertEqual("[a-zA-Z]", rule.ruleDescription)
+        XCTAssertEqual(rule, .letter)
     }
     
     func testGrammarRuleWhitespace() throws {
@@ -34,6 +36,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertFalse(rule.canConsume(from: lexer2))
         XCTAssertEqual(" ", try rule.consume(from: lexer))
         XCTAssertEqual("[\\s\\t\\r\\n]", rule.ruleDescription)
+        XCTAssertEqual(rule, .whitespace)
     }
     
     func testGrammarRuleChar() throws {
@@ -48,6 +51,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try rule.consume(from: lexer3))
         XCTAssertThrowsError(try rule.consume(from: lexer4))
         XCTAssertEqual("'@'", rule.ruleDescription)
+        XCTAssertEqual(rule, .char("@"))
     }
     
     func testGrammarRuleKeyword() throws {
@@ -62,6 +66,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try rule.consume(from: lexer3))
         XCTAssertEqual("test", try rule.consume(from: lexer4))
         XCTAssertEqual("test", rule.ruleDescription)
+        XCTAssertEqual(rule, .keyword("test"))
     }
     
     func testGrammarNamedRule() throws {
@@ -72,6 +77,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("123", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertEqual("number", rule.ruleDescription)
+        XCTAssertEqual(rule, .namedRule(name: "number", .digit+))
     }
     
     func testGrammarRuleOneOrMore() throws {
@@ -82,6 +88,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("123", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertEqual("[0-9]+", rule.ruleDescription)
+        XCTAssertEqual(rule, .oneOrMore(.digit))
     }
     
     func testGrammarRuleZeroOrMore() throws {
@@ -92,6 +99,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("123", try rule.consume(from: lexer1))
         XCTAssertEqual("", try rule.consume(from: lexer2))
         XCTAssertEqual("[0-9]*", rule.ruleDescription)
+        XCTAssertEqual(rule, .zeroOrMore(.digit))
     }
     
     func testGrammarRuleOr() throws {
@@ -101,6 +109,8 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("a", try rule.consume(from: lexer))
         XCTAssertEqual("1", try rule.consume(from: lexer))
         XCTAssertEqual("[0-9] | [a-zA-Z]", rule.ruleDescription)
+        XCTAssertEqual(rule, .or([.digit, .letter]))
+        XCTAssertNotEqual(rule, .or([.letter, .digit]))
     }
     
     func testGramarRuleOrStopsAtFirstMatchFound() throws {
@@ -136,6 +146,8 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("ab123", try rule.consume(from: lexer1))
         XCTAssertEqual("ab", try rule.consume(from: lexer2))
         XCTAssertEqual("([0-9] | [a-zA-Z])+", rule.ruleDescription)
+        XCTAssertEqual(rule, .oneOrMore(.or([.digit, .letter])))
+        XCTAssertNotEqual(rule, .oneOrMore(.or([.letter, .digit])))
     }
     
     func testGrammarRuleOptional() throws {
@@ -148,6 +160,8 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("", try rule.consume(from: lexer2))
         XCTAssertEqual("", try rule.consume(from: lexer3))
         XCTAssertEqual("abc?", rule.ruleDescription)
+        XCTAssertEqual(rule, .optional(.keyword("abc")))
+        XCTAssertNotEqual(rule, .optional(.keyword("def")))
     }
     
     func testGrammarRuleOptionalRuleDescriptionWithMany() throws {
@@ -167,6 +181,8 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("a 1", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertEqual("[a-zA-Z] [0-9]", rule.ruleDescription)
+        XCTAssertEqual(rule, .sequence([.letter, .digit]))
+        XCTAssertNotEqual(rule, .sequence([.digit, .letter]))
     }
     
     func testGrammarRuleDirectSequence() throws {
@@ -184,6 +200,8 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertThrowsError(try rule.consume(from: lexer3))
         XCTAssertEqual("[a-zA-Z][0-9]", rule.ruleDescription)
+        XCTAssertEqual(rule, .directSequence([.letter, .digit]))
+        XCTAssertNotEqual(rule, .directSequence([.digit, .letter]))
     }
     
     func testGrammarRecursive() throws {
@@ -218,6 +236,7 @@ public class GrammarRuleTests: XCTestCase {
         // XCTAssertThrowsError(try argList.consume(from: lexer2)) // TODO: Should this error or not?
         XCTAssertEqual("abc, def, ghi", result)
         XCTAssertEqual("arg (',' argList)*", argList.ruleDescription)
+        XCTAssertEqual(GrammarRule.recursive(argList), .recursive(argList))
     }
     
     func testGrammarRuleOperatorZeroOrMore() {

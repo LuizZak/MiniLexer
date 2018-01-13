@@ -1,5 +1,19 @@
+import Foundation
+
 // MARK: - Safe operations
 public extension Lexer {
+    /// Attempts to advance the string index forward by one, returning a value
+    /// telling whether the advance was successful or whether the current index
+    /// is pointing at the end of the string buffer
+    @inline(__always)
+    public func safeAdvance() -> Bool {
+        if let next = inputSource.index(inputIndex, offsetBy: 1, limitedBy: inputSource.endIndex) {
+            inputIndex = next
+            return true
+        }
+        return false
+    }
+    
     /// Advances while a given predicate returns true.
     /// Stops when reaching end-of-string, or the when the predicate returns false.
     ///
@@ -29,14 +43,16 @@ public extension Lexer {
     /// current stream position does not match the given string.
     /// By default, the lexer does a `literal`, character-by-character match,
     /// which can be overriden by specifying the `options` parameter.
-    public func advanceIf(equals: String, options: String.CompareOptions = .literal) -> Bool {
-        if let range = inputString.range(of: equals, options: options, range: inputIndex..<inputString.endIndex) {
+    public func advanceIf<S: StringProtocol>(equals: S, options: String.CompareOptions = .literal) -> Bool {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: String.IndexDistance(equals.count), limitedBy: inputString.endIndex) else {
+            return false
+        }
+
+        
+        if inputString[inputIndex..<endIndex].compare(equals, options: options) == .orderedSame {
             // Match! Advance stream and proceed...
-            if range.lowerBound == inputIndex {
-                inputIndex = range.upperBound
-                
-                return true
-            }
+            inputIndex = endIndex
+            return true
         }
         
         return false
@@ -110,7 +126,7 @@ public extension Lexer {
     
     /// If the next characters in the read buffer do not ammount to `match`, an
     /// error is thrown.
-    public func expect(match: String, options: String.CompareOptions = .literal) throws {
+    public func expect<S: StringProtocol>(match: S, options: String.CompareOptions = .literal) throws {
         if !advanceIf(equals: match, options: options) {
             throw unexpectedStringError("Expected '\(match)'")
         }
