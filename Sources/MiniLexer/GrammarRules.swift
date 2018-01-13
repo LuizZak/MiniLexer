@@ -180,14 +180,14 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
     public func stepThroughApplying(on lexer: Lexer) throws {
         // Simplify sequence cases since we'll just have to run the lexers one
         // by one during canConsume, anyway.
-        if case .directSequence(let rules) = self {
+        switch self {
+        case .directSequence(let rules):
             for rule in rules {
                 try rule.stepThroughApplying(on: lexer)
             }
             
             return
-        }
-        if case .sequence(let rules) = self {
+        case .sequence(let rules):
             for (i, rule) in rules.enumerated() {
                 try rule.stepThroughApplying(on: lexer)
                 // Skip whitespace between tokens, appending them along the way
@@ -197,8 +197,10 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             }
             
             return
+        default:
+            break
         }
-        
+       
         if !canConsume(from: lexer) {
             throw lexer.unexpectedCharacterError(char: try lexer.peek(), "Expected \(self.ruleDescription)")
         }
@@ -311,12 +313,16 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             
             return false
             
-        case .sequence(let rules):
+        case .sequence(let rules), .directSequence(let rules):
             return lexer.withTemporaryIndex {
                 // If the first consumer works, assume the remaining will
                 // as well and try on.
                 // This will aid in avoiding extreme recursions.
                 guard let rule = rules.first else {
+                    return false
+                }
+                
+                if !rule.canConsume(from: lexer) {
                     return false
                 }
                 
@@ -326,27 +332,6 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                 } catch {
                     return false
                 }
-            }
-            
-        case .directSequence(let rules):
-            return lexer.withTemporaryIndex {
-                for rule in rules {
-                    if !rule.canConsume(from: lexer) {
-                        return false
-                    }
-                    
-                    do {
-                        // If the first consumer works, assume the remaining will
-                        // as well and try on.
-                        // This will aid in avoiding extreme recursions.
-                        try rule.stepThroughApplying(on: lexer)
-                        return true
-                    } catch {
-                        return false
-                    }
-                }
-                
-                return true
             }
         }
     }
