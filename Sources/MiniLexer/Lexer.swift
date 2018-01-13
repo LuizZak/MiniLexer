@@ -188,16 +188,14 @@ public final class Lexer {
     // MARK: Error methods
     public func unexpectedCharacterError(offset: Lexer.Index? = nil, char: Atom, _ message: String) -> Error {
         let offset = offset ?? inputIndex
-        let indexOffset = inputString.distance(from: inputString.startIndex, to: offset)
         
-        return LexerError.unexpectedCharacter((indexOffset, offset), char, message: message)
+        return LexerError.unexpectedCharacter(offset, char, message: message)
     }
     
     public func unexpectedStringError(offset: Lexer.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
-        let indexOffset = inputString.distance(from: inputString.startIndex, to: offset)
         
-        return LexerError.unexpectedString((indexOffset, offset), message: message)
+        return LexerError.unexpectedString(offset, message: message)
     }
     
     public func syntaxError(_ message: String) -> Error {
@@ -242,10 +240,10 @@ extension Lexer {
 public enum LexerError: Error, CustomStringConvertible {
     public var description: String {
         switch self {
-        case let .unexpectedCharacter((charOffset, _), _, message: message):
-            return "Error at \(charOffset): \(message)"
-        case let .unexpectedString((charOffset, _), message: message):
-            return "Error at \(charOffset): \(message)"
+        case let .unexpectedCharacter(offset, _, message: message):
+            return "Error at \(offset): \(message)"
+        case let .unexpectedString(offset, message: message):
+            return "Error at \(offset): \(message)"
         case .syntaxError(let message),
              .endOfStringError(let message),
              .notFound(let message),
@@ -256,8 +254,8 @@ public enum LexerError: Error, CustomStringConvertible {
         }
     }
     
-    case unexpectedCharacter((Int, Lexer.Index), Lexer.Atom, message: String)
-    case unexpectedString((Int, Lexer.Index), message: String)
+    case unexpectedCharacter(Lexer.Index, Lexer.Atom, message: String)
+    case unexpectedString(Lexer.Index, message: String)
     case syntaxError(String)
     case endOfStringError(String)
     case notFound(String)

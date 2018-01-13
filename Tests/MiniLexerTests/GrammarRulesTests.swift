@@ -44,7 +44,7 @@ public class GrammarRuleTests: XCTestCase {
         let lexer4 = Lexer(input: "")
         
         XCTAssertEqual("@", try rule.consume(from: lexer1))
-        XCTAssertEqual("@", try rule.consume(from: lexer2))
+        XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertThrowsError(try rule.consume(from: lexer3))
         XCTAssertThrowsError(try rule.consume(from: lexer4))
         XCTAssertEqual("'@'", rule.ruleDescription)
@@ -58,7 +58,7 @@ public class GrammarRuleTests: XCTestCase {
         let lexer4 = Lexer(input: "testtest")
         
         XCTAssertEqual("test", try rule.consume(from: lexer1))
-        XCTAssertEqual("test", try rule.consume(from: lexer2))
+        XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertThrowsError(try rule.consume(from: lexer3))
         XCTAssertEqual("test", try rule.consume(from: lexer4))
         XCTAssertEqual("test", rule.ruleDescription)

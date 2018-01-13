@@ -6,8 +6,14 @@ public protocol LexerGrammarRule {
     /// and error reporting
     var ruleDescription: String { get }
     
-    /// Consumes the required rule from a lexer
+    /// Consumes the required rule from a lexer.
+    /// Simply catches a substring from the lexer's current position all the way
+    /// to its later index after a call to `LexerGrammarRule.parse(with:)`
     func consume(from lexer: Lexer) throws -> Result
+    
+    /// Parses with a given lexer, but does't return a result, simply advances the
+    /// lexer's offset as if it was parsed by `LexerGrammarRule.consume(from:)`.
+    func stepThroughApplying(on lexer: Lexer) throws
     
     /// Whether this rule can consume its required data from a given lexer.
     /// May not indicate a call to `consume(from:)` will be successful, that is,
@@ -37,6 +43,10 @@ public class RecursiveGrammarRule: LexerGrammarRule {
     
     public func consume(from lexer: Lexer) throws -> Substring {
         return try _rule.consume(from: lexer)
+    }
+    
+    public func stepThroughApplying(on lexer: Lexer) throws {
+        try _rule.stepThroughApplying(on: lexer)
     }
     
     public func canConsume(from lexer: Lexer) -> Bool {
@@ -164,27 +174,29 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
     }
     
     public func consume(from lexer: Lexer) throws -> Substring {
+        return try lexer.consumeString(performing: stepThroughApplying)
+    }
+    
+    public func stepThroughApplying(on lexer: Lexer) throws {
         // Simplify sequence cases since we'll just have to run the lexers one
         // by one during canConsume, anyway.
         if case .directSequence(let rules) = self {
-            var subs: [Substring] = []
             for rule in rules {
-                subs.append(try rule.consume(from: lexer))
+                try rule.stepThroughApplying(on: lexer)
             }
             
-            return subs.reduce(Substring(), +)
+            return
         }
         if case .sequence(let rules) = self {
-            var subs: [Substring] = []
             for (i, rule) in rules.enumerated() {
-                subs.append(try rule.consume(from: lexer))
+                try rule.stepThroughApplying(on: lexer)
                 // Skip whitespace between tokens, appending them along the way
                 if i < rules.count - 1 {
-                    subs.append(lexer.consumeString(performing: { $0.skipWhitespace() }))
+                    lexer.skipWhitespace()
                 }
             }
             
-            return subs.reduce(Substring(), +)
+            return
         }
         
         if !canConsume(from: lexer) {
@@ -192,92 +204,69 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
         }
         
         switch self {
-        case .digit:
-            return try lexer.consumeCharAsSubstring()
-            
-        case .letter:
-            return try lexer.consumeCharAsSubstring()
-            
-        case .whitespace:
-            return try lexer.consumeCharAsSubstring()
+        case .digit, .letter, .whitespace:
+            try lexer.advance()
             
         case .namedRule(_, let rule):
-            return try rule.consume(from: lexer)
+            try rule.stepThroughApplying(on: lexer)
             
         case .optional(let subRule):
             if !subRule.canConsume(from: lexer) {
-                return Substring()
+                return
             }
             
             do {
-                return try subRule.consume(from: lexer)
+                try subRule.stepThroughApplying(on: lexer)
             } catch {
-                return Substring()
+                
             }
             
         case .char(let ch):
-            lexer.skipWhitespace()
-            
-            return try lexer.consumeString { lexer in
-                return try lexer.advance(expectingCurrent: ch)
-            }
+            try lexer.advance(expectingCurrent: ch)
             
         case .keyword(let str):
-            lexer.skipWhitespace()
-            
-            return try lexer.consumeString { lexer in
-                if !lexer.advanceIf(equals: str) {
-                    let kw = lexer.consume(until: Lexer.isWhitespace)
-                    throw lexer.unexpectedStringError("Expected \(str), found \(kw)")
-                }
+            if !lexer.advanceIf(equals: str) {
+                throw lexer.unexpectedStringError("Expected \(ruleDescription)")
             }
             
         case .recursive(let rec):
-            return try rec.consume(from: lexer)
+            try rec.stepThroughApplying(on: lexer)
             
         case .oneOrMore(let subRule):
-            var subs: [Substring] = []
             while subRule.canConsume(from: lexer) {
-                subs.append(try subRule.consume(from: lexer))
+                try subRule.stepThroughApplying(on: lexer)
             }
-            return subs.reduce(Substring(), +)
             
         case .zeroOrMore(let subRule):
             if !subRule.canConsume(from: lexer) {
-                return Substring()
+                return
             }
             
-            var subs: [Substring] = []
             while subRule.canConsume(from: lexer) {
-                subs.append(try subRule.consume(from: lexer))
+                try subRule.stepThroughApplying(on: lexer)
             }
-            return subs.reduce(Substring(), +)
             
         case .or(let rules):
-            var sub: Substring?
             var indexAfter: Lexer.Index?
             for rule in rules {
                 do {
-                    let res = try lexer.withTemporaryIndex { () -> (Substring, Lexer.Index) in
-                        try lexer.withIndexAfter {
-                            try rule.consume(from: lexer)
-                        }
+                    let res = try lexer.withTemporaryIndex { () -> Lexer.Index in
+                        try rule.stepThroughApplying(on: lexer)
+                        return lexer.inputIndex
                     }
                     
-                    (sub, indexAfter) = (res.0, res.1)
+                    indexAfter = res
                     break
                 } catch {
                     
                 }
             }
             
-            guard case let (result?, index?) = (sub, indexAfter) else {
+            guard let index = indexAfter else {
                 throw LexerError.syntaxError("Failed to parse with rule \(ruleDescription)")
             }
             
             lexer.inputIndex = index
-            
-            return result
             
         case .directSequence, .sequence:
             fatalError("Should have handled .directSequence/.sequence case at top")
@@ -332,7 +321,7 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                 }
                 
                 do {
-                    _=try rule.consume(from: lexer)
+                    try rule.stepThroughApplying(on: lexer)
                     return true
                 } catch {
                     return false
@@ -350,7 +339,7 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
                         // If the first consumer works, assume the remaining will
                         // as well and try on.
                         // This will aid in avoiding extreme recursions.
-                        _=try rule.consume(from: lexer)
+                        try rule.stepThroughApplying(on: lexer)
                         return true
                     } catch {
                         return false
