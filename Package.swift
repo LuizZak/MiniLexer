@@ -25,14 +25,20 @@ let package = Package(
             name: "MiniLexer",
             dependencies: []),
         .target(
+            name: "TypeLexing",
+            dependencies: ["MiniLexer"]),
+        .target(
             name: "MiniParser",
             dependencies: ["MiniLexer"]),
         .target(
             name: "URLParseSample",
-            dependencies: ["MiniLexer"]),
+            dependencies: ["MiniLexer", "TypeLexing"]),
         .testTarget(
             name: "MiniLexerTests",
             dependencies: ["MiniLexer"]),
+        .testTarget(
+            name: "TypeLexingTests",
+            dependencies: ["MiniLexer", "TypeLexing"]),
         .testTarget(
             name: "URLParseSampleTests",
             dependencies: ["URLParseSample", "MiniLexer"]),

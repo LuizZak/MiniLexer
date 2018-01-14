@@ -30,6 +30,11 @@ public final class Lexer {
         endIndex = inputString.endIndex
     }
     
+    /// Rewinds the input index to point to the start of the string
+    public func rewindToStart() {
+        inputIndex = inputString.startIndex
+    }
+    
     /// Advances the stream until the first non-whitespace character is found.
     public func skipWhitespace() {
         advance(while: Lexer.isWhitespace)
@@ -106,6 +111,16 @@ public final class Lexer {
         return inputSource[inputIndex]
     }
     
+    /// Parses the string by applying a given grammar rule on this lexer at the
+    /// current position.
+    /// Throws, if operation fails.
+    @_specialize(where G == GrammarRule)
+    @_specialize(where G == RecursiveGrammarRule)
+    @inline(__always)
+    public func parse<G: LexerGrammarRule>(with rule: G) throws -> G.Result {
+        return try rule.consume(from: self)
+    }
+    
     /// Performs discardable index changes inside a given closure.
     /// Any changes to this parser's state are undone after the method returns.
     @inline(__always)
@@ -159,6 +174,7 @@ public final class Lexer {
         return isLowercaseLetter(c) || isUppercaseLetter(c)
     }
     
+    @inline(__always)
     public static func isLowercaseLetter(_ c: Atom) -> Bool {
         switch c {
         case "a"..."z":
@@ -169,6 +185,7 @@ public final class Lexer {
         }
     }
     
+    @inline(__always)
     public static func isUppercaseLetter(_ c: Atom) -> Bool {
         switch c {
         case "A"..."Z":
@@ -179,27 +196,32 @@ public final class Lexer {
         }
     }
     
+    @inline(__always)
     public static func isAlphanumeric(_ c: Atom) -> Bool {
         return isLetter(c) || isDigit(c)
     }
     
     // MARK: Error methods
+    @inline(__always)
     public func unexpectedCharacterError(offset: Lexer.Index? = nil, char: Atom, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
         return LexerError.unexpectedCharacter(offset, char, message: message)
     }
     
+    @inline(__always)
     public func unexpectedStringError(offset: Lexer.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
         return LexerError.unexpectedString(offset, message: message)
     }
     
+    @inline(__always)
     public func syntaxError(_ message: String) -> Error {
         return LexerError.syntaxError(message)
     }
     
+    @inline(__always)
     public func endOfStringError(_ message: String = "Reached unexpected end of input string") -> Error {
         return LexerError.endOfStringError(message)
     }
@@ -211,6 +233,7 @@ extension Lexer {
     /// Returns the index of the next occurrence of a given input char.
     /// Method starts searching from current read index.
     /// This method does not alter the current
+    @inline(__always)
     public func findNext(_ atom: Atom) -> Index? {
         return withTemporaryIndex {
             advance(until: { $0 == atom })
@@ -226,6 +249,7 @@ extension Lexer {
     /// Skips all chars until the next occurrence of a given char.
     /// Method starts searching from current read index.
     /// If the char is not found after the current index, an error is thrown.
+    @inline(__always)
     public func skipToNext(_ atom: Atom) throws {
         guard let index = findNext(atom) else {
             throw LexerError.notFound("Expected \(atom) but it was not found.")

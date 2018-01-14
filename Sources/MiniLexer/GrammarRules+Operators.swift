@@ -8,6 +8,7 @@ infix operator .. : GrammarSequencePrecedence
 
 postfix operator *
 postfix operator +
+postfix operator .?
 
 /// Creates a sequence rule from two grammar rules.
 ///
@@ -49,7 +50,7 @@ public postfix func *(lhs: GrammarRule) -> GrammarRule {
 ///
 /// ```
 /// result:
-///   (lhs[0] lhs[1] lhs[2] ... lhs[n])*
+///   (lhs0 lhs1 lhs2 [...] lhsN)*
 /// ```
 public postfix func *(lhs: Array<GrammarRule>) -> GrammarRule {
     return .zeroOrMore(.sequence(lhs))
@@ -74,10 +75,22 @@ public postfix func +(lhs: GrammarRule) -> GrammarRule {
 ///
 /// ```
 /// result:
-///   (lhs[0] lhs[1] lhs[2] ... lhs[n])+
+///   (lhs0 lhs1 lhs2 [...] lhsN)+
 /// ```
 public postfix func +(lhs: Array<GrammarRule>) -> GrammarRule {
     return .oneOrMore(.sequence(lhs))
+}
+
+/// Creates an optional rule from a grammar rule.
+///
+/// Produces:
+///
+/// ```
+/// result:
+///   lhs?
+/// ```
+public postfix func .?(lhs: GrammarRule) -> GrammarRule {
+    return .optional(lhs)
 }
 
 /// Concatenates rules such that the resulting rule is an `OR` operation between
@@ -101,5 +114,26 @@ public func |(lhs: GrammarRule, rhs: GrammarRule) -> GrammarRule {
         
     default:
         return .or([lhs, rhs])
+    }
+}
+
+/// Creates a direct sequence rule from two grammar rules.
+///
+/// Produces:
+///
+/// ```
+/// result:
+///   [lhs][rhs]
+/// ```
+public func +(lhs: GrammarRule, rhs: GrammarRule) -> GrammarRule {
+    switch (lhs, rhs) {
+    case let (.directSequence(left), .directSequence(right)):
+        return .directSequence(left + right)
+    case let (.directSequence(left), right):
+        return .directSequence(left + [right])
+    case let (left, .directSequence(right)):
+        return .directSequence([left] + right)
+    case let (left, right):
+        return .directSequence([left, right])
     }
 }

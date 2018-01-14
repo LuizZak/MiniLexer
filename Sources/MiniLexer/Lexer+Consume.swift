@@ -33,14 +33,6 @@ public extension Lexer {
         return inputString[start..<inputIndex]
     }
     
-    /// Consumes the next character on the string as a `Substring`.
-    @inline(__always)
-    public func consumeCharAsSubstring() throws -> Substring {
-        let start = inputIndex
-        try advance()
-        return inputString[start..<inputIndex]
-    }
-    
     /// Returns a string that starts from the current input index, all the way
     /// until the index after the given block performs index-advancing operations
     /// on this lexer.

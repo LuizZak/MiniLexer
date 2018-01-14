@@ -1,4 +1,5 @@
 import MiniLexer
+import TypeLexing
 
 /**
  Subset of RFC 1738 & 3986 URL implementation
@@ -122,7 +123,7 @@ public class URLParser {
             // Detect port
             if lexer.safeIsNextChar(equalTo: ":") {
                 try lexer.advance() // Skip ':'
-                port = try lexer.lexInt(skippingWhitespace: false)
+                port = Int(try lexer.parse(with: GrammarRule.digit+))
             }
             
             // End here, without path
@@ -409,7 +410,7 @@ public extension Lexer {
     /// ```
     @inline(__always)
     public func decOctet() throws {
-        let i = try lexInt(skippingWhitespace: false)
+        let i = try parse(with: Int.tokenLexer)
         if i < 0 || i > 255 {
             throw LexerError.miscellaneous("Expected integer between 0 and 255, found \(i) instead.")
         }

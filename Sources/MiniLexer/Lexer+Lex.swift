@@ -1,5 +1,6 @@
 // MARK: - Known Token Lexing
 public extension Lexer {
+    /*
     
     /// Attempts to lex an integer at the current read position.
     /// Throws an error if the operation failed.
@@ -48,6 +49,7 @@ public extension Lexer {
     /// Grammar:
     ///
     ///     identifier  = [a-zA-Z_] [a-zA-Z_0-9]*
+    @inline(__always)
     public func lexIdentifier() throws -> Substring {
         return try consumeString { lexer in
             try lexer.advance(validatingCurrent: { Lexer.isLetter($0) || $0 == "_" })
@@ -59,20 +61,11 @@ public extension Lexer {
     /// Attempts to lex an identifier from the current buffer, throwing an error
     /// if the operation results in a failed parse.
     /// The read index is not modified during this operation.
+    @inline(__always)
     public func peekIdentifier() throws -> Substring {
         return try withTemporaryIndex {
             return try lexIdentifier()
         }
     }
-    
-    /// Peeks into the next identifier on the string, and also returns the index
-    /// at which the identifier ends at - useful for check-then-consume-conditionaly
-    /// routines
-    public func peekIdentifierWithOffset() throws -> (Substring, Index) {
-        return try withTemporaryIndex {
-            return try withIndexAfter {
-                try lexIdentifier()
-            }
-        }
-    }
+    */
 }

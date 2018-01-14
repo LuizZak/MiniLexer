@@ -371,6 +371,87 @@ public class GrammarRuleTests: XCTestCase {
         }
     }
     
+    func testGrammarRuleOperatorDirectSequence() {
+        let rule1 = GrammarRule.digit
+        let rule2 = GrammarRule.letter
+        let oneOrMore = rule1 + rule2
+        
+        switch oneOrMore {
+        case .directSequence(let ar):
+            XCTAssertEqual(ar.count, 2)
+            
+            if case .digit = ar[0], case .letter = ar[1] {
+                // Success!
+                return
+            }
+            
+            XCTFail("Failed to generate proper direct sequence operands")
+            break
+        default:
+            XCTFail("Expected '+' operator to compose as .directSequence")
+        }
+    }
+    
+    func testGrammarRuleOperatorDirectSequenceCollapseSequential() {
+        let oneOrMore: GrammarRule = .digit + .letter + .char("@")
+        
+        switch oneOrMore {
+        case .directSequence(let ar):
+            XCTAssertEqual(ar.count, 3)
+            
+            if case .digit = ar[0], case .letter = ar[1], case .char("@") = ar[2] {
+                // Success!
+                return
+            }
+            
+            XCTFail("Failed to generate proper sequence operands")
+            break
+        default:
+            XCTFail("Expected '+' operator to compose as .directSequence")
+        }
+    }
+    
+    func testGrammarRuleOperatorOptional() {
+        let rule = GrammarRule.digit
+        let oneOrMore = rule.?
+        
+        switch oneOrMore {
+        case .optional(.digit):
+            // Success!
+            break
+        default:
+            XCTFail("Expected '.?' operator to compose as .optional")
+        }
+    }
+    
+    func testGrammarRuleArrayWithOneItemBecomesOptional() {
+        let ruleOptional: GrammarRule = [.digit]
+        let ruleSequence: GrammarRule = [.digit, .letter]
+        
+        switch ruleOptional {
+        case .optional(.digit):
+            // Success!
+            break
+        default:
+            XCTFail("Expected array literal containing one rule to compose as .optional")
+        }
+        
+        switch ruleSequence {
+        case .sequence(let ar):
+            XCTAssertEqual(ar.count, 2)
+            
+            if case .digit = ar[0], case .letter = ar[1] {
+                // Success!
+                return
+            }
+            
+            XCTFail("Failed to generate proper sequence")
+            break
+        default:
+            XCTFail("Expected array literal containing more than one rule to compose as .sequence")
+        }
+    }
+    
     func testRecursiveGrammarRuleCreate() throws {
         let rule = RecursiveGrammarRule.create(named: "list") { (rec) -> GrammarRule in
             return .sequence([.letter, [",", .recursive(rec)]*])
@@ -678,7 +759,7 @@ public class GrammarRuleTests: XCTestCase {
             .namedRule(name: "modifier", ident)
         
         let modifierList = RecursiveGrammarRule.create(named: "modifierList") {
-            modifier .. .optional("," .. .recursive($0))
+            modifier .. ["," .. .recursive($0)]
         }
         
         let propertyModifierList =

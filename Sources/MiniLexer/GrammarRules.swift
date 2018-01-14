@@ -22,6 +22,65 @@ public protocol LexerGrammarRule {
     func canConsume(from lexer: Lexer) -> Bool
 }
 
+/// Type-erasing type over `LexerGrammarRule`
+public struct AnyGrammarRule<T>: LexerGrammarRule {
+    public typealias Result = T
+    
+    @_versioned
+    internal let _ruleDescription: () -> String
+    @_versioned
+    internal let _consume: (Lexer) throws -> T
+    @_versioned
+    internal let _stepThroughApplying: (Lexer) throws -> Void
+    @_versioned
+    internal let _canConsume: (Lexer) -> Bool
+    
+    public var ruleDescription: String {
+        return _ruleDescription()
+    }
+    
+    /// Creates a type-erased AnyGrammarRule<T> over a given grammar rule.
+    @inline(__always)
+    public init<U: LexerGrammarRule>(_ rule: U) where U.Result == T {
+        _ruleDescription = { rule.ruleDescription }
+        _consume = rule.consume(from:)
+        _stepThroughApplying = rule.stepThroughApplying(on:)
+        _canConsume = rule.canConsume(from:)
+    }
+    
+    /// Creates a type-erased AnyGrammarRule<T> over a given grammar rule, with
+    /// a transformer that takes that grammar's result and attempts to transform
+    /// into another type, which is then returned by `AnyGrammarRule`'s `consume`
+    /// method.
+    @inline(__always)
+    public init<U: LexerGrammarRule, S: StringProtocol>(rule: U, transformer: @escaping (S) throws -> T) where U.Result == S {
+        _ruleDescription = { rule.ruleDescription }
+        _consume = { lexer in
+            let res = try rule.consume(from: lexer)
+            
+            return try transformer(res)
+        }
+        _stepThroughApplying = rule.stepThroughApplying(on:)
+        _canConsume = rule.canConsume(from:)
+    }
+    
+    @_specialize(where T == Int)
+    @inline(__always)
+    public func consume(from lexer: Lexer) throws -> T {
+        return try _consume(lexer)
+    }
+    
+    @inline(__always)
+    public func stepThroughApplying(on lexer: Lexer) throws {
+        return try _stepThroughApplying(lexer)
+    }
+    
+    @inline(__always)
+    public func canConsume(from lexer: Lexer) -> Bool {
+        return _canConsume(lexer)
+    }
+}
+
 /// Allows recursion into a `GrammarRule` node
 public class RecursiveGrammarRule: LexerGrammarRule {
     private var _rule: GrammarRule
@@ -170,7 +229,14 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
     }
     
     public init(arrayLiteral elements: GrammarRule...) {
-        self = .sequence(elements)
+        // Arrays with one rule compose into an optional.
+        // This is a syntactic feature mostly, and used to provide a more natural
+        // grammar when using the DSL.
+        if elements.count == 1 {
+            self = .optional(elements[0])
+        } else {
+            self = .sequence(elements)
+        }
     }
     
     public func consume(from lexer: Lexer) throws -> Substring {
@@ -315,8 +381,8 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             
         case .sequence(let rules), .directSequence(let rules):
             return lexer.withTemporaryIndex {
-                // If the first consumer works, assume the remaining will
-                // as well and try on.
+                // If the first consumer works, assume the remaining will as well
+                // and try on.
                 // This will aid in avoiding extreme recursions.
                 guard let rule = rules.first else {
                     return false

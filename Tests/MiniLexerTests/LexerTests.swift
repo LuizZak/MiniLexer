@@ -14,6 +14,15 @@ class LexerTests: XCTestCase {
         XCTAssertEqual(lexer2.inputIndex, "abc".index(after: "abc".startIndex))
     }
     
+    func testRewindToStart() {
+        let lexer = Lexer(input: "1234")
+        lexer.inputIndex = lexer.inputString.index(lexer.inputIndex, offsetBy: 2)
+        
+        lexer.rewindToStart()
+        
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.startIndex)
+    }
+    
     func testIsEof() throws {
         let lexer = Lexer(input: "abc")
         
@@ -55,17 +64,6 @@ class LexerTests: XCTestCase {
         try lexer.advance()
         try lexer.advance()
         XCTAssertFalse(lexer.safeIsNextChar(equalTo: "-"))
-    }
-    
-    func testPeekIdent() throws {
-        let lexer = Lexer(input: "abc def")
-        
-        let peek1 = try lexer.peekIdentifier()
-        try lexer.advanceLength(4)
-        let peek2 = try lexer.peekIdentifier()
-        
-        XCTAssertEqual(peek1, "abc")
-        XCTAssertEqual(peek2, "def")
     }
     
     func testPeekForward() throws {
