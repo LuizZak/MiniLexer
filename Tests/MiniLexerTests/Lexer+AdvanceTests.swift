@@ -40,6 +40,14 @@ class Lexer_AdvanceTests: XCTestCase {
         XCTAssertThrowsError(try lexer.advance(expectingCurrent: "b"))
     }
     
+    func testAdvanceExpectingDoesNotAdvanceLexerIndexOnError() throws {
+        let lexer = Lexer(input: "abc")
+        
+        try? lexer.advance(expectingCurrent: "b")
+        
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.startIndex)
+    }
+    
     func testAdvanceValidatingCurrent() throws {
         let lexer = Lexer(input: "abc")
         let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
@@ -60,6 +68,14 @@ class Lexer_AdvanceTests: XCTestCase {
         let lexer = Lexer(input: "abc")
         
         XCTAssertThrowsError(try lexer.advance(validatingCurrent: { $0 == "b" }))
+    }
+    
+    func testAdvanceValidatingDoesNotAdvanceLexerIndexOnError() throws {
+        let lexer = Lexer(input: "abc")
+        
+        try? lexer.advance(validatingCurrent: { $0 == "b" })
+        
+        XCTAssertEqual(lexer.inputIndex, lexer.inputString.startIndex)
     }
     
     func testAdvanceIf() {

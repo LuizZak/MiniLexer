@@ -47,7 +47,6 @@ public extension Lexer {
         guard let endIndex = inputString.index(inputIndex, offsetBy: String.IndexDistance(equals.count), limitedBy: inputString.endIndex) else {
             return false
         }
-
         
         if inputString[inputIndex..<endIndex].compare(equals, options: options) == .orderedSame {
             // Match! Advance stream and proceed...
@@ -102,8 +101,10 @@ public extension Lexer {
     /// one, or advances to the next position, if it is.
     @inline(__always)
     public func advance(expectingCurrent atom: Atom) throws {
+        let prev = inputIndex
         let n = try next()
         if n != atom {
+            inputIndex = prev
             throw unexpectedCharacterError(char: n, "Expected '\(atom)', received '\(n)' instead")
         }
     }
@@ -117,8 +118,10 @@ public extension Lexer {
     /// Calling when `isEoF() == true` results in an error thrown
     @inline(__always)
     public func advance(validatingCurrent: (Atom) throws -> Bool) throws {
+        let prev = inputIndex
         let n = try next()
         if try !validatingCurrent(n) {
+            inputIndex = prev
             throw unexpectedCharacterError(char: n, "Unexpected \(n)")
         }
     }
