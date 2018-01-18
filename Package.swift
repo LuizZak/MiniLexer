@@ -12,7 +12,10 @@ let package = Package(
             targets: ["MiniLexer"]),
         .library(
             name: "MiniParser",
-            targets: ["MiniParser"])
+            targets: ["MiniParser"]),
+        .library(
+            name: "TypeLexing",
+            targets: ["TypeLexing"])
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
