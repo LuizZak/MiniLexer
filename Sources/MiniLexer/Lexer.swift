@@ -52,7 +52,11 @@ public final class Lexer {
     /// the end of the input string.
     @inline(__always)
     public func isEof(offsetBy: Int) -> Bool {
-        return inputSource.index(inputIndex, offsetBy: offsetBy) >= endIndex
+        guard let index = inputSource.index(inputIndex, offsetBy: offsetBy, limitedBy: endIndex) else {
+            return true
+        }
+        
+        return index >= endIndex
     }
     
     /// Returns whether the next char returns true when passed to the given predicate,
