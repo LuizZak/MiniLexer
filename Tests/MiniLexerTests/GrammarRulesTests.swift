@@ -699,6 +699,61 @@ public class GrammarRuleTests: XCTestCase {
         }
     }
     
+    func testManualLexingPerformance() {
+        // With manual lexing without use of GrammarRules
+        
+        // propertyModifierList:
+        //   '(' modifierList ')'
+        //
+        // modifierList:
+        //   modifier (',' modifier)*
+        //
+        // modifier:
+        //   ident
+        //
+        // ident:
+        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //
+        
+        measure {
+            do {
+                for _ in 0...100 {
+                    let lexer = Lexer(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                    
+                    _=try lexer.consumeString { lexer in
+                        try lexer.advance(expectingCurrent: "(")
+                        
+                        var expIdent = true
+                        while try lexer.peek() != ")" {
+                            expIdent = false
+                            
+                            lexer.skipWhitespace()
+                            
+                            // Ident
+                            try lexer.advance(validatingCurrent: { Lexer.isLetter($0) || $0 == "_" })
+                            lexer.advance(while: { Lexer.isLetter($0) || Lexer.isDigit($0) || $0 == "_" })
+                            
+                            lexer.skipWhitespace()
+                            
+                            if try lexer.peek() == "," {
+                                try lexer.advance()
+                                expIdent = true
+                            }
+                        }
+                        
+                        if expIdent {
+                            throw LexerError.syntaxError("Expected identifier")
+                        }
+                        
+                        try lexer.advance(expectingCurrent: ")")
+                    }
+                }
+            } catch {
+                XCTFail("\(error)")
+            }
+        }
+    }
+    
     func testGrammarRuleRecursiveWithZeroOrMorePerformance() {
         // With recursive modifierList
         
