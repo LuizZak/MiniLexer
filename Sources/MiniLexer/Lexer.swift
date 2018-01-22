@@ -66,8 +66,8 @@ public final class Lexer {
     /// This method is safe, since it checks isEoF before making the check call,
     /// and returns 'false' if EoF.
     @inline(__always)
-    public func safeIsNextChar(equalTo char: Atom) -> Bool {
-        return !isEof() && unsafePeek() == char
+    public func safeIsNextChar(equalTo char: Atom, offsetBy: Int = 0) -> Bool {
+        return !isEof(offsetBy: offsetBy) && unsafePeekForward(offsetBy: offsetBy) == char
     }
     
     /// Reads a single character from the current stream position, and forwards
@@ -109,6 +109,15 @@ public final class Lexer {
     @_versioned
     internal func unsafePeek() -> Atom {
         return inputSource[inputIndex]
+    }
+    
+    /// Unsafe version of peekForward(), proper for usages where check of isEoF is
+    /// preemptively made.
+    @inline(__always)
+    @_versioned
+    internal func unsafePeekForward(offsetBy: Int = 1) -> Atom {
+        let newIndex = inputSource.index(inputIndex, offsetBy: offsetBy)
+        return inputSource[newIndex]
     }
     
     /// Parses the string by applying a given grammar rule on this lexer at the
