@@ -38,6 +38,16 @@ public extension Lexer {
         }
     }
     
+    /// Returns if the next characters in the read buffer equal to `match` accordin
+    /// to the specified string comparison rules.
+    public func checkNext<S: StringProtocol>(matches match: S, options: String.CompareOptions = .literal) -> Bool {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: String.IndexDistance(match.count), limitedBy: inputString.endIndex) else {
+            return false
+        }
+        
+        return inputString[inputIndex..<endIndex].compare(match, options: options) == .orderedSame
+    }
+    
     /// Advances the stream if the current string under it matches the given string.
     /// The method checks the match, does nothing while returning false if the
     /// current stream position does not match the given string.
@@ -125,7 +135,6 @@ public extension Lexer {
             throw unexpectedCharacterError(char: n, "Unexpected \(n)")
         }
     }
-    
     
     /// If the next characters in the read buffer do not ammount to `match`, an
     /// error is thrown.

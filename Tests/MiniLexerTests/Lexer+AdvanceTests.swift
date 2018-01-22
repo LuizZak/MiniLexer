@@ -119,6 +119,40 @@ class Lexer_AdvanceTests: XCTestCase {
         XCTAssertEqual(lexer.inputIndex, expectedIndex)
     }
     
+    func testCheckNext() {
+        let lexer = Lexer(input: "abc")
+        let expectedIndex = lexer.inputIndex
+        
+        let matches = lexer.checkNext(matches: "ab")
+        
+        XCTAssert(matches)
+        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+    }
+    
+    func testCheckNextUsesOffset() throws {
+        let lexer = Lexer(input: "abcdef")
+        try lexer.advanceLength(2)
+        let expectedIndex = lexer.inputIndex
+        
+        let matches = lexer.checkNext(matches: "cd")
+        
+        XCTAssert(matches)
+        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+    }
+    
+    func testCheckNextOptions() {
+        let lexer = Lexer(input: "áBc")
+        
+        XCTAssert(lexer.checkNext(matches: "ab", options: [.caseInsensitive, .diacriticInsensitive]))
+    }
+    
+    func testNonMatchingCheckNext() {
+        let lexer = Lexer(input: "abc")
+        let expectedIndex = lexer.inputString.startIndex
+        
+        XCTAssertFalse(lexer.checkNext(matches: "bc"))
+    }
+    
     func testExpect() throws {
         let lexer = Lexer(input: "abc")
         let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
