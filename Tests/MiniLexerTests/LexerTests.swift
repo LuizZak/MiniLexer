@@ -56,7 +56,7 @@ class LexerTests: XCTestCase {
         XCTAssertThrowsError(try lexer.peek()) // Throw on Eof
     }
     
-    func testSafePeek() throws {
+    func testSafeIsNextChar() throws {
         let lexer = Lexer(input: "abc")
         
         XCTAssert(lexer.safeIsNextChar(equalTo: "a"))
@@ -64,6 +64,15 @@ class LexerTests: XCTestCase {
         try lexer.advance()
         try lexer.advance()
         XCTAssertFalse(lexer.safeIsNextChar(equalTo: "-"))
+    }
+    
+    func testSafeIsNextCharWithOffset() throws {
+        let lexer = Lexer(input: "abc")
+        
+        XCTAssert(lexer.safeIsNextChar(equalTo: "b", offsetBy: 1))
+        try lexer.advance()
+        try lexer.advance()
+        XCTAssertFalse(lexer.safeIsNextChar(equalTo: "-", offsetBy: 1))
     }
     
     func testPeekForward() throws {
