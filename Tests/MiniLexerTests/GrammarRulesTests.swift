@@ -514,7 +514,7 @@ public class GrammarRuleTests: XCTestCase {
         //   '(' modifierList ')'
         //
         // modifierList:
-        //   modifier (',' modifier)*
+        //   modifier (',' modifierList)*
         //
         // modifier:
         //   ident
@@ -557,7 +557,7 @@ public class GrammarRuleTests: XCTestCase {
         //   '(' modifierList ')'
         //
         // modifierList:
-        //   modifier (',' modifier)*
+        //   modifier (',' modifierList)*
         //
         // modifier:
         //   compound
