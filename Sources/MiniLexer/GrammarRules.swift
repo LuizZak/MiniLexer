@@ -82,7 +82,7 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
 }
 
 /// Allows recursion into a `GrammarRule` node
-public class RecursiveGrammarRule: LexerGrammarRule {
+public final class RecursiveGrammarRule: LexerGrammarRule {
     private var _rule: GrammarRule
     
     public var ruleName: String
@@ -147,7 +147,7 @@ public class RecursiveGrammarRule: LexerGrammarRule {
 /// - directSequence: Attempts to parse a sequence of rules taking into consideration
 /// any whitespace between the tokens. Fails if an unexpected whitespace is found
 /// between rules.
-public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, ExpressibleByArrayLiteral {
+public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalarLiteral, ExpressibleByArrayLiteral {
     case digit
     case letter
     case whitespace
@@ -164,7 +164,8 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
     
     private var isRuleWithMany: Bool {
         switch self {
-        case .digit, .letter, .whitespace, .oneOrMore, .zeroOrMore, .optional, .keyword, .char, .recursive, .namedRule:
+        case .digit, .letter, .whitespace, .oneOrMore, .zeroOrMore, .optional,
+             .keyword, .char, .recursive, .namedRule:
             return false
         case .or, .sequence, .directSequence:
             return true
@@ -186,7 +187,7 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             return "'\(ch)'"
             
         case .keyword(let str):
-            return str
+            return "'\(str)'"
             
         case .recursive(let rec):
             return rec.ruleName
@@ -256,7 +257,8 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
         case .sequence(let rules):
             for (i, rule) in rules.enumerated() {
                 try rule.stepThroughApplying(on: lexer)
-                // Skip whitespace between tokens, appending them along the way
+                
+                // Skip whitespace between tokens
                 if i < rules.count - 1 {
                     lexer.skipWhitespace()
                 }
@@ -273,7 +275,7 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
         
         switch self {
         case .digit, .letter, .whitespace:
-            try lexer.advance()
+            lexer.unsafeAdvance()
             
         case .namedRule(_, let rule):
             try rule.stepThroughApplying(on: lexer)
@@ -301,17 +303,47 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             try rec.stepThroughApplying(on: lexer)
             
         case .oneOrMore(let subRule):
-            while subRule.canConsume(from: lexer) {
-                try subRule.stepThroughApplying(on: lexer)
+            // Micro-optimization for .digit, .letter, .whitespace and .char rules
+            switch subRule {
+            case .digit:
+                try lexer.advance(validatingCurrent: Lexer.isDigit)
+                lexer.advance(while: Lexer.isDigit)
+            case .letter:
+                try lexer.advance(validatingCurrent: Lexer.isLetter)
+                lexer.advance(while: Lexer.isLetter)
+            case .whitespace:
+                try lexer.advance(validatingCurrent: Lexer.isWhitespace)
+                lexer.advance(while: Lexer.isWhitespace)
+            case .char(let ch):
+                try lexer.advance(expectingCurrent: ch)
+                lexer.advance(while: { $0 == ch })
+                
+            default:
+                repeat {
+                    try subRule.stepThroughApplying(on: lexer)
+                } while subRule.canConsume(from: lexer)
             }
             
         case .zeroOrMore(let subRule):
-            if !subRule.canConsume(from: lexer) {
-                return
-            }
-            
-            while subRule.canConsume(from: lexer) {
-                try subRule.stepThroughApplying(on: lexer)
+            // Micro-optimization for .digit, .letter, .whitespace and .char rules
+            switch subRule {
+            case .digit:
+                lexer.advance(while: Lexer.isDigit)
+            case .letter:
+                lexer.advance(while: Lexer.isLetter)
+            case .whitespace:
+                lexer.advance(while: Lexer.isWhitespace)
+            case .char(let ch):
+                lexer.advance(while: { $0 == ch })
+                
+            default:
+                if !subRule.canConsume(from: lexer) {
+                    return
+                }
+                
+                repeat {
+                    try subRule.stepThroughApplying(on: lexer)
+                } while subRule.canConsume(from: lexer)
             }
             
         case .or(let rules):
@@ -351,10 +383,7 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
             return lexer.safeNextCharPasses(with: Lexer.isWhitespace)
             
         case .char(let ch):
-            return lexer.withTemporaryIndex {
-                lexer.skipWhitespace()
-                return lexer.safeIsNextChar(equalTo: ch)
-            }
+            return lexer.safeIsNextChar(equalTo: ch)
             
         case .keyword:
             return !lexer.isEof()
@@ -406,31 +435,5 @@ public enum GrammarRule: LexerGrammarRule, ExpressibleByUnicodeScalarLiteral, Ex
 extension RecursiveGrammarRule: Equatable {
     public static func ==(lhs: RecursiveGrammarRule, rhs: RecursiveGrammarRule) -> Bool {
         return lhs === rhs
-    }
-}
-
-extension GrammarRule: Equatable {
-    public static func ==(lhs: GrammarRule, rhs: GrammarRule) -> Bool {
-        switch (lhs, rhs) {
-        case (.digit, .digit), (.letter, .letter), (.whitespace, .whitespace):
-            return true
-        case let (.char(l), .char(r)):
-            return l == r
-        case let (.keyword(l), .keyword(r)):
-            return l == r
-        case let (.recursive(l), .recursive(r)):
-            return l == r
-        case let (.namedRule(_, l), .namedRule(_, r)),
-             let (.optional(l), .optional(r)),
-             let (.oneOrMore(l), .oneOrMore(r)),
-             let (.zeroOrMore(l), .zeroOrMore(r)):
-            return l == r
-        case let (.or(l), .or(r)),
-             let (.sequence(l), .sequence(r)),
-             let (.directSequence(l), .directSequence(r)):
-            return l == r
-        default:
-            return false
-        }
     }
 }

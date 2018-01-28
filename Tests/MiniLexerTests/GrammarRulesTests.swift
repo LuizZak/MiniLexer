@@ -65,7 +65,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertThrowsError(try rule.consume(from: lexer2))
         XCTAssertThrowsError(try rule.consume(from: lexer3))
         XCTAssertEqual("test", try rule.consume(from: lexer4))
-        XCTAssertEqual("test", rule.ruleDescription)
+        XCTAssertEqual("'test'", rule.ruleDescription)
         XCTAssertEqual(rule, .keyword("test"))
     }
     
@@ -159,7 +159,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("abc", try rule.consume(from: lexer1))
         XCTAssertEqual("", try rule.consume(from: lexer2))
         XCTAssertEqual("", try rule.consume(from: lexer3))
-        XCTAssertEqual("abc?", rule.ruleDescription)
+        XCTAssertEqual("'abc'?", rule.ruleDescription)
         XCTAssertEqual(rule, .optional(.keyword("abc")))
         XCTAssertNotEqual(rule, .optional(.keyword("def")))
     }
@@ -411,19 +411,6 @@ public class GrammarRuleTests: XCTestCase {
         }
     }
     
-    func testGrammarRuleOperatorOptional() {
-        let rule = GrammarRule.digit
-        let oneOrMore = rule.?
-        
-        switch oneOrMore {
-        case .optional(.digit):
-            // Success!
-            break
-        default:
-            XCTFail("Expected '.?' operator to compose as .optional")
-        }
-    }
-    
     func testGrammarRuleArrayWithOneItemBecomesOptional() {
         let ruleOptional: GrammarRule = [.digit]
         let ruleSequence: GrammarRule = [.digit, .letter]
@@ -486,17 +473,18 @@ public class GrammarRuleTests: XCTestCase {
         //   ident
         //
         // ident:
-        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //   [a-zA-Z_][a-zA-Z_0-9]*
         //
         
         // Arrange
-        let ident: GrammarRule = [.letter | "_", (.letter | "_" | .digit)*]
+        let ident: GrammarRule = (.letter | "_") + (.letter | "_" | .digit)*
         let modifier: GrammarRule = .namedRule(name: "modifier", ident)
         
         let modifierList: GrammarRule =
             modifier .. ("," .. modifier)*
         
-        let propertyModifierList: GrammarRule = ["(", modifierList, ")"]
+        let propertyModifierList =
+            "(" .. modifierList .. ")"
         
         let lexer1 = Lexer(input: "(mod1, mod2)")
         let lexer2 = Lexer(input: "(mod1, )")
@@ -520,12 +508,12 @@ public class GrammarRuleTests: XCTestCase {
         //   ident
         //
         // ident:
-        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //   [a-zA-Z_][a-zA-Z_0-9]*
         //
         
         // Arrange
         let ident: GrammarRule =
-            (.letter | "_") .. (.letter | "_" | .digit)*
+            (.letter | "_") + (.letter | "_" | .digit)*
         let modifier: GrammarRule =
             .namedRule(name: "modifier", ident)
         
@@ -607,7 +595,7 @@ public class GrammarRuleTests: XCTestCase {
         //   ('a' ident) | ('a' number) | ('a' | '@keyword')
         //
         // ident:
-        //   [a-zA-Z] [a-zA-Z0-9]*
+        //   [a-zA-Z][a-zA-Z0-9]*
         //
         // number:
         //   [0-9]+
@@ -617,7 +605,7 @@ public class GrammarRuleTests: XCTestCase {
             .digit+
         
         let ident: GrammarRule =
-            (.letter) .. (.letter | .digit)*
+            (.letter) + (.letter | .digit)*
         
         let test =
             ("a" .. ident) | ("a" .. number) | ("a" .. .keyword("@keyword"))
@@ -638,7 +626,7 @@ public class GrammarRuleTests: XCTestCase {
         //   ('@keyword' ident) | ('@keyword' number) | ('@keyword' | '@a')
         //
         // ident:
-        //   [a-zA-Z] [a-zA-Z0-9]*
+        //   [a-zA-Z][a-zA-Z0-9]*
         //
         // number:
         //   [0-9]+
@@ -648,7 +636,7 @@ public class GrammarRuleTests: XCTestCase {
             .digit+
         
         let ident: GrammarRule =
-            (.letter) .. (.letter | .digit)*
+            (.letter) + (.letter | .digit)*
         
         let test =
             (.keyword("@keyword") .. ident) | (.keyword("@keyword") .. number) | (.keyword("@keyword") .. "a")
@@ -677,11 +665,11 @@ public class GrammarRuleTests: XCTestCase {
         //   ident
         //
         // ident:
-        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //   [a-zA-Z_][a-zA-Z_0-9]*
         //
         
         let ident: GrammarRule =
-            (.letter | "_") .. (.letter | "_" | .digit)*
+            (.letter | "_") + (.letter | "_" | .digit)*
         let modifier: GrammarRule =
             .namedRule(name: "modifier", ident)
         
@@ -712,7 +700,7 @@ public class GrammarRuleTests: XCTestCase {
         //   ident
         //
         // ident:
-        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //   [a-zA-Z_][a-zA-Z_0-9]*
         //
         
         measure {
@@ -767,11 +755,11 @@ public class GrammarRuleTests: XCTestCase {
         //   ident
         //
         // ident:
-        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //   [a-zA-Z_][a-zA-Z_0-9]*
         //
         
         let ident: GrammarRule =
-            (.letter | "_") .. (.letter | "_" | .digit)*
+            (.letter | "_") + (.letter | "_" | .digit)*
         
         let modifier: GrammarRule =
             .namedRule(name: "modifier", ident)
@@ -804,11 +792,11 @@ public class GrammarRuleTests: XCTestCase {
         //   ident
         //
         // ident:
-        //   [a-zA-Z_] [a-zA-Z_0-9]*
+        //   [a-zA-Z_][a-zA-Z_0-9]*
         //
         
         let ident: GrammarRule =
-            (.letter | "_") .. (.letter | "_" | .digit)*
+            (.letter | "_") + (.letter | "_" | .digit)*
         
         let modifier: GrammarRule =
             .namedRule(name: "modifier", ident)

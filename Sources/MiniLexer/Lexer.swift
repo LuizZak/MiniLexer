@@ -36,6 +36,7 @@ public final class Lexer {
     }
     
     /// Advances the stream until the first non-whitespace character is found.
+    @inline(__always)
     public func skipWhitespace() {
         advance(while: Lexer.isWhitespace)
     }

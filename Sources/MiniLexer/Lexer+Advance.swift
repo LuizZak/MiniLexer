@@ -41,7 +41,7 @@ public extension Lexer {
     /// Returns if the next characters in the read buffer equal to `match` accordin
     /// to the specified string comparison rules.
     public func checkNext<S: StringProtocol>(matches match: S, options: String.CompareOptions = .literal) -> Bool {
-        guard let endIndex = inputString.index(inputIndex, offsetBy: String.IndexDistance(match.count), limitedBy: inputString.endIndex) else {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: match.count, limitedBy: inputString.endIndex) else {
             return false
         }
         
@@ -54,7 +54,7 @@ public extension Lexer {
     /// By default, the lexer does a `literal`, character-by-character match,
     /// which can be overriden by specifying the `options` parameter.
     public func advanceIf<S: StringProtocol>(equals: S, options: String.CompareOptions = .literal) -> Bool {
-        guard let endIndex = inputString.index(inputIndex, offsetBy: String.IndexDistance(equals.count), limitedBy: inputString.endIndex) else {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: equals.count, limitedBy: inputString.endIndex) else {
             return false
         }
         

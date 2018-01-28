@@ -8,7 +8,6 @@ infix operator .. : GrammarSequencePrecedence
 
 postfix operator *
 postfix operator +
-postfix operator .?
 
 /// Creates a sequence rule from two grammar rules.
 ///
@@ -79,18 +78,6 @@ public postfix func +(lhs: GrammarRule) -> GrammarRule {
 /// ```
 public postfix func +(lhs: Array<GrammarRule>) -> GrammarRule {
     return .oneOrMore(.sequence(lhs))
-}
-
-/// Creates an optional rule from a grammar rule.
-///
-/// Produces:
-///
-/// ```
-/// result:
-///   lhs?
-/// ```
-public postfix func .?(lhs: GrammarRule) -> GrammarRule {
-    return .optional(lhs)
 }
 
 /// Concatenates rules such that the resulting rule is an `OR` operation between

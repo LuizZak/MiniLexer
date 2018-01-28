@@ -148,7 +148,6 @@ class Lexer_AdvanceTests: XCTestCase {
     
     func testNonMatchingCheckNext() {
         let lexer = Lexer(input: "abc")
-        let expectedIndex = lexer.inputString.startIndex
         
         XCTAssertFalse(lexer.checkNext(matches: "bc"))
     }
