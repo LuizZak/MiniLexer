@@ -98,7 +98,7 @@ public extension Lexer {
     @inline(__always)
     public func advanceLength(_ n: Int) throws {
         precondition(n > 0)
-        if isEof(offsetBy: n) {
+        if isEof(offsetBy: n) && isEof(offsetBy: n - 1) {
             throw endOfStringError()
         }
         

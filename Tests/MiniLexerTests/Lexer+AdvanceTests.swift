@@ -229,6 +229,15 @@ class Lexer_AdvanceTests: XCTestCase {
         XCTAssertEqual(expectedIndex, lexer.inputIndex)
     }
     
+    func testAdvanceLengthAdvancingToEndOfString() throws {
+        let lexer = Lexer(input: "abc")
+        let expectedIndex = lexer.inputString.endIndex
+        
+        try lexer.advanceLength(3)
+        
+        XCTAssertEqual(expectedIndex, lexer.inputIndex)
+    }
+    
     func testAdvanceLengthThrowsErrorWhenPastEndOfString() throws {
         let lexer = Lexer(input: "abc")
         
