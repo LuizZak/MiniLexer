@@ -29,7 +29,7 @@ public protocol TokenProtocol: Equatable {
     /// Advances the lexer passed in by whatever length this token takes in the
     /// input stream.
     ///
-    /// Throws an error, in case no token could be read.
+    /// Throws an error, in case the stream could not be advanced further.
     func advance(in lexer: Lexer) throws
     
     /// Gets the string representation of this token value
