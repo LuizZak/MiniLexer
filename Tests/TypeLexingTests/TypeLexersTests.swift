@@ -20,8 +20,8 @@ class TypeLexersTests: XCTestCase {
         
         XCTAssertEqual(128, try Int.tokenLexer.consume(from: lexerInt))
         XCTAssertEqual(-128, try Int.tokenLexer.consume(from: lexerNegativeInt))
-        XCTAssertThrowsError(try Int.tokenLexer.consume(from: lexerNotInt))
         XCTAssertThrowsError(try Int.tokenLexer.consume(from: lexerSpaceBetweenSign))
+        XCTAssertThrowsError(try Int.tokenLexer.consume(from: lexerNotInt))
         XCTAssertThrowsError(try Int.tokenLexer.consume(from: lexerEmpty))
     }
     
@@ -34,8 +34,8 @@ class TypeLexersTests: XCTestCase {
         
         XCTAssertThrowsError(try Int8.tokenLexer.consume(from: lexerInt))
         XCTAssertEqual(-128, try Int8.tokenLexer.consume(from: lexerNegativeInt))
-        XCTAssertThrowsError(try Int8.tokenLexer.consume(from: lexerNotInt))
         XCTAssertThrowsError(try Int8.tokenLexer.consume(from: lexerSpaceBetweenSign))
+        XCTAssertThrowsError(try Int8.tokenLexer.consume(from: lexerNotInt))
         XCTAssertThrowsError(try Int8.tokenLexer.consume(from: lexerEmpty))
     }
     
@@ -50,8 +50,8 @@ class TypeLexersTests: XCTestCase {
         XCTAssertEqual(128, try UInt8.tokenLexer.consume(from: lexerInt))
         XCTAssertThrowsError(try UInt8.tokenLexer.consume(from: lexerOverflow))
         XCTAssertThrowsError(try UInt8.tokenLexer.consume(from: lexerNegativeInt))
-        XCTAssertThrowsError(try UInt8.tokenLexer.consume(from: lexerNotInt))
         XCTAssertThrowsError(try UInt8.tokenLexer.consume(from: lexerSpaceBetweenSign))
+        XCTAssertThrowsError(try UInt8.tokenLexer.consume(from: lexerNotInt))
         XCTAssertThrowsError(try UInt8.tokenLexer.consume(from: lexerEmpty))
     }
     
@@ -80,8 +80,8 @@ class TypeLexersTests: XCTestCase {
         XCTAssertEqual(3.402823e+38, try Float.tokenLexer.consume(from: lexerLargestPositiveValue))
         XCTAssertEqual(3.402823e-38, try Float.tokenLexer.consume(from: lexerLargestNegativeValue))
         XCTAssertThrowsError(try Float.tokenLexer.consume(from: lexerOverflow))
-        XCTAssertThrowsError(try Float.tokenLexer.consume(from: lexerNotNumber))
         XCTAssertThrowsError(try Float.tokenLexer.consume(from: lexerSpaceBetweenSign))
+        XCTAssertThrowsError(try Float.tokenLexer.consume(from: lexerNotNumber))
         XCTAssertThrowsError(try Float.tokenLexer.consume(from: lexerEmpty))
     }
     
@@ -94,7 +94,7 @@ class TypeLexersTests: XCTestCase {
         let lexerDecimalPlacePositiveExponent = Lexer(input: "1.5e+2")
         let lexerDecimalPlaceNegativeExponent = Lexer(input: "1.5e-2")
         let lexerLargestPositiveValue = Lexer(input: "1.7976931348623157e+308")
-        let lexerLargestNegativeValue = Lexer(input: "1.7976931348623157e+308")
+        let lexerLargestNegativeValue = Lexer(input: "1.7976931348623157e-308")
         let lexerOverflow = Lexer(input: "1.7976931348623157e+309")
         let lexerSpaceBetweenSign = Lexer(input: "- 128")
         let lexerNotNumber = Lexer(input: "a123")
@@ -108,10 +108,10 @@ class TypeLexersTests: XCTestCase {
         XCTAssertEqual(1.5e+2, try Double.tokenLexer.consume(from: lexerDecimalPlacePositiveExponent))
         XCTAssertEqual(1.5e-2, try Double.tokenLexer.consume(from: lexerDecimalPlaceNegativeExponent))
         XCTAssertEqual(1.7976931348623157e+308, try Double.tokenLexer.consume(from: lexerLargestPositiveValue))
-        XCTAssertEqual(1.7976931348623157e+308, try Double.tokenLexer.consume(from: lexerLargestNegativeValue))
+        XCTAssertEqual(1.7976931348623157e-308, try Double.tokenLexer.consume(from: lexerLargestNegativeValue))
         XCTAssertThrowsError(try Double.tokenLexer.consume(from: lexerOverflow))
-        XCTAssertThrowsError(try Double.tokenLexer.consume(from: lexerNotNumber))
         XCTAssertThrowsError(try Double.tokenLexer.consume(from: lexerSpaceBetweenSign))
+        XCTAssertThrowsError(try Double.tokenLexer.consume(from: lexerNotNumber))
         XCTAssertThrowsError(try Double.tokenLexer.consume(from: lexerEmpty))
     }
 }

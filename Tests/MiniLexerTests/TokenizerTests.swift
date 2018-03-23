@@ -89,15 +89,16 @@ class TokenizerTests: XCTestCase {
         sut = TokenizerLexer(input: "(")
         let bt = sut.backtracker()
         sut.skipToken()
+        
         bt.backtrack()
         
-        try sut.advance(over: .openParens)
+        try sut.advance(over: .openParens) // Should not throw error!
     }
     
     func testAdvanceOver() throws {
         sut = TokenizerLexer(input: "(,)")
         
-        try sut.advance(over: .openParens)
+        XCTAssertEqual(try sut.advance(over: .openParens).tokenType, .openParens)
         
         XCTAssertEqual(sut.token().tokenType, .comma)
     }
@@ -142,6 +143,22 @@ class TokenizerTests: XCTestCase {
         let tokens = sut.allTokens().map { $0.tokenType }
         
         XCTAssertEqual(tokens, [.openParens, .comma, .closeParens])
+    }
+    
+    func testAdvanceUntil() {
+        sut = TokenizerLexer(input: "(,)")
+        
+        sut.advance(until: { $0.tokenType == .closeParens })
+        
+        XCTAssertEqual(sut.token().tokenType, .closeParens)
+    }
+    
+    func testAdvancesUntilStopsAtEndOfFile() {
+        sut = TokenizerLexer(input: "(,)")
+        
+        sut.advance(until: { _ in false })
+        
+        XCTAssertEqual(sut.token().tokenType, .eof)
     }
 }
 

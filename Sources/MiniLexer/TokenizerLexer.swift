@@ -3,7 +3,7 @@
 public class TokenizerLexer<T: TokenType> {
     private var hasReadFirstToken = false
     
-    private var current: Token = Token(value: "", tokenType: T.eofToken)
+    private var current: Token = Token(value: "", tokenType: T.eofToken, range: nil)
     
     /// The lexer associated with this tokenizer lexer
     public let lexer: Lexer
@@ -13,7 +13,7 @@ public class TokenizerLexer<T: TokenType> {
     public var isEof: Bool {
         ensureReadFirstToken()
         
-        return current == Token(value: "", tokenType: T.eofToken)
+        return current == Token(value: "", tokenType: T.eofToken, range: nil)
     }
     
     /// Initializes this tokenizer with a given lexer.
@@ -28,12 +28,7 @@ public class TokenizerLexer<T: TokenType> {
     
     /// Gets all remaining tokens
     public func allTokens() -> [Token] {
-        var tokens: [Token] = []
-        while !isEof {
-            tokens.append(nextToken())
-        }
-        
-        return tokens
+        return Array(makeIterator())
     }
     
     /// Returns the current token and advances to the next token.
@@ -57,7 +52,8 @@ public class TokenizerLexer<T: TokenType> {
     
     /// Attempts to advance from the current point, reading a given token type.
     /// If the token cannot be matched, an error is thrown.
-    public func advance(over tokenType: T) throws {
+    @discardableResult
+    public func advance(over tokenType: T) throws -> Token {
         ensureReadFirstToken()
         
         if current.tokenType != tokenType {
@@ -68,7 +64,7 @@ public class TokenizerLexer<T: TokenType> {
         
         try tokenType.advance(in: lexer)
         
-        readToken()
+        return nextToken()
     }
     
     /// Returns `true` iff the current token is the one provided.
@@ -104,6 +100,44 @@ public class TokenizerLexer<T: TokenType> {
         return current
     }
     
+    /// Return the current token's type
+    public func tokenType() -> T {
+        return token().tokenType
+    }
+    
+    /// Creates an iterator that advances this tokenizer along each consumable
+    /// token.
+    ///
+    /// The iterator finishes iterating before returning the end-of-file token.
+    ///
+    /// - Returns: An iterator for reading the tokens from this lexer.
+    public func makeIterator() -> AnyIterator<Token> {
+        ensureReadFirstToken()
+        
+        return AnyIterator {
+            if self.isEof {
+                return nil
+            }
+            
+            return self.nextToken()
+        }
+    }
+    
+    /// Advances through the tokens until a predicate returns false for a token
+    /// value.
+    /// The method stops such that the next token is the first token the closure
+    /// returned false to.
+    /// The method returns automatically when end-of-file is reached.
+    public func advance(until predicate: (Token) throws -> Bool) rethrows {
+        while !isEof {
+            if try predicate(token()) {
+                return
+            }
+            
+            skipToken()
+        }
+    }
+    
     private func ensureReadFirstToken() {
         if hasReadFirstToken {
             return
@@ -119,14 +153,18 @@ public class TokenizerLexer<T: TokenType> {
             
             // Check all available tokens
             guard let token = lexer.withTemporaryIndex(changes: { T.tokenType(at: lexer) }) else {
-                current = Token(value: "", tokenType: T.eofToken)
+                current = Token(value: "", tokenType: T.eofToken, range: nil)
                 return
             }
             
             let length = token.length(in: lexer)
             let endIndex = lexer.inputString.index(lexer.inputIndex, offsetBy: length)
             
-            current = Token(value: lexer.inputString[lexer.inputIndex..<endIndex], tokenType: token)
+            let range = lexer.inputIndex..<endIndex
+            
+            current = Token(value: lexer.inputString[lexer.inputIndex..<endIndex],
+                            tokenType: token,
+                            range: range)
         }
     }
     
@@ -155,6 +193,10 @@ public class TokenizerLexer<T: TokenType> {
     public struct Token: Equatable {
         public var value: Substring
         public var tokenType: T
+        
+        /// Range of the string the token occupies.
+        /// Is nil, in case this token is a non representable token, like `.eof`.
+        public var range: Range<Lexer.Index>?
     }
     
     /// A backtracker instance from a `.backtracker()` call.
