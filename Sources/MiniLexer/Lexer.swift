@@ -6,6 +6,8 @@ public final class Lexer {
     public typealias Atom = UnicodeScalar
     public typealias Index = String.Index
     
+    private var state: LexerState
+    
     public let inputString: String
     
     @_versioned
@@ -13,20 +15,29 @@ public final class Lexer {
         return inputString.unicodeScalars
     }
     
-    public var inputIndex: Index
+    public var inputIndex: Index {
+        get {
+            return state.index
+        }
+        set {
+            state.index = newValue
+        }
+    }
     
     @_versioned
     internal let endIndex: Index
     
     public init(input: String) {
+        state = LexerState(index: input.startIndex)
+        
         inputString = input
-        inputIndex = inputString.startIndex
         endIndex = inputString.endIndex
     }
     
     public init(input: String, index: Index) {
+        state = LexerState(index: index)
+        
         inputString = input
-        inputIndex = index
         endIndex = inputString.endIndex
     }
     
@@ -180,6 +191,12 @@ public final class Lexer {
         return (try changes(), inputIndex)
     }
     
+    /// Returns a backtracker that is able to return the state of this lexer back
+    /// to the point at which this method was called.
+    public func backtracker() -> Backtracker {
+        return Backtracker(lexer: self)
+    }
+    
     // MARK: Character checking
     @inline(__always)
     public static func isDigit(_ c: Atom) -> Bool {
@@ -246,6 +263,27 @@ public final class Lexer {
     @inline(__always)
     public func endOfStringError(_ message: String = "Reached unexpected end of input string") -> Error {
         return LexerError.endOfStringError(message)
+    }
+    
+    /// Allows backtracking changes to a Lexer's state
+    public class Backtracker {
+        private let lexer: Lexer
+        private let state: LexerState
+        
+        init(lexer: Lexer) {
+            self.lexer = lexer
+            self.state = lexer.state
+        }
+        
+        /// Backtracks the state of the lexer associated with this backtracker
+        /// back to the point at which it was created.
+        public func backtrack() {
+            lexer.state = state
+        }
+    }
+    
+    private struct LexerState {
+        var index: Lexer.Index
     }
 }
 

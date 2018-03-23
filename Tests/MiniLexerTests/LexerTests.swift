@@ -15,157 +15,179 @@ class LexerTests: XCTestCase {
     }
     
     func testRewindToStart() {
-        let lexer = Lexer(input: "1234")
-        lexer.inputIndex = lexer.inputString.index(lexer.inputIndex, offsetBy: 2)
+        let sut = Lexer(input: "1234")
+        sut.inputIndex = sut.inputString.index(sut.inputIndex, offsetBy: 2)
         
-        lexer.rewindToStart()
+        sut.rewindToStart()
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.startIndex)
+        XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
     }
     
     func testIsEof() throws {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssertFalse(lexer.isEof())
+        XCTAssertFalse(sut.isEof())
         
-        try lexer.advance()
-        try lexer.advance()
-        try lexer.advance()
+        try sut.advance()
+        try sut.advance()
+        try sut.advance()
         
-        XCTAssert(lexer.isEof())
+        XCTAssert(sut.isEof())
     }
     
     func testPeek() throws {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssertEqual(try lexer.peek(), "a")
+        XCTAssertEqual(try sut.peek(), "a")
     }
     
     func testPeekUsesOffsetForPeeking() throws {
-        let lexer = Lexer(input: "abc")
-        try lexer.advance()
-        try lexer.advance()
+        let sut = Lexer(input: "abc")
+        try sut.advance()
+        try sut.advance()
         
-        XCTAssertEqual(try lexer.peek(), "c")
+        XCTAssertEqual(try sut.peek(), "c")
     }
     
     func testPeekThrowsErrorWhenEndOfString() {
-        let lexer = Lexer(input: "abc")
-        lexer.advance(while: { _ in true })
+        let sut = Lexer(input: "abc")
+        sut.advance(while: { _ in true })
         
-        XCTAssertThrowsError(try lexer.peek()) // Throw on Eof
+        XCTAssertThrowsError(try sut.peek()) // Throw on Eof
     }
     
     func testSafeIsNextChar() throws {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssert(lexer.safeIsNextChar(equalTo: "a"))
-        try lexer.advance()
-        try lexer.advance()
-        try lexer.advance()
-        XCTAssertFalse(lexer.safeIsNextChar(equalTo: "-"))
+        XCTAssert(sut.safeIsNextChar(equalTo: "a"))
+        try sut.advance()
+        try sut.advance()
+        try sut.advance()
+        XCTAssertFalse(sut.safeIsNextChar(equalTo: "-"))
     }
     
     func testSafeIsNextCharWithOffset() throws {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssert(lexer.safeIsNextChar(equalTo: "b", offsetBy: 1))
-        try lexer.advance()
-        try lexer.advance()
-        XCTAssertFalse(lexer.safeIsNextChar(equalTo: "-", offsetBy: 1))
+        XCTAssert(sut.safeIsNextChar(equalTo: "b", offsetBy: 1))
+        try sut.advance()
+        try sut.advance()
+        XCTAssertFalse(sut.safeIsNextChar(equalTo: "-", offsetBy: 1))
     }
     
     func testPeekForward() throws {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssertEqual("b", try lexer.peekForward())
-        XCTAssertEqual("c", try lexer.peekForward(count: 2))
+        XCTAssertEqual("b", try sut.peekForward())
+        XCTAssertEqual("c", try sut.peekForward(count: 2))
     }
     
     func testPeekForwardFailsWithErrorWhenPastEndOfString() {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssertThrowsError(try lexer.peekForward(count: 4))
+        XCTAssertThrowsError(try sut.peekForward(count: 4))
     }
     
     func testFindNext() throws {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssertEqual(lexer.findNext("a"), lexer.inputString.startIndex)
-        XCTAssertEqual(lexer.findNext("c"), lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2))
-        XCTAssertNil(lexer.findNext("0"))
+        XCTAssertEqual(sut.findNext("a"), sut.inputString.startIndex)
+        XCTAssertEqual(sut.findNext("c"), sut.inputString.index(sut.inputString.startIndex, offsetBy: 2))
+        XCTAssertNil(sut.findNext("0"))
     }
     
     func testSkipToNext() throws {
-        let lexer = Lexer(input: "abc")
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        let sut = Lexer(input: "abc")
+        let expectedIndex = sut.inputString.index(sut.inputString.startIndex, offsetBy: 2)
         
-        try lexer.skipToNext("c")
+        try sut.skipToNext("c")
         
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(sut.inputIndex, expectedIndex)
     }
     
     func testSkipToNextFailsIfNotFound() {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssertThrowsError(try lexer.skipToNext("0"))
+        XCTAssertThrowsError(try sut.skipToNext("0"))
     }
     
     func testNext() throws {
-        let lexer = Lexer(input: "abc")
+        let sut = Lexer(input: "abc")
         
-        XCTAssertEqual(try lexer.next(), "a")
+        XCTAssertEqual(try sut.next(), "a")
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(after: lexer.inputString.startIndex))
+        XCTAssertEqual(sut.inputIndex, sut.inputString.index(after: sut.inputString.startIndex))
         
-        XCTAssertEqual(try lexer.next(), "b")
-        XCTAssertEqual(try lexer.next(), "c")
+        XCTAssertEqual(try sut.next(), "b")
+        XCTAssertEqual(try sut.next(), "c")
         
-        XCTAssertThrowsError(try lexer.peek()) // Throw on Eof
+        XCTAssertThrowsError(try sut.peek()) // Throw on Eof
     }
     
     func testNextUsesOffsetForReading() throws {
-        let lexer = Lexer(input: "abc")
-        try lexer.advance()
-        try lexer.advance()
+        let sut = Lexer(input: "abc")
+        try sut.advance()
+        try sut.advance()
         
-        XCTAssertEqual(try lexer.next(), "c")
+        XCTAssertEqual(try sut.next(), "c")
     }
     
     func testNextThrowsWhenAtEndOfString() {
-        let lexer = Lexer(input: "abc")
-        lexer.advance(while: { _ in true })
+        let sut = Lexer(input: "abc")
+        sut.advance(while: { _ in true })
         
-        XCTAssertThrowsError(try lexer.peek()) // Throw on Eof
+        XCTAssertThrowsError(try sut.peek()) // Throw on Eof
     }
     
     func testWithTemporaryIndex() throws {
-        let lexer = Lexer(input: "abc")
-        try lexer.advance()
+        let sut = Lexer(input: "abc")
+        try sut.advance()
         
-        let prevIndex = lexer.inputIndex
-        let char = try lexer.withTemporaryIndex { () -> Lexer.Atom in
-            try lexer.advance()
-            return try lexer.next()
+        let prevIndex = sut.inputIndex
+        let char = try sut.withTemporaryIndex { () -> Lexer.Atom in
+            try sut.advance()
+            return try sut.next()
         }
         
         XCTAssertEqual(char, "c")
-        XCTAssertEqual(lexer.inputIndex, prevIndex)
+        XCTAssertEqual(sut.inputIndex, prevIndex)
     }
     
     func testWithTemporaryIndexRewindsOnError() throws {
-        let lexer = Lexer(input: "abc")
-        let prevIndex = lexer.inputIndex
+        let sut = Lexer(input: "abc")
+        let prevIndex = sut.inputIndex
         
         do {
-            try lexer.withTemporaryIndex { () -> Void in
-                try lexer.advance()
-                throw lexer.endOfStringError()
+            try sut.withTemporaryIndex { () -> Void in
+                try sut.advance()
+                throw sut.endOfStringError()
             }
         } catch {
             
         }
         
-        XCTAssertEqual(lexer.inputIndex, prevIndex)
+        XCTAssertEqual(sut.inputIndex, prevIndex)
+    }
+    
+    func testBacktracker() throws {
+        let sut = Lexer(input: "abc")
+        let bt = sut.backtracker()
+        try sut.advance()
+        
+        bt.backtrack()
+        
+        XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
+    }
+    
+    func testBacktrackerWorksMultipleTimesInSequence() throws {
+        let sut = Lexer(input: "abc")
+        let bt = sut.backtracker()
+        try sut.advance()
+        bt.backtrack()
+        try sut.advance()
+        
+        bt.backtrack()
+        
+        XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
     }
 }
