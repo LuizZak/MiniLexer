@@ -109,6 +109,20 @@ class TokenizerTests: XCTestCase {
         XCTAssertThrowsError(try sut.advance(over: .comma))
     }
     
+    func testAdvanceMatching() throws {
+        sut = TokenizerLexer(input: "(,)")
+        
+        XCTAssertEqual(try sut.advance(matching: { $0 == .openParens }).tokenType, .openParens)
+        
+        XCTAssertEqual(sut.token().tokenType, .comma)
+    }
+    
+    func testAdvanceMatchingFailed() {
+        sut = TokenizerLexer(input: "(,)")
+        
+        XCTAssertThrowsError(try sut.advance(matching: { $0 == .comma }))
+    }
+    
     func testBacktracking() {
         sut = TokenizerLexer(input: "(,)")
         

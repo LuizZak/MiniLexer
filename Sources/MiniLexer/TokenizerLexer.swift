@@ -65,6 +65,25 @@ open class TokenizerLexer<T: TokenProtocol> {
         return nextToken()
     }
     
+    /// Attempts to advance from the current point, reading a token and passing
+    /// it to a given validating function.
+    ///
+    /// - Parameter predicate: A predicate for validating the current token.
+    /// - Returns: The token read that passed through the precidate.
+    /// - Throws: A `LexerError` in case the predicate returns false.
+    @discardableResult
+    public func advance(matching predicate: (T) -> Bool) throws -> Token {
+        ensureReadFirstToken()
+        
+        if !predicate(current.tokenType) {
+            throw LexerError.syntaxError("Unexpected token \(current.tokenType)")
+        }
+        
+        lexer.skipWhitespace()
+        
+        return nextToken()
+    }
+    
     /// Returns `true` iff the current token is the one provided.
     public func tokenType(is type: T) -> Bool {
         ensureReadFirstToken()
