@@ -109,6 +109,17 @@ class TokenizerTests: XCTestCase {
         XCTAssertThrowsError(try sut.advance(over: .comma))
     }
     
+    func testAdvanceOverErrorMessage() {
+        sut = TokenizerLexer(input: "(,)")
+        
+        do {
+            try sut.advance(over: .comma)
+            XCTFail("Should have thrown")
+        } catch {
+            XCTAssertEqual("\(error)", "Expected token ',' but found '('")
+        }
+    }
+    
     func testAdvanceMatching() throws {
         sut = TokenizerLexer(input: "(,)")
         

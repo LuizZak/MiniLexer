@@ -57,7 +57,7 @@ open class TokenizerLexer<T: TokenProtocol> {
         ensureReadFirstToken()
         
         if current.tokenType != tokenType {
-            throw LexerError.syntaxError("Missing expected token '\(tokenType.tokenString)'")
+            throw LexerError.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(current.tokenType.tokenString)'")
         }
         
         lexer.skipWhitespace()
