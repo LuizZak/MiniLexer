@@ -45,7 +45,7 @@ class TokenizerTests: XCTestCase {
     func testTokenIsType() {
         sut = TokenizerLexer(input: "(")
         
-        XCTAssert(sut.isToken(.openParens))
+        XCTAssert(sut.tokenType(is: .openParens))
     }
     
     func testConsumeTokenIfTypeIsMatching() {

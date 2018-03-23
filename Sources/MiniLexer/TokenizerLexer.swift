@@ -1,6 +1,6 @@
 /// A tokenizer lexer provides tokenization support by wrapping a bare text lexer
 /// with token recognition capabilities through a parametrized token type.
-public class TokenizerLexer<T: TokenProtocol> {
+open class TokenizerLexer<T: TokenProtocol> {
     private var hasReadFirstToken = false
     
     private var current: Token = Token(value: "", tokenType: T.eofToken, range: nil)
@@ -66,7 +66,7 @@ public class TokenizerLexer<T: TokenProtocol> {
     }
     
     /// Returns `true` iff the current token is the one provided.
-    public func isToken(_ type: T) -> Bool {
+    public func tokenType(is type: T) -> Bool {
         ensureReadFirstToken()
         
         return current.tokenType == type
