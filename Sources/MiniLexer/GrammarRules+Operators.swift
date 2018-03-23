@@ -106,6 +106,9 @@ public func |(lhs: GrammarRule, rhs: GrammarRule) -> GrammarRule {
 
 /// Creates a direct sequence rule from two grammar rules.
 ///
+/// Unlike the `..` joiner operator, whitespaces are not skipt automatically
+/// while parsing the two rules.
+///
 /// Produces:
 ///
 /// ```

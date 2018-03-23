@@ -712,7 +712,7 @@ public class GrammarRuleTests: XCTestCase {
                         try lexer.advance(expectingCurrent: "(")
                         
                         var expIdent = true
-                        while try lexer.peek() != ")" {
+                        while !lexer.safeIsNextChar(equalTo: ")") {
                             expIdent = false
                             
                             lexer.skipWhitespace()
@@ -724,7 +724,7 @@ public class GrammarRuleTests: XCTestCase {
                             lexer.skipWhitespace()
                             
                             if try lexer.peek() == "," {
-                                try lexer.advance()
+                                lexer.unsafeAdvance()
                                 expIdent = true
                             }
                         }

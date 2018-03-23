@@ -71,7 +71,15 @@ public final class Lexer {
     /// This method is safe, since it checks isEoF before making the check call,
     /// and returns 'false' if EoF.
     @inline(__always)
-    public func safeIsNextChar(equalTo char: Atom, offsetBy: Int = 0) -> Bool {
+    public func safeIsNextChar(equalTo char: Atom) -> Bool {
+        return !isEof() && unsafePeek() == char
+    }
+    
+    /// Returns whether the next char in the string the given char.
+    /// This method is safe, since it checks isEoF before making the check call,
+    /// and returns 'false' if EoF.
+    @inline(__always)
+    public func safeIsNextChar(equalTo char: Atom, offsetBy: Int) -> Bool {
         return !isEof(offsetBy: offsetBy) && unsafePeekForward(offsetBy: offsetBy) == char
     }
     
