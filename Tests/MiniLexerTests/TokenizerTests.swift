@@ -135,6 +135,14 @@ class TokenizerTests: XCTestCase {
         
         XCTAssertEqual(sut.token().tokenType, .openParens)
     }
+    
+    func testAllTokens() {
+        sut = TokenizerLexer(input: "(,)")
+        
+        let tokens = sut.allTokens().map { $0.tokenType }
+        
+        XCTAssertEqual(tokens, [.openParens, .comma, .closeParens])
+    }
 }
 
 enum TestToken: String, TokenType {

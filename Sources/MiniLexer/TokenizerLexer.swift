@@ -26,6 +26,16 @@ public class TokenizerLexer<T: TokenType> {
         self.init(lexer: Lexer(input: input))
     }
     
+    /// Gets all remaining tokens
+    public func allTokens() -> [Token] {
+        var tokens: [Token] = []
+        while !isEof {
+            tokens.append(nextToken())
+        }
+        
+        return tokens
+    }
+    
     /// Returns the current token and advances to the next token.
     public func nextToken() -> Token {
         defer {
