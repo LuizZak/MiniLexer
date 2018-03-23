@@ -219,6 +219,18 @@ open class TokenizerLexer<T: TokenProtocol> {
         /// Range of the string the token occupies.
         /// Is nil, in case this token is a non representable token, like `.eof`.
         public var range: Range<Lexer.Index>?
+        
+        public init(value: Substring, tokenType: T, range: Range<Lexer.Index>?) {
+            self.value = value
+            self.tokenType = tokenType
+            self.range = range
+        }
+        
+        public init(value: String, tokenType: T, range: Range<Lexer.Index>?) {
+            self.value = Substring(value)
+            self.tokenType = tokenType
+            self.range = range
+        }
     }
     
     /// A backtracker instance from a `.backtracker()` call.
