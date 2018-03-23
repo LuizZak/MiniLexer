@@ -116,7 +116,7 @@ class TokenizerTests: XCTestCase {
             try sut.advance(over: .comma)
             XCTFail("Should have thrown")
         } catch {
-            XCTAssertEqual("\(error)", "Expected token ',' but found '('")
+            XCTAssertEqual("\(error)", "Error: Expected token ',' but found '('")
         }
     }
     
