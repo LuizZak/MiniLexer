@@ -175,6 +175,14 @@ class TokenizerTests: XCTestCase {
         XCTAssertEqual(tokens, [.openParens, .comma, .closeParens])
     }
     
+    func testAllTokensSpaced() {
+        sut = TokenizerLexer(input: " ( , ) ")
+        
+        let tokens = sut.allTokens().map { $0.tokenType }
+        
+        XCTAssertEqual(tokens, [.openParens, .comma, .closeParens])
+    }
+    
     func testAdvanceUntil() {
         sut = TokenizerLexer(input: "(,)")
         

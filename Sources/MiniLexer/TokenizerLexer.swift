@@ -46,7 +46,10 @@ open class TokenizerLexer<T: TokenProtocol> {
     public func skipToken() {
         ensureReadFirstToken()
         
-        try? current.tokenType.advance(in: lexer)
+        if let range = current.range {
+            lexer.inputIndex = range.upperBound
+        }
+        
         readToken()
     }
     
