@@ -160,6 +160,20 @@ class TokenizerTests: XCTestCase {
         
         XCTAssertEqual(sut.token().tokenType, .eof)
     }
+    
+    func testTokenMatches() {
+        sut = TokenizerLexer(input: "(")
+        
+        XCTAssert(sut.tokenType(matches: { $0 == .openParens }))
+        XCTAssertFalse(sut.tokenType(matches: { $0 == .closeParens }))
+    }
+    
+    func testTokenMatchesWithEmptyString() {
+        sut = TokenizerLexer(input: "")
+        
+        XCTAssert(sut.tokenType(matches: { $0 == .eof }))
+        XCTAssertFalse(sut.tokenType(matches: { $0 == .closeParens }))
+    }
 }
 
 enum TestToken: String, TokenProtocol {

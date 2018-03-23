@@ -72,6 +72,11 @@ public class TokenizerLexer<T: TokenProtocol> {
         return current.tokenType == type
     }
     
+    /// Returns `true` if the current token type passes a given predicate
+    public func tokenType(matches predicate: (T) -> Bool) -> Bool {
+        return predicate(tokenType())
+    }
+    
     /// Consumes a given token type, if the current token matches the token type,
     /// and advances to the next token.
     ///
