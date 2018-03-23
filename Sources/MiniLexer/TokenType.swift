@@ -32,13 +32,6 @@ public protocol TokenType: Equatable {
     /// Throws an error, in case no token could be read.
     func advance(in lexer: Lexer) throws
     
-    /// Returns whether this token instance matches the current index at a given
-    /// lexer.
-    ///
-    /// It is not required for conformers to return the state of the lexer to the
-    /// previous state prior to the calling of this method (i.e. `lexer.withTemporaryIndex`).
-    func matchesText(in lexer: Lexer) -> Bool
-    
     /// Gets the string representation of this token value
     var tokenString: String { get }
 }
