@@ -1,6 +1,6 @@
 /// A tokenizer lexer provides tokenization support by wrapping a bare text lexer
 /// with token recognition capabilities through a parametrized token type.
-public class TokenizerLexer<T: TokenType> {
+public class TokenizerLexer<T: TokenProtocol> {
     private var hasReadFirstToken = false
     
     private var current: Token = Token(value: "", tokenType: T.eofToken, range: nil)
@@ -61,8 +61,6 @@ public class TokenizerLexer<T: TokenType> {
         }
         
         lexer.skipWhitespace()
-        
-        try tokenType.advance(in: lexer)
         
         return nextToken()
     }

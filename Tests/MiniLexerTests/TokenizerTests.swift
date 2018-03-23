@@ -162,7 +162,7 @@ class TokenizerTests: XCTestCase {
     }
 }
 
-enum TestToken: String, TokenType {
+enum TestToken: String, TokenProtocol {
     case openParens = "("
     case comma = ","
     case closeParens = ")"

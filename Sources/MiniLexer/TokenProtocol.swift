@@ -1,5 +1,5 @@
 /// A protocol for tokens that can be consumed serially with a `TokenizerLexer`.
-public protocol TokenType: Equatable {
+public protocol TokenProtocol: Equatable {
     /// Gets the token that represents the end-of-file of an input string.
     ///
     /// It is important that this token is unique since its usage delimits the
