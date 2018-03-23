@@ -103,16 +103,17 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// provided type.
     @discardableResult
     public func consumeToken(ifTypeIs type: T) -> Token? {
-        if self.token().tokenType != type {
+        let tok = self.token()
+        
+        if tok.tokenType != type {
             return nil
         }
         
         lexer.skipWhitespace()
         
-        try? type.advance(in: lexer)
-        readToken()
+        skipToken()
         
-        return current
+        return tok
     }
     
     /// Returns the current token.

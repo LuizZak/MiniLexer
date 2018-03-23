@@ -51,7 +51,12 @@ class TokenizerTests: XCTestCase {
     func testConsumeTokenIfTypeIsMatching() {
         sut = TokenizerLexer(input: "(")
         
-        XCTAssertNotNil(sut.consumeToken(ifTypeIs: .openParens))
+        let result = sut.consumeToken(ifTypeIs: .openParens)
+        
+        XCTAssertNotNil(result)
+        XCTAssertEqual(result?.value, "(")
+        XCTAssertEqual(result?.tokenType, .openParens)
+        XCTAssertEqual(result?.range, "(".startIndex..<"(".endIndex)
         XCTAssert(sut.isEof)
     }
     
