@@ -39,6 +39,8 @@ public class TokenizerLexer<T: TokenType> {
     
     /// Skips to the next available token in the stream.
     public func skipToken() {
+        ensureReadFirstToken()
+        
         try? current.tokenType.advance(in: lexer)
         readToken()
     }
@@ -46,6 +48,8 @@ public class TokenizerLexer<T: TokenType> {
     /// Attempts to advance from the current point, reading a given token type.
     /// If the token cannot be matched, an error is thrown.
     public func advance(over tokenType: T) throws {
+        ensureReadFirstToken()
+        
         if current.tokenType != tokenType {
             throw LexerError.syntaxError("Missing expected token '\(tokenType.tokenString)'")
         }
@@ -58,7 +62,7 @@ public class TokenizerLexer<T: TokenType> {
     }
     
     /// Returns `true` iff the current token is the one provided.
-    public func token(_ type: T) -> Bool {
+    public func isToken(_ type: T) -> Bool {
         ensureReadFirstToken()
         
         return current.tokenType == type
