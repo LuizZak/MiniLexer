@@ -158,9 +158,9 @@ public final class Lexer {
     /// Any changes to this parser's state are undone after the method returns.
     @inline(__always)
     public func withTemporaryIndex<T>(changes: () throws -> T) rethrows -> T {
-        let index = inputIndex
+        let backtrack = backtracker()
         defer {
-            inputIndex = index
+            backtrack.backtrack()
         }
         return try changes()
     }
@@ -172,11 +172,11 @@ public final class Lexer {
     /// and doesn't rewind.
     @inline(__always)
     public func rewindOnFailure<T>(changes: () throws -> T) rethrows -> T {
-        let index = inputIndex
+        let backtrack = backtracker()
         do {
             return try changes()
         } catch {
-            inputIndex = index
+            backtrack.backtrack()
             throw error
         }
     }
