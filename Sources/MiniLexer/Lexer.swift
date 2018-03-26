@@ -245,20 +245,14 @@ public final class Lexer {
     public func unexpectedCharacterError(offset: Lexer.Index? = nil, char: Atom, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
-        let column = Lexer.columnOffset(at: offset, in: inputString)
-        let line = Lexer.lineNumber(at: offset, in: inputString)
-        
-        return LexerError.unexpectedCharacter(column: column, line: line, char: char, message: message)
+        return LexerError.unexpectedCharacter(offset, char: char, message: message)
     }
     
     @inline(__always)
     public func unexpectedStringError(offset: Lexer.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
-        let column = Lexer.columnOffset(at: offset, in: inputString)
-        let line = Lexer.lineNumber(at: offset, in: inputString)
-        
-        return LexerError.unexpectedString(column: column, line: line, message: message)
+        return LexerError.unexpectedString(offset, message: message)
     }
     
     @inline(__always)
@@ -350,8 +344,8 @@ extension Lexer {
 }
 
 public enum LexerError: Error {
-    case unexpectedCharacter(column: Int, line: Int, char: Lexer.Atom, message: String)
-    case unexpectedString(column: Int, line: Int, message: String)
+    case unexpectedCharacter(Lexer.Index, char: Lexer.Atom, message: String)
+    case unexpectedString(Lexer.Index, message: String)
     case syntaxError(String)
     case endOfStringError(String)
     case notFound(String)
@@ -360,12 +354,34 @@ public enum LexerError: Error {
 }
 
 extension LexerError: CustomStringConvertible {
+    public func description(withOffsetsIn string: String) -> String {
+        switch self {
+        case let .unexpectedCharacter(offset, _, message: message):
+            let column = Lexer.columnOffset(at: offset, in: string)
+            let line = Lexer.lineNumber(at: offset, in: string)
+            
+            return "Error at line \(line) column \(column): \(message)"
+        case let .unexpectedString(offset, message: message):
+            let column = Lexer.columnOffset(at: offset, in: string)
+            let line = Lexer.lineNumber(at: offset, in: string)
+            
+            return "Error at line \(line) column \(column): \(message)"
+        case .syntaxError(let message),
+             .endOfStringError(let message),
+             .notFound(let message),
+             .miscellaneous(let message):
+            return "Error: \(message)"
+        case .genericParseError:
+            return "An internal error during parsing was raised"
+        }
+    }
+    
     public var description: String {
         switch self {
-        case let .unexpectedCharacter(offset, line, _, message: message):
-            return "Error at line \(line) column \(offset): \(message)"
-        case let .unexpectedString(offset, line, message: message):
-            return "Error at line \(line) column \(offset): \(message)"
+        case let .unexpectedCharacter(_, _, message: message):
+            return "Error: \(message)"
+        case let .unexpectedString(_, message: message):
+            return "Error: \(message)"
         case .syntaxError(let message),
              .endOfStringError(let message),
              .notFound(let message),
