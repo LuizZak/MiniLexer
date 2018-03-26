@@ -245,14 +245,20 @@ public final class Lexer {
     public func unexpectedCharacterError(offset: Lexer.Index? = nil, char: Atom, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
-        return LexerError.unexpectedCharacter(offset, char, message: message)
+        let column = Lexer.columnOffset(at: offset, in: inputString)
+        let line = Lexer.lineNumber(at: offset, in: inputString)
+        
+        return LexerError.unexpectedCharacter(column: column, line: line, char: char, message: message)
     }
     
     @inline(__always)
     public func unexpectedStringError(offset: Lexer.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
-        return LexerError.unexpectedString(offset, message: message)
+        let column = Lexer.columnOffset(at: offset, in: inputString)
+        let line = Lexer.lineNumber(at: offset, in: inputString)
+        
+        return LexerError.unexpectedString(column: column, line: line, message: message)
     }
     
     @inline(__always)
@@ -284,6 +290,30 @@ public final class Lexer {
     
     private struct LexerState {
         var index: Lexer.Index
+    }
+    
+    @_versioned
+    internal static func lineNumber(at index: String.Index, in string: String) -> Int {
+        let line =
+            string[..<index].reduce(0) {
+                $0 + ($1 == "\n" ? 1 : 0)
+            }
+        
+        return line + 1 // lines start at one
+    }
+    
+    @_versioned
+    internal static func columnOffset(at index: String.Index, in string: String) -> Int {
+        // Figure out start of line at the given index
+        let lineStart =
+            zip(string[..<index], string.indices)
+                .reversed()
+                .first { $0.0 == "\n" }?.1
+        
+        let lineStartOffset =
+            lineStart.map(string.index(after:)) ?? string.startIndex
+        
+        return string.distance(from: lineStartOffset, to: index) + 1 // columns start at one
     }
 }
 
@@ -319,13 +349,23 @@ extension Lexer {
     }
 }
 
-public enum LexerError: Error, CustomStringConvertible {
+public enum LexerError: Error {
+    case unexpectedCharacter(column: Int, line: Int, char: Lexer.Atom, message: String)
+    case unexpectedString(column: Int, line: Int, message: String)
+    case syntaxError(String)
+    case endOfStringError(String)
+    case notFound(String)
+    case miscellaneous(String)
+    case genericParseError
+}
+
+extension LexerError: CustomStringConvertible {
     public var description: String {
         switch self {
-        case let .unexpectedCharacter(offset, _, message: message):
-            return "Error at \(offset): \(message)"
-        case let .unexpectedString(offset, message: message):
-            return "Error at \(offset): \(message)"
+        case let .unexpectedCharacter(offset, line, _, message: message):
+            return "Error at line \(line) column \(offset): \(message)"
+        case let .unexpectedString(offset, line, message: message):
+            return "Error at line \(line) column \(offset): \(message)"
         case .syntaxError(let message),
              .endOfStringError(let message),
              .notFound(let message),
@@ -335,12 +375,4 @@ public enum LexerError: Error, CustomStringConvertible {
             return "An internal error during parsing was raised"
         }
     }
-    
-    case unexpectedCharacter(Lexer.Index, Lexer.Atom, message: String)
-    case unexpectedString(Lexer.Index, message: String)
-    case syntaxError(String)
-    case endOfStringError(String)
-    case notFound(String)
-    case miscellaneous(String)
-    case genericParseError
 }
