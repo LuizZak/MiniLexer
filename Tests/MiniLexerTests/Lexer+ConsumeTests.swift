@@ -44,4 +44,18 @@ class Lexer_ConsumeTests: XCTestCase {
         
         XCTAssertEqual(consumed, "abc")
     }
+    
+    func testConsumeLength() throws {
+        let lexer = Lexer(input: "abc")
+        
+        let consumed = try lexer.consumeLength(2)
+        
+        XCTAssertEqual(consumed, "ab")
+    }
+    
+    func testConsumeLengthThrowsEndOfStringErrorIfLengthExceedsStringEndIndex() {
+        let lexer = Lexer(input: "abc")
+        
+        assertThrowsEof(try lexer.consumeLength(4))
+    }
 }

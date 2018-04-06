@@ -113,6 +113,55 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertNotEqual(rule, .or([.letter, .digit]))
     }
     
+    func testGrammarRuleMaximumLengthIn() {
+        let rule = GrammarRule.digit
+        let lexerMatching = Lexer(input: "123")
+        let lexerNonMatching = Lexer(input: "a")
+        
+        XCTAssertEqual(rule.maximumLength(in: lexerMatching), 1)
+        XCTAssertNil(rule.maximumLength(in: lexerNonMatching))
+    }
+    
+    func testGrammarRuleMaximumLengthInWithZeroOrMoreRule() {
+        let rule = GrammarRule.digit*
+        let lexerMatching = Lexer(input: "123")
+        let lexerMatchingPartial = Lexer(input: "123abc")
+        let lexerNonMatching = Lexer(input: "a")
+        
+        XCTAssertEqual(rule.maximumLength(in: lexerMatching), 3)
+        XCTAssertEqual(rule.maximumLength(in: lexerMatchingPartial), 3)
+        XCTAssertEqual(rule.maximumLength(in: lexerNonMatching), 0)
+    }
+    
+    func testGrammarRuleMaximumLengthInWithGreedyRule() {
+        let rule = GrammarRule.digit+
+        let lexerMatching = Lexer(input: "123")
+        let lexerMatchingPartial = Lexer(input: "123abc")
+        let lexerNonMatching = Lexer(input: "a")
+        
+        XCTAssertEqual(rule.maximumLength(in: lexerMatching), 3)
+        XCTAssertEqual(rule.maximumLength(in: lexerMatchingPartial), 3)
+        XCTAssertNil(rule.maximumLength(in: lexerNonMatching))
+    }
+    
+    func testGrammarRulePassesIn() {
+        let rule = GrammarRule.digit
+        let lexerMatching = Lexer(input: "123")
+        let lexerNonMatching = Lexer(input: "a")
+        
+        XCTAssert(rule.passes(in: lexerMatching))
+        XCTAssertFalse(rule.passes(in: lexerNonMatching))
+    }
+    
+    func testGrammarRulePassesInWithZeroOrMoreRule() {
+        let rule = GrammarRule.digit*
+        let lexerMatching = Lexer(input: "123")
+        let lexerNonMatching = Lexer(input: "a")
+        
+        XCTAssert(rule.passes(in: lexerMatching))
+        XCTAssert(rule.passes(in: lexerNonMatching))
+    }
+    
     func testGramarRuleOrStopsAtFirstMatchFound() throws {
         // test:
         //   ('@keyword' [0-9]+) | ('@keyword' 'abc') | ('@keyword' | 'a')
@@ -592,7 +641,7 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGramarRuleLookahead() throws {
         // test:
-        //   ('a' ident) | ('a' number) | ('a' | '@keyword')
+        //   ('a' ident) | ('a' number) | ('a' '@keyword')
         //
         // ident:
         //   [a-zA-Z][a-zA-Z0-9]*
@@ -623,7 +672,7 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGramarRuleLookaheadWithKeyword() throws {
         // test:
-        //   ('@keyword' ident) | ('@keyword' number) | ('@keyword' | '@a')
+        //   ('@keyword' ident) | ('@keyword' number) | ('@keyword' 'a')
         //
         // ident:
         //   [a-zA-Z][a-zA-Z0-9]*

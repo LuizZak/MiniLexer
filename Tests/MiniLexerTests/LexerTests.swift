@@ -53,7 +53,7 @@ class LexerTests: XCTestCase {
         let sut = Lexer(input: "abc")
         sut.advance(while: { _ in true })
         
-        XCTAssertThrowsError(try sut.peek()) // Throw on Eof
+        assertThrowsEof(try sut.peek()) // Throw on Eof
     }
     
     func testSafeIsNextChar() throws {
@@ -85,7 +85,7 @@ class LexerTests: XCTestCase {
     func testPeekForwardFailsWithErrorWhenPastEndOfString() {
         let sut = Lexer(input: "abc")
         
-        XCTAssertThrowsError(try sut.peekForward(count: 4))
+        assertThrowsEof(try sut.peekForward(count: 4))
     }
     
     func testFindNext() throws {
@@ -121,7 +121,7 @@ class LexerTests: XCTestCase {
         XCTAssertEqual(try sut.next(), "b")
         XCTAssertEqual(try sut.next(), "c")
         
-        XCTAssertThrowsError(try sut.peek()) // Throw on Eof
+        assertThrowsEof(try sut.peek())
     }
     
     func testNextUsesOffsetForReading() throws {
@@ -136,7 +136,7 @@ class LexerTests: XCTestCase {
         let sut = Lexer(input: "abc")
         sut.advance(while: { _ in true })
         
-        XCTAssertThrowsError(try sut.peek()) // Throw on Eof
+        assertThrowsEof(try sut.peek())
     }
     
     func testWithTemporaryIndex() throws {

@@ -20,7 +20,53 @@ public protocol LexerGrammarRule {
     /// if `false`, indicates a call to `consume(from:)` will definitely fail,
     /// but if `true`, indicates a call to `consume(from:)` may be successful.
     func canConsume(from lexer: Lexer) -> Bool
+    
+    /// Returns the maximal length this grammar rule can consume from a given lexer,
+    /// if successful.
+    ///
+    /// Returns nil, if an error ocurred while consuming the rule.
+    func maximumLength(in lexer: Lexer) -> Int?
+    
+    /// Returns `true` if this grammar rule validates effectively when applied on
+    /// a given lexer.
+    ///
+    /// Gives a better guarantee than using `canConsume(from:)` since that method
+    /// does a cheaper validation of whether an initial consumption attempt can
+    /// be performed without immediate failures.
+    ///
+    /// This method returns the lexer to the previous state before returning.
+    func passes(in lexer: Lexer) -> Bool
 }
+
+public extension LexerGrammarRule {
+    func maximumLength(in lexer: Lexer) -> Int? {
+        do {
+            let start = lexer.inputIndex
+            
+            let end: Lexer.Index = try lexer.withTemporaryIndex {
+                try stepThroughApplying(on: lexer)
+                return lexer.inputIndex
+            }
+            
+            return lexer.inputString.distance(from: start, to: end)
+        } catch {
+            return nil
+        }
+    }
+    
+    public func passes(in lexer: Lexer) -> Bool {
+        do {
+            _=try lexer.withTemporaryIndex {
+                try stepThroughApplying(on: lexer)
+            }
+            
+            return true
+        } catch {
+            return false
+        }
+    }
+}
+
 
 /// Type-erasing type over `LexerGrammarRule`
 public struct AnyGrammarRule<T>: LexerGrammarRule {

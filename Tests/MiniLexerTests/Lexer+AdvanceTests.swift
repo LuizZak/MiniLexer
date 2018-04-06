@@ -15,7 +15,7 @@ class Lexer_AdvanceTests: XCTestCase {
     func testAdvanceThrowsErrorWhenAtEndOfString() throws {
         let lexer = Lexer(input: "")
         
-        XCTAssertThrowsError(try lexer.advance())
+        assertThrowsEof(try lexer.advance())
     }
     
     func testAdvanceExpectingCurrent() throws {
@@ -31,7 +31,7 @@ class Lexer_AdvanceTests: XCTestCase {
     func testAdvanceExpectingCurrentThrowsWhenAtEndOfString() throws {
         let lexer = Lexer(input: "")
         
-        XCTAssertThrowsError(try lexer.advance(expectingCurrent: "a"))
+        assertThrowsEof(try lexer.advance(expectingCurrent: "a"))
     }
     
     func testAdvanceExpectingCurrentThrowsWhenNonMatching() throws {
@@ -61,7 +61,7 @@ class Lexer_AdvanceTests: XCTestCase {
     func testAdvanceValidatingCurrentThrowsWhenAtEndOfString() throws {
         let lexer = Lexer(input: "")
         
-        XCTAssertThrowsError(try lexer.advance(validatingCurrent: { $0 == "a" }))
+        assertThrowsEof(try lexer.advance(validatingCurrent: { $0 == "a" }))
     }
     
     func testAdvanceValidatingCurrentThrowsWhenNonMatching() throws {
@@ -241,6 +241,6 @@ class Lexer_AdvanceTests: XCTestCase {
     func testAdvanceLengthThrowsErrorWhenPastEndOfString() throws {
         let lexer = Lexer(input: "abc")
         
-        XCTAssertThrowsError(try lexer.advanceLength(4))
+        assertThrowsEof(try lexer.advanceLength(4))
     }
 }
