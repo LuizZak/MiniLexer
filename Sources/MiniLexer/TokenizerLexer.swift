@@ -1,7 +1,8 @@
 /// A tokenizer lexer provides tokenization support by wrapping a bare text lexer
 /// with token recognition capabilities through a parametrized token type.
 open class TokenizerLexer<T: TokenProtocol> {
-    private var hasReadFirstToken = false
+    /// Used to check and re-tokenize a lexer if its index is changed externally.
+    private var lastLexerIndex: Lexer.Index?
     
     private var current: Token = Token(value: "", tokenType: T.eofToken, range: nil)
     
@@ -11,7 +12,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// Whether the tokenizer is at the end of the input stream.
     /// When the end is reached, no more tokens can be read.
     public var isEof: Bool {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         return current == Token(value: "", tokenType: T.eofToken, range: nil)
     }
@@ -37,14 +38,14 @@ open class TokenizerLexer<T: TokenProtocol> {
             skipToken()
         }
         
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         return current
     }
     
     /// Skips to the next available token in the stream.
     public func skipToken() {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         if let range = current.range {
             lexer.inputIndex = range.upperBound
@@ -57,7 +58,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// If the token cannot be matched, an error is thrown.
     @discardableResult
     public func advance(over tokenType: T) throws -> Token {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         if current.tokenType != tokenType {
             throw LexerError.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(current.tokenType.tokenString)'")
@@ -76,7 +77,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// - Throws: A `LexerError` in case the predicate returns false.
     @discardableResult
     public func advance(matching predicate: (T) -> Bool) throws -> Token {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         if !predicate(current.tokenType) {
             throw LexerError.syntaxError("Unexpected token \(current.tokenType)")
@@ -89,7 +90,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     
     /// Returns `true` iff the current token is the one provided.
     public func tokenType(is type: T) -> Bool {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         return current.tokenType == type
     }
@@ -121,7 +122,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     
     /// Returns the current token.
     public func token() -> Token {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         return current
     }
@@ -138,7 +139,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     ///
     /// - Returns: An iterator for reading the tokens from this lexer.
     public func makeIterator() -> AnyIterator<Token> {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         return AnyIterator {
             if self.isEof {
@@ -164,12 +165,12 @@ open class TokenizerLexer<T: TokenProtocol> {
         }
     }
     
-    private func ensureReadFirstToken() {
-        if hasReadFirstToken {
+    private func ensureLexerIndexConsistent() {
+        if lexer.inputIndex == lastLexerIndex {
             return
         }
         
-        hasReadFirstToken = true
+        lastLexerIndex = lexer.inputIndex
         readToken()
     }
     
@@ -197,7 +198,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// Provides a backtracker which can be used to backtrack this tokenizer lexer's
     /// state to the point at which this method was called.
     public func backtracker() -> Backtrack {
-        ensureReadFirstToken()
+        ensureLexerIndexConsistent()
         
         return Backtrack(lexer: self)
     }

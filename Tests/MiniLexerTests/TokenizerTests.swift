@@ -212,6 +212,17 @@ class TokenizerTests: XCTestCase {
         XCTAssert(sut.tokenType(matches: { $0 == .eof }))
         XCTAssertFalse(sut.tokenType(matches: { $0 == .closeParens }))
     }
+    
+    func testTokenizerConsistencyWhenLexerIndexIsModifiedExternally() throws {
+        sut = TokenizerLexer(input: "(,)")
+        _=sut.token()
+        
+        try sut.lexer.advanceLength(1)
+        
+        XCTAssertEqual(sut.token().value, ",")
+        XCTAssertEqual(sut.token().tokenType, .comma)
+        XCTAssertEqual(sut.token().range, sut.lexer.inputString.index("(,)".startIndex, offsetBy: 1)..<"(,".endIndex)
+    }
 }
 
 enum TestToken: String, TokenProtocol {
