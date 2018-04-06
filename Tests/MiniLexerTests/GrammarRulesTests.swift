@@ -779,7 +779,7 @@ public class GrammarRuleTests: XCTestCase {
                         }
                         
                         if expIdent {
-                            throw LexerError.syntaxError("Expected identifier")
+                            throw lexer.syntaxError("Expected identifier")
                         }
                         
                         try lexer.advance(expectingCurrent: ")")

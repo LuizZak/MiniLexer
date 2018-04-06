@@ -61,7 +61,7 @@ open class TokenizerLexer<T: TokenProtocol> {
         ensureLexerIndexConsistent()
         
         if current.tokenType != tokenType {
-            throw LexerError.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(current.tokenType.tokenString)'")
+            throw lexer.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(current.tokenType.tokenString)'")
         }
         
         lexer.skipWhitespace()
@@ -80,7 +80,7 @@ open class TokenizerLexer<T: TokenProtocol> {
         ensureLexerIndexConsistent()
         
         if !predicate(current.tokenType) {
-            throw LexerError.syntaxError("Unexpected token \(current.tokenType)")
+            throw lexer.syntaxError("Unexpected token \(current.tokenType)")
         }
         
         lexer.skipWhitespace()

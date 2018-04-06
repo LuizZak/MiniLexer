@@ -99,12 +99,13 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     /// into another type, which is then returned by `AnyGrammarRule`'s `consume`
     /// method.
     @inline(__always)
-    public init<U: LexerGrammarRule, S: StringProtocol>(rule: U, transformer: @escaping (S) throws -> T) where U.Result == S {
+    public init<U: LexerGrammarRule, S: StringProtocol>(rule: U, transformer: @escaping (S, Lexer.Index) throws -> T) where U.Result == S {
         _ruleDescription = { rule.ruleDescription }
         _consume = { lexer in
+            let index = lexer.inputIndex
             let res = try rule.consume(from: lexer)
             
-            return try transformer(res)
+            return try transformer(res, index)
         }
         _stepThroughApplying = rule.stepThroughApplying(on:)
         _canConsume = rule.canConsume(from:)
@@ -409,7 +410,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             }
             
             guard let index = indexAfter else {
-                throw LexerError.syntaxError("Failed to parse with rule \(ruleDescription)")
+                throw lexer.syntaxError("Failed to parse with rule \(ruleDescription)")
             }
             
             lexer.inputIndex = index

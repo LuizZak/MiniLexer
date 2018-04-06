@@ -120,8 +120,10 @@ class TokenizerTests: XCTestCase {
         do {
             try sut.advance(over: .comma)
             XCTFail("Should have thrown")
+        } catch let error as LexerError {
+            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString), "Error at line 1 column 1: Expected token ',' but found '('")
         } catch {
-            XCTAssertEqual("\(error)", "Error: Expected token ',' but found '('")
+            XCTFail("Unexpected error \(error)")
         }
     }
     
@@ -160,8 +162,10 @@ class TokenizerTests: XCTestCase {
             }
             
             XCTFail("Should have thrown error")
+        } catch let error as LexerError {
+            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString), "Error at line 1 column 2: Expected token '(' but found ','")
         } catch {
-            // Consume
+            XCTFail("Unexpected error \(error)")
         }
         
         XCTAssertEqual(sut.token().tokenType, .openParens)

@@ -256,8 +256,10 @@ public final class Lexer {
     }
     
     @inline(__always)
-    public func syntaxError(_ message: String) -> Error {
-        return LexerError.syntaxError(message)
+    public func syntaxError(offset: Lexer.Index? = nil, _ message: String) -> Error {
+        let offset = offset ?? inputIndex
+        
+        return LexerError.syntaxError(offset, message)
     }
     
     @inline(__always)
@@ -346,7 +348,7 @@ extension Lexer {
 public enum LexerError: Error {
     case unexpectedCharacter(Lexer.Index, char: Lexer.Atom, message: String)
     case unexpectedString(Lexer.Index, message: String)
-    case syntaxError(String)
+    case syntaxError(Lexer.Index, String)
     case endOfStringError(String)
     case notFound(String)
     case miscellaneous(String)
@@ -356,18 +358,14 @@ public enum LexerError: Error {
 extension LexerError: CustomStringConvertible {
     public func description(withOffsetsIn string: String) -> String {
         switch self {
-        case let .unexpectedCharacter(offset, _, message: message):
+        case let .unexpectedCharacter(offset, _, message: message),
+             let .unexpectedString(offset, message: message),
+             let .syntaxError(offset, message):
             let column = Lexer.columnOffset(at: offset, in: string)
             let line = Lexer.lineNumber(at: offset, in: string)
             
             return "Error at line \(line) column \(column): \(message)"
-        case let .unexpectedString(offset, message: message):
-            let column = Lexer.columnOffset(at: offset, in: string)
-            let line = Lexer.lineNumber(at: offset, in: string)
-            
-            return "Error at line \(line) column \(column): \(message)"
-        case .syntaxError(let message),
-             .endOfStringError(let message),
+        case .endOfStringError(let message),
              .notFound(let message),
              .miscellaneous(let message):
             return "Error: \(message)"
@@ -378,12 +376,11 @@ extension LexerError: CustomStringConvertible {
     
     public var description: String {
         switch self {
-        case let .unexpectedCharacter(_, _, message: message):
+        case let .unexpectedCharacter(_, _, message: message),
+             let .unexpectedString(_, message: message),
+             let .syntaxError(_, message):
             return "Error: \(message)"
-        case let .unexpectedString(_, message: message):
-            return "Error: \(message)"
-        case .syntaxError(let message),
-             .endOfStringError(let message),
+        case .endOfStringError(let message),
              .notFound(let message),
              .miscellaneous(let message):
             return "Error: \(message)"
