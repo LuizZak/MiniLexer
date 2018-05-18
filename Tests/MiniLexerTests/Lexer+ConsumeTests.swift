@@ -58,4 +58,13 @@ class Lexer_ConsumeTests: XCTestCase {
         
         assertThrowsEof(try lexer.consumeLength(4))
     }
+
+    func testConsumeLengthOffsetFromStart() throws {
+        let lexer = Lexer(input: "abcdef")
+        try lexer.advanceLength(2)
+        
+        let consumed = try lexer.consumeLength(2)
+        
+        XCTAssertEqual(consumed, "cd")
+    }
 }
