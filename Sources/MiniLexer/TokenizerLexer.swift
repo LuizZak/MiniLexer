@@ -49,6 +49,7 @@ open class TokenizerLexer<T: TokenProtocol> {
         
         if let range = current.range {
             lexer.inputIndex = range.upperBound
+            lastLexerIndex = lexer.inputIndex
         }
         
         readToken()
@@ -65,6 +66,7 @@ open class TokenizerLexer<T: TokenProtocol> {
         }
         
         lexer.skipWhitespace()
+        lastLexerIndex = lexer.inputIndex
         
         return nextToken()
     }
@@ -84,6 +86,7 @@ open class TokenizerLexer<T: TokenProtocol> {
         }
         
         lexer.skipWhitespace()
+        lastLexerIndex = lexer.inputIndex
         
         return nextToken()
     }
