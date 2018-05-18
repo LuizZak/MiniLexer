@@ -121,7 +121,8 @@ class TokenizerTests: XCTestCase {
             try sut.advance(over: .comma)
             XCTFail("Should have thrown")
         } catch let error as LexerError {
-            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString), "Error at line 1 column 1: Expected token ',' but found '('")
+            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString),
+                           "Error at line 1 column 1: Expected token ',' but found '('")
         } catch {
             XCTFail("Unexpected error \(error)")
         }
@@ -162,13 +163,12 @@ class TokenizerTests: XCTestCase {
             }
             
             XCTFail("Should have thrown error")
-        } catch let error as LexerError {
-            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString), "Error at line 1 column 2: Expected token '(' but found ','")
         } catch {
-            XCTFail("Unexpected error \(error)")
+            //
         }
         
         XCTAssertEqual(sut.token().tokenType, .openParens)
+        XCTAssertEqual(sut.lexer.inputIndex, sut.lexer.inputString.startIndex)
     }
     
     func testAllTokens() {
@@ -227,6 +227,18 @@ class TokenizerTests: XCTestCase {
         XCTAssertEqual(sut.token().tokenType, .comma)
         XCTAssertEqual(sut.token().range, sut.lexer.inputString.index("(,)".startIndex, offsetBy: 1)..<"(,".endIndex)
     }
+    
+    func testMakeIterator() throws {
+        sut = TokenizerLexer(input: "(,,)")
+        
+        let iterator = sut.makeIterator()
+        
+        XCTAssertEqual(iterator.next()?.value, "(")
+        XCTAssertEqual(iterator.next()?.value, ",")
+        XCTAssertEqual(iterator.next()?.value, ",")
+        XCTAssertEqual(iterator.next()?.value, ")")
+        XCTAssertNil(iterator.next())
+    }
 }
 
 enum TestToken: String, TokenProtocol {
@@ -269,28 +281,6 @@ enum TestToken: String, TokenProtocol {
             return 1
         case .eof:
             return 0
-        }
-    }
-    
-    func advance(in lexer: Lexer) throws {
-        switch self {
-        case .openParens, .closeParens, .comma:
-            try lexer.advance()
-        case .eof:
-            break
-        }
-    }
-    
-    func matchesText(in lexer: Lexer) -> Bool {
-        switch self {
-        case .openParens:
-            return lexer.safeIsNextChar(equalTo: "(")
-        case .comma:
-            return lexer.safeIsNextChar(equalTo: ",")
-        case .closeParens:
-            return lexer.safeIsNextChar(equalTo: ")")
-        case .eof:
-            return false
         }
     }
 }
