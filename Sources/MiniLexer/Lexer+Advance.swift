@@ -5,7 +5,7 @@ public extension Lexer {
     /// Attempts to advance the string index forward by one, returning a value
     /// telling whether the advance was successful or whether the current index
     /// is pointing at the end of the string buffer
-    @inline(__always)
+    @inlinable
     public func safeAdvance() -> Bool {
         if let next = inputSource.index(inputIndex, offsetBy: 1, limitedBy: inputSource.endIndex) {
             inputIndex = next
@@ -19,7 +19,7 @@ public extension Lexer {
     ///
     /// The char under `peek()` will be the char that the predicate returned `false`
     /// for.
-    @inline(__always)
+    @inlinable
     public func advance(while predicate: (Atom) throws -> Bool) rethrows {
         while try !isEof() && predicate(unsafePeek()) {
             unsafeAdvance()
@@ -31,7 +31,7 @@ public extension Lexer {
     ///
     /// The char under `peek()` will be the char that the predicate returned `true`
     /// for.
-    @inline(__always)
+    @inlinable
     public func advance(until predicate: (Atom) throws -> Bool) rethrows {
         while try !isEof() && !predicate(unsafePeek()) {
             unsafeAdvance()
@@ -74,7 +74,7 @@ public extension Lexer {
     /// Advances the stream without reading a character.
     /// Throws an EoF error if the current offset is at the end of the character
     /// stream.
-    @inline(__always)
+    @inlinable
     public func advance() throws {
         if isEof() {
             throw endOfStringError()
@@ -85,8 +85,7 @@ public extension Lexer {
     
     /// Unsafe version of advance(), proper for usages where check of isEoF is
     /// preemptively made.
-    @inline(__always)
-    @_versioned
+    @usableFromInline
     internal func unsafeAdvance() {
         inputSource.formIndex(after: &inputIndex)
     }
@@ -95,7 +94,7 @@ public extension Lexer {
     /// Throws, if less than 'n' characters are available to read.
     ///
     /// - precondition: `n > 0`
-    @inline(__always)
+    @inlinable
     public func advanceLength(_ n: Int) throws {
         precondition(n > 0)
         if isEof(offsetBy: n) && isEof(offsetBy: n - 1) {
@@ -109,7 +108,7 @@ public extension Lexer {
     /// character.
     /// The method throws an error if the current character is not the expected
     /// one, or advances to the next position, if it is.
-    @inline(__always)
+    @inlinable
     public func advance(expectingCurrent atom: Atom) throws {
         let prev = inputIndex
         let n = try next()
@@ -126,7 +125,7 @@ public extension Lexer {
     /// given closure, or advances to the next position, if it does.
     ///
     /// Calling when `isEoF() == true` results in an error thrown
-    @inline(__always)
+    @inlinable
     public func advance(validatingCurrent: (Atom) throws -> Bool) throws {
         let prev = inputIndex
         let n = try next()

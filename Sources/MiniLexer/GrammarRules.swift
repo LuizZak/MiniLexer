@@ -72,13 +72,13 @@ public extension LexerGrammarRule {
 public struct AnyGrammarRule<T>: LexerGrammarRule {
     public typealias Result = T
     
-    @_versioned
+    @usableFromInline
     internal let _ruleDescription: () -> String
-    @_versioned
+    @usableFromInline
     internal let _consume: (Lexer) throws -> T
-    @_versioned
+    @usableFromInline
     internal let _stepThroughApplying: (Lexer) throws -> Void
-    @_versioned
+    @usableFromInline
     internal let _canConsume: (Lexer) -> Bool
     
     public var ruleDescription: String {
@@ -86,7 +86,7 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     }
     
     /// Creates a type-erased AnyGrammarRule<T> over a given grammar rule.
-    @inline(__always)
+    @inlinable
     public init<U: LexerGrammarRule>(_ rule: U) where U.Result == T {
         _ruleDescription = { rule.ruleDescription }
         _consume = rule.consume(from:)
@@ -98,7 +98,7 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     /// a transformer that takes that grammar's result and attempts to transform
     /// into another type, which is then returned by `AnyGrammarRule`'s `consume`
     /// method.
-    @inline(__always)
+    @inlinable
     public init<U: LexerGrammarRule, S: StringProtocol>(rule: U, transformer: @escaping (S, Lexer.Index) throws -> T) where U.Result == S {
         _ruleDescription = { rule.ruleDescription }
         _consume = { lexer in
@@ -112,17 +112,17 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     }
     
     @_specialize(where T == Int)
-    @inline(__always)
+    @inlinable
     public func consume(from lexer: Lexer) throws -> T {
         return try _consume(lexer)
     }
     
-    @inline(__always)
+    @inlinable
     public func stepThroughApplying(on lexer: Lexer) throws {
         return try _stepThroughApplying(lexer)
     }
     
-    @inline(__always)
+    @inlinable
     public func canConsume(from lexer: Lexer) -> Bool {
         return _canConsume(lexer)
     }

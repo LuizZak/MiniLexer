@@ -5,7 +5,7 @@ public extension Lexer {
     ///
     /// The char under `peek()` will be the char that the predicate returned `false`
     /// for.
-    @inline(__always)
+    @inlinable
     public func consume(while predicate: (Atom) throws -> Bool) rethrows -> Substring {
         let start = inputIndex
         try advance(while: predicate)
@@ -16,7 +16,7 @@ public extension Lexer {
     /// character.
     /// Returns an empty string, if the current character is already pointing at
     /// the end of the buffer.
-    @inline(__always)
+    @inlinable
     public func consumeRemaining() -> Substring {
         return consumeString { $0.inputIndex = $0.endIndex }
     }
@@ -26,7 +26,7 @@ public extension Lexer {
     ///
     /// The char under `peek()` will be the char that the predicate returned `true`
     /// for.
-    @inline(__always)
+    @inlinable
     public func consume(until predicate: (Atom) throws -> Bool) rethrows -> Substring {
         let start = inputIndex
         try advance(until: predicate)
@@ -37,7 +37,7 @@ public extension Lexer {
     /// until the index after the given block performs index-advancing operations
     /// on this lexer.
     /// If no index change is made, an empty string is returned.
-    @inline(__always)
+    @inlinable
     public func consumeString(performing block: (Lexer) throws -> Void) rethrows -> Substring {
         let start = inputIndex
         try block(self)
@@ -51,7 +51,7 @@ public extension Lexer {
     /// Throws, if less than 'n' characters are available to read.
     ///
     /// - precondition: `n > 0`
-    @inline(__always)
+    @inlinable
     public func consumeLength(_ n: Int) throws -> Substring {
         precondition(n > 0)
         if isEof(offsetBy: n) {

@@ -10,7 +10,7 @@ public final class Lexer {
     
     public let inputString: String
     
-    @_versioned
+    @usableFromInline
     internal var inputSource: String.UnicodeScalarView {
         return inputString.unicodeScalars
     }
@@ -24,7 +24,7 @@ public final class Lexer {
         }
     }
     
-    @_versioned
+    @usableFromInline
     internal let endIndex: Index
     
     public init(input: String) {
@@ -47,7 +47,7 @@ public final class Lexer {
     }
     
     /// Advances the stream until the first non-whitespace character is found.
-    @inline(__always)
+    @inlinable
     public func skipWhitespace() {
         advance(while: Lexer.isWhitespace)
     }
@@ -55,14 +55,14 @@ public final class Lexer {
     /// Returns whether the current stream position points to the end of the input
     /// string.
     /// No further reading is possible when a stream is pointing to the end.
-    @inline(__always)
+    @inlinable
     public func isEof() -> Bool {
         return inputIndex >= endIndex
     }
     
     /// Returns whether the current stream position + `offsetBy` points to past
     /// the end of the input string.
-    @inline(__always)
+    @inlinable
     public func isEof(offsetBy: Int) -> Bool {
         guard let index = inputSource.index(inputIndex, offsetBy: offsetBy, limitedBy: endIndex) else {
             return true
@@ -73,7 +73,7 @@ public final class Lexer {
     
     /// Returns whether the next char returns true when passed to the given predicate,
     /// This method is safe, since it checks isEoF before making the check call.
-    @inline(__always)
+    @inlinable
     public func safeNextCharPasses(with predicate: (Atom) throws -> Bool) rethrows -> Bool {
         return try !isEof() && predicate(unsafePeek())
     }
@@ -81,7 +81,7 @@ public final class Lexer {
     /// Returns whether the next char in the string the given char.
     /// This method is safe, since it checks isEoF before making the check call,
     /// and returns 'false' if EoF.
-    @inline(__always)
+    @inlinable
     public func safeIsNextChar(equalTo char: Atom) -> Bool {
         return !isEof() && unsafePeek() == char
     }
@@ -89,14 +89,14 @@ public final class Lexer {
     /// Returns whether the next char in the string the given char.
     /// This method is safe, since it checks isEoF before making the check call,
     /// and returns 'false' if EoF.
-    @inline(__always)
+    @inlinable
     public func safeIsNextChar(equalTo char: Atom, offsetBy: Int) -> Bool {
         return !isEof(offsetBy: offsetBy) && unsafePeekForward(offsetBy: offsetBy) == char
     }
     
     /// Reads a single character from the current stream position, and forwards
     /// the stream by 1 unit.
-    @inline(__always)
+    @inlinable
     public func next() throws -> Atom {
         let atom = try peek()
         unsafeAdvance()
@@ -104,7 +104,7 @@ public final class Lexer {
     }
     
     /// Peeks the current character at the current index
-    @inline(__always)
+    @inlinable
     public func peek() throws -> Atom {
         if isEof() {
             throw endOfStringError()
@@ -117,7 +117,7 @@ public final class Lexer {
     ///
     /// - precondition: `count > 0`
     /// - throws: `LexerError.endOfStringError`, if inputIndex + count >= endIndex
-    @inline(__always)
+    @inlinable
     public func peekForward(count: Int = 1) throws -> Atom {
         precondition(count >= 0)
         guard let newIndex = inputSource.index(inputIndex, offsetBy: count, limitedBy: endIndex) else {
@@ -129,16 +129,14 @@ public final class Lexer {
     
     /// Unsafe version of peek(), proper for usages where check of isEoF is
     /// preemptively made.
-    @inline(__always)
-    @_versioned
+    @usableFromInline
     internal func unsafePeek() -> Atom {
         return inputSource[inputIndex]
     }
     
     /// Unsafe version of peekForward(), proper for usages where check of isEoF is
     /// preemptively made.
-    @inline(__always)
-    @_versioned
+    @usableFromInline
     internal func unsafePeekForward(offsetBy: Int = 1) -> Atom {
         let newIndex = inputSource.index(inputIndex, offsetBy: offsetBy)
         return inputSource[newIndex]
@@ -149,14 +147,14 @@ public final class Lexer {
     /// Throws, if operation fails.
     @_specialize(where G == GrammarRule)
     @_specialize(where G == RecursiveGrammarRule)
-    @inline(__always)
+    @inlinable
     public func parse<G: LexerGrammarRule>(with rule: G) throws -> G.Result {
         return try rule.consume(from: self)
     }
     
     /// Performs discardable index changes inside a given closure.
     /// Any changes to this parser's state are undone after the method returns.
-    @inline(__always)
+    @inlinable
     public func withTemporaryIndex<T>(changes: () throws -> T) rethrows -> T {
         let backtrack = backtracker()
         defer {
@@ -170,7 +168,7 @@ public final class Lexer {
     /// and the error is rethrown.
     /// In case the `changes` block succeed, the method returns its return value
     /// and doesn't rewind.
-    @inline(__always)
+    @inlinable
     public func rewindOnFailure<T>(changes: () throws -> T) rethrows -> T {
         let backtrack = backtracker()
         do {
@@ -186,7 +184,7 @@ public final class Lexer {
     ///
     /// Can be used to record index after changes are made in conjunction to
     /// `withTemporaryIndex`
-    @inline(__always)
+    @inlinable
     public func withIndexAfter<T>(performing changes: () throws -> T) rethrows -> (T, Lexer.Index) {
         return (try changes(), inputIndex)
     }
@@ -198,22 +196,22 @@ public final class Lexer {
     }
     
     // MARK: Character checking
-    @inline(__always)
+    @inlinable
     public static func isDigit(_ c: Atom) -> Bool {
         return c >= "0" && c <= "9"
     }
     
-    @inline(__always)
+    @inlinable
     public static func isWhitespace(_ c: Atom) -> Bool {
         return c == " " || c == "\r" || c == "\n" || c == "\t"
     }
     
-    @inline(__always)
+    @inlinable
     public static func isLetter(_ c: Atom) -> Bool {
         return isLowercaseLetter(c) || isUppercaseLetter(c)
     }
     
-    @inline(__always)
+    @inlinable
     public static func isLowercaseLetter(_ c: Atom) -> Bool {
         switch c {
         case "a"..."z":
@@ -224,7 +222,7 @@ public final class Lexer {
         }
     }
     
-    @inline(__always)
+    @inlinable
     public static func isUppercaseLetter(_ c: Atom) -> Bool {
         switch c {
         case "A"..."Z":
@@ -235,34 +233,34 @@ public final class Lexer {
         }
     }
     
-    @inline(__always)
+    @inlinable
     public static func isAlphanumeric(_ c: Atom) -> Bool {
         return isLetter(c) || isDigit(c)
     }
     
     // MARK: Error methods
-    @inline(__always)
+    @inlinable
     public func unexpectedCharacterError(offset: Lexer.Index? = nil, char: Atom, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
         return LexerError.unexpectedCharacter(offset, char: char, message: message)
     }
     
-    @inline(__always)
+    @inlinable
     public func unexpectedStringError(offset: Lexer.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
         return LexerError.unexpectedString(offset, message: message)
     }
     
-    @inline(__always)
+    @inlinable
     public func syntaxError(offset: Lexer.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
         return LexerError.syntaxError(offset, message)
     }
     
-    @inline(__always)
+    @inlinable
     public func endOfStringError(_ message: String = "Reached unexpected end of input string") -> Error {
         return LexerError.endOfStringError(message)
     }
@@ -288,7 +286,7 @@ public final class Lexer {
         var index: Lexer.Index
     }
     
-    @_versioned
+    @usableFromInline
     internal static func lineNumber(at index: String.Index, in string: String) -> Int {
         let line =
             string[..<index].reduce(0) {
@@ -298,7 +296,7 @@ public final class Lexer {
         return line + 1 // lines start at one
     }
     
-    @_versioned
+    @usableFromInline
     internal static func columnOffset(at index: String.Index, in string: String) -> Int {
         // Figure out start of line at the given index
         let lineStart =
@@ -319,7 +317,7 @@ extension Lexer {
     /// Returns the index of the next occurrence of a given input char.
     /// Method starts searching from current read index.
     /// This method does not alter the current
-    @inline(__always)
+    @inlinable
     public func findNext(_ atom: Atom) -> Index? {
         return withTemporaryIndex {
             advance(until: { $0 == atom })
@@ -335,7 +333,7 @@ extension Lexer {
     /// Skips all chars until the next occurrence of a given char.
     /// Method starts searching from current read index.
     /// If the char is not found after the current index, an error is thrown.
-    @inline(__always)
+    @inlinable
     public func skipToNext(_ atom: Atom) throws {
         guard let index = findNext(atom) else {
             throw LexerError.notFound("Expected \(atom) but it was not found.")
