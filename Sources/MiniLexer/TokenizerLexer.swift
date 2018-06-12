@@ -101,28 +101,6 @@ open class TokenizerLexer<T: TokenProtocol> {
         return nextToken()
     }
     
-    /// Consumes a given token type, if the current token matches the token type,
-    /// and advances to the next token.
-    ///
-    /// Returns the token read, or nil, in case the current token is not of the
-    /// provided type.
-    @discardableResult
-    public func consumeToken(ifTypeIs type: T) -> T? {
-        let tok = self.token()
-        
-        if tok != type {
-            return nil
-        }
-        
-        recordingLexerState {
-            $0.skipWhitespace()
-        }
-        
-        skipToken()
-        
-        return tok
-    }
-    
     /// Returns the current token.
     public func token() -> T {
         ensureLexerIndexConsistent()
@@ -267,6 +245,29 @@ public extension TokenizerLexer where T: TokenWrapper {
     public func tokenType() -> T.Token {
         return token().tokenType
     }
+    
+    /// Consumes a given token type, if the current token matches the token type,
+    /// and advances to the next token.
+    ///
+    /// Returns the token read, or nil, in case the current token is not of the
+    /// provided type.
+    @discardableResult
+    public func consumeToken(ifTypeIs type: T.Token) -> T? {
+        let tok = self.token()
+        
+        if tok.tokenType != type {
+            return nil
+        }
+        
+        recordingLexerState {
+            $0.skipWhitespace()
+        }
+        
+        skipToken()
+        
+        return tok
+    }
+    
 }
 
 public protocol TokenWrapper: TokenProtocol {
