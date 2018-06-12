@@ -101,18 +101,6 @@ open class TokenizerLexer<T: TokenProtocol> {
         return nextToken()
     }
     
-    /// Returns `true` iff the current token is the one provided.
-    public func tokenType(is type: T) -> Bool {
-        ensureLexerIndexConsistent()
-        
-        return current == type
-    }
-    
-    /// Returns `true` if the current token type passes a given predicate
-    public func tokenType(matches predicate: (T) -> Bool) -> Bool {
-        return predicate(tokenType())
-    }
-    
     /// Consumes a given token type, if the current token matches the token type,
     /// and advances to the next token.
     ///
@@ -142,9 +130,14 @@ open class TokenizerLexer<T: TokenProtocol> {
         return current
     }
     
-    /// Return the current token's type
-    public func tokenType() -> T {
-        return token()
+    /// Returns `true` iff the current token is the one provided.
+    public func token(is type: T) -> Bool {
+        return token() == type
+    }
+    
+    /// Returns `true` if the current token passes a given predicate
+    public func token(matches predicate: (T) -> Bool) -> Bool {
+        return predicate(token())
     }
     
     /// Creates an iterator that advances this tokenizer along each consumable
@@ -255,5 +248,85 @@ open class TokenizerLexer<T: TokenProtocol> {
             lexer.current = token
             didBacktrack = true
         }
+    }
+}
+
+public extension TokenizerLexer where T: TokenWrapper {
+    
+    /// Returns `true` iff the current token is the one provided.
+    public func tokenType(is type: T.Token) -> Bool {
+        return tokenType() == type
+    }
+    
+    /// Returns `true` if the current token type passes a given predicate
+    public func tokenType(matches predicate: (T.Token) -> Bool) -> Bool {
+        return predicate(tokenType())
+    }
+    
+    /// Return the current token's type
+    public func tokenType() -> T.Token {
+        return token().tokenType
+    }
+}
+
+public protocol TokenWrapper: TokenProtocol {
+    associatedtype Token: TokenProtocol
+    
+    var tokenType: Token { get }
+}
+
+/// A structured Token type that can wrap over some simpler token types that don't
+/// store a lot of data or are singletons, like enum-based tokens.
+public struct FullToken<T: TokenProtocol>: TokenWrapper {
+    public var value: Substring
+    public var tokenType: T
+    
+    /// Range of the string the token occupies.
+    /// Is nil, in case this token is a non representable token, like `.eof`.
+    public var range: Range<Lexer.Index>?
+    
+    public init(value: Substring, tokenType: T, range: Range<Lexer.Index>?) {
+        self.value = value
+        self.tokenType = tokenType
+        self.range = range
+    }
+    
+    public init(value: String, tokenType: T, range: Range<Lexer.Index>?) {
+        self.value = Substring(value)
+        self.tokenType = tokenType
+        self.range = range
+    }
+}
+
+extension FullToken: TokenProtocol {
+    public static var eofToken: FullToken {
+        return FullToken(value: "", tokenType: T.eofToken, range: nil)
+    }
+    
+    public func length(in lexer: Lexer) -> Int {
+        return tokenType.length(in: lexer)
+    }
+    
+    public var tokenString: T.Segment {
+        return tokenType.tokenString
+    }
+    
+    public static func tokenType(at lexer: Lexer) -> FullToken<T>? {
+        let bt = lexer.backtracker()
+        guard let t = T.tokenType(at: lexer) else {
+            return nil
+        }
+        
+        let length = t.length(in: lexer)
+        
+        bt.backtrack()
+        
+        if length > 0 {
+            let range = lexer.inputIndex..<lexer.inputString.index(lexer.inputIndex, offsetBy: length)
+            
+            return FullToken(value: lexer.inputString[range], tokenType: t, range: range)
+        }
+        
+        return nil
     }
 }

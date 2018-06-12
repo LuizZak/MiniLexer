@@ -45,7 +45,7 @@ class TokenizerTests: XCTestCase {
     func testTokenIsType() {
         sut = TokenizerLexer(input: "(")
         
-        XCTAssert(sut.tokenType(is: .openParens))
+        XCTAssert(sut.token(is: .openParens))
     }
     
     func testConsumeTokenIfTypeIsMatching() {
@@ -205,15 +205,15 @@ class TokenizerTests: XCTestCase {
     func testTokenMatches() {
         sut = TokenizerLexer(input: "(")
         
-        XCTAssert(sut.tokenType(matches: { $0 == .openParens }))
-        XCTAssertFalse(sut.tokenType(matches: { $0 == .closeParens }))
+        XCTAssert(sut.token(matches: { $0 == .openParens }))
+        XCTAssertFalse(sut.token(matches: { $0 == .closeParens }))
     }
     
     func testTokenMatchesWithEmptyString() {
         sut = TokenizerLexer(input: "")
         
-        XCTAssert(sut.tokenType(matches: { $0 == .eof }))
-        XCTAssertFalse(sut.tokenType(matches: { $0 == .closeParens }))
+        XCTAssert(sut.token(matches: { $0 == .eof }))
+        XCTAssertFalse(sut.token(matches: { $0 == .closeParens }))
     }
     
     func testTokenizerConsistencyWhenLexerIndexIsModifiedExternally() throws {
@@ -249,6 +249,50 @@ class TokenizerTests: XCTestCase {
         XCTAssertEqual(tokens[2], TestStructToken(isEof: false, tokenString: ","))
         XCTAssertEqual(tokens[3], TestStructToken(isEof: false, tokenString: "."))
         XCTAssertEqual(tokens[4], TestStructToken(isEof: false, tokenString: ")"))
+    }
+    
+    func testFullToken() throws {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(,)")
+        
+        let tokens = sut.allTokens()
+        
+        XCTAssertEqual(tokens.count, 3)
+        XCTAssertEqual(tokens[0].tokenType, .openParens)
+        XCTAssertEqual(tokens[1].tokenType, .comma)
+        XCTAssertEqual(tokens[2].tokenType, .closeParens)
+    }
+    
+    func testFullTokenValue() throws {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(,)")
+        
+        let tokens = sut.allTokens()
+        
+        XCTAssertEqual(tokens.count, 3)
+        XCTAssertEqual(tokens[0].value, "(")
+        XCTAssertEqual(tokens[1].value, ",")
+        XCTAssertEqual(tokens[2].value, ")")
+    }
+    
+    func testFullTokenTokenString() throws {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(,)")
+        
+        let tokens = sut.allTokens()
+        
+        XCTAssertEqual(tokens.count, 3)
+        XCTAssertEqual(tokens[0].tokenString, tokens[0].tokenType.tokenString)
+        XCTAssertEqual(tokens[1].tokenString, tokens[1].tokenType.tokenString)
+        XCTAssertEqual(tokens[2].tokenString, tokens[2].tokenType.tokenString)
+    }
+    
+    func testFullTokenRange() throws {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: " ( , ) ")
+        
+        let tokens = sut.allTokens()
+        
+        XCTAssertEqual(tokens.count, 3)
+        XCTAssertEqual(tokens[0].range, " ".endIndex..<" (".endIndex)
+        XCTAssertEqual(tokens[1].range, " ( ".endIndex..<" ( ,".endIndex)
+        XCTAssertEqual(tokens[2].range, " ( , ".endIndex..<" ( , )".endIndex)
     }
 }
 
