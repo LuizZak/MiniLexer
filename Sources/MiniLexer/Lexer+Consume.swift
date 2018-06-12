@@ -54,7 +54,7 @@ public extension Lexer {
     @inlinable
     public func consumeLength(_ n: Int) throws -> Substring {
         precondition(n > 0)
-        if isEof(offsetBy: n) {
+        if isEof(offsetBy: n - 1) {
             throw endOfStringError()
         }
         

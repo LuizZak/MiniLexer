@@ -1,5 +1,7 @@
 /// A protocol for tokens that can be consumed serially with a `TokenizerLexer`.
 public protocol TokenProtocol: Equatable {
+    associatedtype Segment: StringProtocol = String
+    
     /// Gets the token that represents the end-of-file of an input string.
     ///
     /// It is important that this token is unique since its usage delimits the
@@ -27,5 +29,5 @@ public protocol TokenProtocol: Equatable {
     func length(in lexer: Lexer) -> Int
     
     /// Gets the string representation of this token value
-    var tokenString: String { get }
+    var tokenString: Segment { get }
 }

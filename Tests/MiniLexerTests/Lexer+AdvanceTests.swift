@@ -243,4 +243,10 @@ class Lexer_AdvanceTests: XCTestCase {
         
         assertThrowsEof(try lexer.advanceLength(4))
     }
+    
+    func testAdvanceWithLengthEndingInEndIndex() throws {
+        let lexer = Lexer(input: "(")
+        
+        try lexer.advanceLength(1)
+    }
 }

@@ -14,15 +14,15 @@ class TokenizerTests: XCTestCase {
     func testTokenizeStream() {
         sut = TokenizerLexer(input: "()")
         
-        XCTAssertEqual(sut.nextToken().tokenType, .openParens)
-        XCTAssertEqual(sut.nextToken().tokenType, .closeParens)
-        XCTAssertEqual(sut.nextToken().tokenType, .eof)
+        XCTAssertEqual(sut.nextToken(), .openParens)
+        XCTAssertEqual(sut.nextToken(), .closeParens)
+        XCTAssertEqual(sut.nextToken(), .eof)
     }
     
     func testTokenizeEofOnEmptyString() {
         sut = TokenizerLexer(input: "")
         
-        XCTAssertEqual(sut.nextToken().tokenType, .eof)
+        XCTAssertEqual(sut.nextToken(), .eof)
     }
     
     func testSkipToken() {
@@ -30,7 +30,7 @@ class TokenizerTests: XCTestCase {
         
         sut.skipToken()
         
-        XCTAssertEqual(sut.nextToken().tokenType, .closeParens)
+        XCTAssertEqual(sut.nextToken(), .closeParens)
     }
     
     func testToken() {
@@ -38,8 +38,8 @@ class TokenizerTests: XCTestCase {
         
         let token = sut.token()
         
-        XCTAssertEqual(token.value, "(")
-        XCTAssertEqual(token.tokenType, .openParens)
+        XCTAssertEqual(token.tokenString, "(")
+        XCTAssertEqual(token, .openParens)
     }
     
     func testTokenIsType() {
@@ -54,9 +54,8 @@ class TokenizerTests: XCTestCase {
         let result = sut.consumeToken(ifTypeIs: .openParens)
         
         XCTAssertNotNil(result)
-        XCTAssertEqual(result?.value, "(")
-        XCTAssertEqual(result?.tokenType, .openParens)
-        XCTAssertEqual(result?.range, "(".startIndex..<"(".endIndex)
+        XCTAssertEqual(result?.tokenString, "(")
+        XCTAssertEqual(result, .openParens)
         XCTAssert(sut.isEof)
     }
     
@@ -75,7 +74,7 @@ class TokenizerTests: XCTestCase {
         
         bt.backtrack()
         
-        XCTAssertEqual(sut.token().tokenType, .openParens)
+        XCTAssertEqual(sut.token(), .openParens)
     }
     
     func testBacktrackerWontWorkTwice() {
@@ -87,7 +86,7 @@ class TokenizerTests: XCTestCase {
         
         bt.backtrack()
         
-        XCTAssertEqual(sut.token().tokenType, .comma)
+        XCTAssertEqual(sut.token(), .comma)
     }
     
     func testBacktrackerWontEraseHasReadFirstTokenState() throws {
@@ -103,9 +102,9 @@ class TokenizerTests: XCTestCase {
     func testAdvanceOver() throws {
         sut = TokenizerLexer(input: "(,)")
         
-        XCTAssertEqual(try sut.advance(over: .openParens).tokenType, .openParens)
+        XCTAssertEqual(try sut.advance(over: .openParens), .openParens)
         
-        XCTAssertEqual(sut.token().tokenType, .comma)
+        XCTAssertEqual(sut.token(), .comma)
     }
     
     func testAdvanceOverFailed() {
@@ -131,9 +130,9 @@ class TokenizerTests: XCTestCase {
     func testAdvanceMatching() throws {
         sut = TokenizerLexer(input: "(,)")
         
-        XCTAssertEqual(try sut.advance(matching: { $0 == .openParens }).tokenType, .openParens)
+        XCTAssertEqual(try sut.advance(matching: { $0 == .openParens }), .openParens)
         
-        XCTAssertEqual(sut.token().tokenType, .comma)
+        XCTAssertEqual(sut.token(), .comma)
     }
     
     func testAdvanceMatchingFailed() {
@@ -150,7 +149,7 @@ class TokenizerTests: XCTestCase {
             sut.skipToken()
         }
         
-        XCTAssertEqual(sut.token().tokenType, .openParens)
+        XCTAssertEqual(sut.token(), .openParens)
     }
     
     func testBacktrackingWorksWithErrorsThrown() {
@@ -167,14 +166,14 @@ class TokenizerTests: XCTestCase {
             //
         }
         
-        XCTAssertEqual(sut.token().tokenType, .openParens)
+        XCTAssertEqual(sut.token(), .openParens)
         XCTAssertEqual(sut.lexer.inputIndex, sut.lexer.inputString.startIndex)
     }
     
     func testAllTokens() {
         sut = TokenizerLexer(input: "(,)")
         
-        let tokens = sut.allTokens().map { $0.tokenType }
+        let tokens = sut.allTokens()
         
         XCTAssertEqual(tokens, [.openParens, .comma, .closeParens])
     }
@@ -182,7 +181,7 @@ class TokenizerTests: XCTestCase {
     func testAllTokensSpaced() {
         sut = TokenizerLexer(input: " ( , ) ")
         
-        let tokens = sut.allTokens().map { $0.tokenType }
+        let tokens = sut.allTokens()
         
         XCTAssertEqual(tokens, [.openParens, .comma, .closeParens])
     }
@@ -190,9 +189,9 @@ class TokenizerTests: XCTestCase {
     func testAdvanceUntil() {
         sut = TokenizerLexer(input: "(,)")
         
-        sut.advance(until: { $0.tokenType == .closeParens })
+        sut.advance(until: { $0 == .closeParens })
         
-        XCTAssertEqual(sut.token().tokenType, .closeParens)
+        XCTAssertEqual(sut.token(), .closeParens)
     }
     
     func testAdvancesUntilStopsAtEndOfFile() {
@@ -200,7 +199,7 @@ class TokenizerTests: XCTestCase {
         
         sut.advance(until: { _ in false })
         
-        XCTAssertEqual(sut.token().tokenType, .eof)
+        XCTAssertEqual(sut.token(), .eof)
     }
     
     func testTokenMatches() {
@@ -223,9 +222,8 @@ class TokenizerTests: XCTestCase {
         
         try sut.lexer.advanceLength(1)
         
-        XCTAssertEqual(sut.token().value, ",")
-        XCTAssertEqual(sut.token().tokenType, .comma)
-        XCTAssertEqual(sut.token().range, sut.lexer.inputString.index("(,)".startIndex, offsetBy: 1)..<"(,".endIndex)
+        XCTAssertEqual(sut.token().tokenString, ",")
+        XCTAssertEqual(sut.token(), .comma)
     }
     
     func testMakeIterator() throws {
@@ -233,11 +231,56 @@ class TokenizerTests: XCTestCase {
         
         let iterator = sut.makeIterator()
         
-        XCTAssertEqual(iterator.next()?.value, "(")
-        XCTAssertEqual(iterator.next()?.value, ",")
-        XCTAssertEqual(iterator.next()?.value, ",")
-        XCTAssertEqual(iterator.next()?.value, ")")
+        XCTAssertEqual(iterator.next()?.tokenString, "(")
+        XCTAssertEqual(iterator.next()?.tokenString, ",")
+        XCTAssertEqual(iterator.next()?.tokenString, ",")
+        XCTAssertEqual(iterator.next()?.tokenString, ")")
         XCTAssertNil(iterator.next())
+    }
+    
+    func testAlternativeTokenizer() throws {
+        let sut = TokenizerLexer<TestStructToken>(input: "(.,.)")
+        
+        let tokens = sut.allTokens()
+        
+        XCTAssertEqual(tokens.count, 5)
+        XCTAssertEqual(tokens[0], TestStructToken(isEof: false, tokenString: "("))
+        XCTAssertEqual(tokens[1], TestStructToken(isEof: false, tokenString: "."))
+        XCTAssertEqual(tokens[2], TestStructToken(isEof: false, tokenString: ","))
+        XCTAssertEqual(tokens[3], TestStructToken(isEof: false, tokenString: "."))
+        XCTAssertEqual(tokens[4], TestStructToken(isEof: false, tokenString: ")"))
+    }
+}
+
+struct TestStructToken: TokenProtocol {
+    static var eofToken: TestStructToken = TestStructToken(isEof: true, tokenString: "")
+    
+    var isEof: Bool
+    var tokenString: Substring
+    
+    func length(in lexer: Lexer) -> Int {
+        return tokenString.count
+    }
+    
+    static func tokenType(at lexer: Lexer) -> TestStructToken? {
+        do {
+            if lexer.safeIsNextChar(equalTo: ".") {
+                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            }
+            if lexer.safeIsNextChar(equalTo: ",") {
+                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            }
+            if lexer.safeIsNextChar(equalTo: "(") {
+                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            }
+            if lexer.safeIsNextChar(equalTo: ")") {
+                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            }
+        } catch {
+            
+        }
+        
+        return nil
     }
 }
 
