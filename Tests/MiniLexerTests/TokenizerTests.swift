@@ -48,6 +48,18 @@ class TokenizerTests: XCTestCase {
         XCTAssert(sut.token(is: .openParens))
     }
     
+    func testTokenTypeIsType() {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(")
+        
+        XCTAssert(sut.tokenType(is: .openParens))
+    }
+    
+    func testTokenTypeMatches() {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(")
+        
+        XCTAssert(sut.tokenType(matches: { $0 == .openParens }))
+    }
+    
     func testConsumeTokenIfTypeIsMatching() {
         let sut = TokenizerLexer<FullToken<TestToken>>(input: "(")
         
@@ -107,10 +119,24 @@ class TokenizerTests: XCTestCase {
         XCTAssertEqual(sut.token(), .comma)
     }
     
+    func testAdvanceOverTokenType() throws {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(,)")
+        
+        XCTAssertEqual(try sut.advance(overTokenType: .openParens).tokenType, .openParens)
+        
+        XCTAssertEqual(sut.token().tokenType, .comma)
+    }
+    
     func testAdvanceOverFailed() {
         sut = TokenizerLexer(input: "(,)")
         
         XCTAssertThrowsError(try sut.advance(over: .comma))
+    }
+    
+    func testAdvanceOverTokenTypeFailed() {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(,)")
+        
+        XCTAssertThrowsError(try sut.advance(overTokenType: .comma))
     }
     
     func testAdvanceOverErrorMessage() {
@@ -118,6 +144,20 @@ class TokenizerTests: XCTestCase {
         
         do {
             try sut.advance(over: .comma)
+            XCTFail("Should have thrown")
+        } catch let error as LexerError {
+            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString),
+                           "Error at line 1 column 1: Expected token ',' but found '('")
+        } catch {
+            XCTFail("Unexpected error \(error)")
+        }
+    }
+    
+    func testAdvanceOverTokenTypeErrorMessage() {
+        let sut = TokenizerLexer<FullToken<TestToken>>(input: "(,)")
+        
+        do {
+            try sut.advance(overTokenType: .comma)
             XCTFail("Should have thrown")
         } catch let error as LexerError {
             XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString),

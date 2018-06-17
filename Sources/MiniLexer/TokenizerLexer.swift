@@ -63,14 +63,14 @@ open class TokenizerLexer<T: TokenProtocol> {
         readToken()
     }
     
-    /// Attempts to advance from the current point, reading a given token type.
+    /// Attempts to advance from the current point, reading a given token.
     /// If the token cannot be matched, an error is thrown.
     @discardableResult
-    public func advance(over tokenType: T) throws -> T {
+    public func advance(over token: T) throws -> T {
         ensureLexerIndexConsistent()
         
-        if current != tokenType {
-            throw lexer.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(current.tokenString)'")
+        if current != token {
+            throw lexer.syntaxError("Expected token '\(token.tokenString)' but found '\(current.tokenString)'")
         }
         
         recordingLexerState {
@@ -244,6 +244,21 @@ public extension TokenizerLexer where T: TokenWrapper {
     /// Return the current token's type
     public func tokenType() -> T.Token {
         return token().tokenType
+    }
+    
+    /// Attempts to advance from the current point, reading a given token type.
+    /// If the token cannot be matched, an error is thrown.
+    @discardableResult
+    public func advance(overTokenType tokenType: T.Token) throws -> T {
+        if self.tokenType() != tokenType {
+            throw lexer.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(self.tokenType().tokenString)'")
+        }
+        
+        recordingLexerState {
+            $0.skipWhitespace()
+        }
+        
+        return nextToken()
     }
     
     /// Consumes a given token type, if the current token matches the token type,
