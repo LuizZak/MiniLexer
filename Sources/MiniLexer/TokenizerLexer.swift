@@ -1,6 +1,8 @@
 /// A tokenizer lexer provides tokenization support by wrapping a bare text lexer
 /// with token recognition capabilities through a parametrized token type.
 open class TokenizerLexer<T: TokenProtocol> {
+    public typealias Token = T
+    
     /// Used to check and re-tokenize a lexer if its index is changed externally.
     private var lastLexerIndex: Lexer.Index?
     
