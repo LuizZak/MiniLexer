@@ -145,8 +145,6 @@ public final class Lexer {
     /// Parses the string by applying a given grammar rule on this lexer at the
     /// current position.
     /// Throws, if operation fails.
-    @_specialize(where G == GrammarRule)
-    @_specialize(where G == RecursiveGrammarRule)
     @inlinable
     public func parse<G: LexerGrammarRule>(with rule: G) throws -> G.Result {
         return try rule.consume(from: self)

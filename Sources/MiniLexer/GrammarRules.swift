@@ -111,7 +111,6 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
         _canConsume = rule.canConsume(from:)
     }
     
-    @_specialize(where T == Int)
     @inlinable
     public func consume(from lexer: Lexer) throws -> T {
         return try _consume(lexer)
