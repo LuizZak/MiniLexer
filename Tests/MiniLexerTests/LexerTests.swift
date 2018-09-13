@@ -190,4 +190,31 @@ class LexerTests: XCTestCase {
         
         XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
     }
+    
+    func testRangeMarker() throws {
+        let sut = Lexer(input: "abc")
+        let marker = sut.startRange()
+        try sut.advance()
+        
+        XCTAssertEqual(marker.range(), sut.inputString.startIndex..<sut.inputString.index(after: sut.inputString.startIndex))
+        XCTAssertEqual(marker.string(), "a")
+    }
+    
+    func testRangeMarkerEmpty() throws {
+        let sut = Lexer(input: "abc")
+        let marker = sut.startRange()
+        
+        XCTAssertEqual(marker.range(), sut.inputString.startIndex..<sut.inputString.startIndex)
+        XCTAssertEqual(marker.string(), "")
+    }
+    
+    func testRangeMarkerReverseIndex() throws {
+        let sut = Lexer(input: "abc")
+        try sut.advanceLength(2)
+        let marker = sut.startRange()
+        sut.rewindToStart()
+        
+        XCTAssertEqual(marker.range(), sut.inputString.startIndex..<sut.inputString.index(sut.inputString.startIndex, offsetBy: 2))
+        XCTAssertEqual(marker.string(), "ab")
+    }
 }

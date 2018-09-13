@@ -193,6 +193,11 @@ public final class Lexer {
         return Backtracker(lexer: self)
     }
     
+    /// Starts a textual range from the current position of this lexer
+    public func startRange() -> RangeMarker {
+        return RangeMarker(lexer: self)
+    }
+    
     // MARK: Character checking
     @inlinable
     public static func isDigit(_ c: Atom) -> Bool {
@@ -277,6 +282,38 @@ public final class Lexer {
         /// back to the point at which it was created.
         public func backtrack() {
             lexer.state = state
+        }
+    }
+    
+    /// Allows selecting ranges of a Lexer's input string
+    public class RangeMarker {
+        private let lexer: Lexer
+        private let state: LexerState
+        
+        init(lexer: Lexer) {
+            self.lexer = lexer
+            self.state = lexer.state
+        }
+        
+        /// Returns the string that fits the entire range from the start of this
+        /// marker up to the lexer's current input index.
+        ///
+        /// If the lexer's input index is less than the marker's initial index,
+        /// an empty string is returned.
+        public func string() -> String {
+            guard state.index != lexer.inputIndex else {
+                return ""
+            }
+            
+            return String(lexer.inputString[range()])
+        }
+        
+        /// Returns the closed range for this marker's range.
+        public func range() -> Range<Lexer.Index> {
+            let start = min(state.index, lexer.inputIndex)
+            let end = max(state.index, lexer.inputIndex)
+            
+            return start..<end
         }
     }
     
