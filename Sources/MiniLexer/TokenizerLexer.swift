@@ -49,7 +49,10 @@ open class TokenizerLexer<T: TokenProtocol> {
     public func skipToken() {
         ensureLexerIndexConsistent()
         
-        let length = current.length(in: lexer)
+        let length: Int = lexer.withTemporaryIndex {
+            lexer.skipWhitespace()
+            return current.length(in: lexer)
+        }
         if length > 0 {
             recordingLexerState {
                 do {

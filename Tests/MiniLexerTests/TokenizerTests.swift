@@ -334,6 +334,17 @@ class TokenizerTests: XCTestCase {
         XCTAssertEqual(tokens[1].range, " ( ".endIndex..<" ( ,".endIndex)
         XCTAssertEqual(tokens[2].range, " ( , ".endIndex..<" ( , )".endIndex)
     }
+    
+    func testSkipTokenWithLeadingWhitespace() {
+        let sut = TokenizerLexer<FullToken<TestTokenWithIdentifier>>(input: ", Array()")
+        
+        sut.skipToken()
+        sut.skipToken()
+        sut.skipToken()
+        sut.skipToken()
+        
+        XCTAssert(sut.isEof)
+    }
 }
 
 struct TestStructToken: TokenProtocol {
@@ -365,6 +376,60 @@ struct TestStructToken: TokenProtocol {
         }
         
         return nil
+    }
+}
+
+enum TestTokenWithIdentifier: String, TokenProtocol {
+    private static let identifierLexer = (.letter | "_") + (.letter | "_" | .digit)*
+    
+    case openParens = "("
+    case closeParens = ")"
+    case identifier
+    case comma
+    case eof
+    
+    static var eofToken = TestTokenWithIdentifier.eof
+    
+    var tokenString: String {
+        switch self {
+        case .openParens:
+            return "("
+        case .identifier:
+            return "identifier"
+        case .closeParens:
+            return ")"
+        case .comma:
+            return ","
+        case .eof:
+            return ""
+        }
+    }
+    
+    static func tokenType(at lexer: Lexer) -> TestTokenWithIdentifier? {
+        if lexer.safeIsNextChar(equalTo: "(") {
+            return .openParens
+        }
+        if lexer.safeIsNextChar(equalTo: ")") {
+            return .closeParens
+        }
+        if lexer.safeIsNextChar(equalTo: ",") {
+            return .comma
+        }
+        if lexer.safeNextCharPasses(with: Lexer.isLetter) {
+            return .identifier
+        }
+        return nil
+    }
+    
+    func length(in lexer: Lexer) -> Int {
+        switch self {
+        case .openParens, .closeParens, .comma:
+            return 1
+        case .identifier:
+            return TestTokenWithIdentifier.identifierLexer.maximumLength(in: lexer) ?? 0
+        case .eof:
+            return 0
+        }
     }
 }
 
