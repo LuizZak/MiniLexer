@@ -345,6 +345,14 @@ class TokenizerTests: XCTestCase {
         
         XCTAssert(sut.isEof)
     }
+    
+    func testTokenTypeIsAtBeginningOfGrammar() {
+        let sut = TokenizerLexer<FullToken<TestToken2>>(input: "0,0,0")
+        
+        XCTAssert(sut.tokenType(is: .integer))
+        XCTAssertNoThrow(try sut.advance(overTokenType: .integer))
+        XCTAssert(sut.tokenType(is: .comma))
+    }
 }
 
 struct TestStructToken: TokenProtocol {
@@ -474,5 +482,97 @@ enum TestToken: String, TokenProtocol {
         case .eof:
             return 0
         }
+    }
+}
+
+private enum TestToken2: TokenProtocol {
+    fileprivate static let floatGrammar: GrammarRule = ["-"] .. .digit+ .. ["." .. .digit+]
+    
+    case eof
+    case comma
+    case force
+    case color
+    case cw
+    case ccw
+    case integer
+    case float
+    
+    static var eofToken: TestToken2 = .eof
+    
+    var tokenString: String {
+        switch self {
+        case .eof:
+            return ""
+        case .comma:
+            return ","
+        case .force:
+            return "force"
+        case .color:
+            return "color"
+        case .cw:
+            return "cw"
+        case .ccw:
+            return "ccw"
+        case .integer:
+            return "<integer>"
+        case .float:
+            return "<float>"
+        }
+    }
+    
+    func length(in lexer: Lexer) -> Int {
+        switch self {
+        case .eof:
+            return 0
+        case .comma:
+            return 1
+        case .cw:
+            return 2
+        case .ccw:
+            return 3
+        case .force, .color:
+            return 5
+        case .integer:
+            return (GrammarRule.digit+).maximumLength(in: lexer) ?? 0
+        case .float:
+            return TestToken2.floatGrammar.maximumLength(in: lexer) ?? 0
+        }
+    }
+    
+    static func tokenType(at lexer: Lexer) -> TestToken2? {
+        
+        if lexer.checkNext(matches: ",") {
+            return .comma
+        }
+        
+        if lexer.checkNext(matches: "force") {
+            return .force
+        }
+        if lexer.checkNext(matches: "color") {
+            return .color
+        }
+        if lexer.checkNext(matches: "cw") {
+            return .cw
+        }
+        if lexer.checkNext(matches: "ccw") {
+            return .ccw
+        }
+        
+        if lexer.safeNextCharPasses(with: Lexer.isDigit) {
+            let backtracker = lexer.backtracker()
+            lexer.advance(while: Lexer.isDigit)
+            
+            if !lexer.safeIsNextChar(equalTo: ".") {
+                return .integer
+            }
+            
+            backtracker.backtrack()
+        }
+        
+        if TestToken2.floatGrammar.passes(in: lexer) {
+            return .float
+        }
+        
+        return .eof
     }
 }

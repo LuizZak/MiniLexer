@@ -338,6 +338,8 @@ extension FullToken: TokenProtocol {
             return nil
         }
         
+        bt.backtrack()
+        
         let length = t.length(in: lexer)
         
         bt.backtrack()
