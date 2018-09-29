@@ -168,7 +168,7 @@ public extension Lexer {
     /// URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
     /// ```
     @inlinable
-    public func URI() throws -> Substring {
+    func URI() throws -> Substring {
         return try consumeString { lexer in
             try lexer.scheme()
             try lexer.advance(expectingCurrent: ":")
@@ -192,7 +192,7 @@ public extension Lexer {
     ///               / path-empty
     /// ```
     @inlinable
-    public func hierPart() throws {
+    func hierPart() throws {
         // Implementation detail: matches rules for relativePart()
         try relativePart()
     }
@@ -201,7 +201,7 @@ public extension Lexer {
     /// absolute-URI  = scheme ":" hier-part [ "?" query ]
     /// ```
     @inlinable
-    public func absoluteURI() throws {
+    func absoluteURI() throws {
         try scheme()
         try advance(expectingCurrent: ":")
         try hierPart()
@@ -216,7 +216,7 @@ public extension Lexer {
     /// relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
     /// ```
     @inlinable
-    public func relativeRef() throws {
+    func relativeRef() throws {
         try relativePart()
         
         if safeIsNextChar(equalTo: "?") {
@@ -236,7 +236,7 @@ public extension Lexer {
     ///               / path-empty
     /// ```
     @inlinable
-    public func relativePart() throws {
+    func relativePart() throws {
         try advance(expectingCurrent: "/")
         
         if safeIsNextChar(equalTo: "/") {
@@ -259,7 +259,7 @@ public extension Lexer {
     /// scheme        = ALPHA *( ALPHA / DIGIT / "+" / "-" / "." )
     /// ```
     @inlinable
-    public func scheme() throws {
+    func scheme() throws {
         try advance(validatingCurrent: Lexer.isLetter)
         
         advance(while: { Lexer.isAlphanumeric($0) || $0 == "+" || $0 == "-" || $0 == "." })
@@ -269,7 +269,7 @@ public extension Lexer {
     /// authority     = [ userinfo "@" ] host [ ":" port ]
     /// ```
     @inlinable
-    public func authority() throws {
+    func authority() throws {
         // Try to find '@', then match user info
         if findNext("@") != nil {
             optional { lexer in
@@ -291,7 +291,7 @@ public extension Lexer {
     /// userinfo      = *( unreserved / pct-encoded / sub-delims / ":" )
     /// ```
     @inlinable
-    public func userinfo() throws {
+    func userinfo() throws {
         try expect(atLeast: 0) { lexer in
             let c = try lexer.peek()
             if Lexer.isUnreserved(c) || Lexer.isSubDelim(c) || c == ":" {
@@ -308,7 +308,7 @@ public extension Lexer {
     /// host          = IP-literal / IPv4address / reg-name
     /// ```
     @inlinable
-    public func host() throws {
+    func host() throws {
         if optional(using: { lexer -> Bool in
             try lexer.regName()
             return true
@@ -330,7 +330,7 @@ public extension Lexer {
     /// port          = *DIGIT
     /// ```
     @inlinable
-    public func port() {
+    func port() {
         advance(while: Lexer.isDigit)
     }
     
@@ -352,7 +352,7 @@ public extension Lexer {
     ///               / [ *6( h16 ":" ) h16 ] "::"
     /// ```
     @inlinable
-    public func ipLiteral() throws {
+    func ipLiteral() throws {
         try advance(expectingCurrent: "[")
         
         advance(while: { $0 != "]" })
@@ -364,7 +364,7 @@ public extension Lexer {
     /// h16           = 1*4HEXDIG
     /// ```
     @inlinable
-    public func h16() throws {
+    func h16() throws {
         try expect(between: 1, max: 4) { lexer -> Bool in
             if !lexer.safeNextCharPasses(with: Lexer.isHexdig) {
                 return false
@@ -379,7 +379,7 @@ public extension Lexer {
     /// ls32          = ( h16 ":" h16 ) / IPv4address
     /// ```
     @inlinable
-    public func ls32() throws {
+    func ls32() throws {
         do {
             try ipv4Address()
         } catch {
@@ -393,7 +393,7 @@ public extension Lexer {
     /// IPv4address   = dec-octet "." dec-octet "." dec-octet "." dec-octet
     /// ```
     @inlinable
-    public func ipv4Address() throws {
+    func ipv4Address() throws {
         for _ in 0..<3 {
             try decOctet()
             try advance(expectingCurrent: ".")
@@ -410,7 +410,7 @@ public extension Lexer {
     ///               / "25" %x30-35          ; 250-255
     /// ```
     @inlinable
-    public func decOctet() throws {
+    func decOctet() throws {
         let i = try parse(with: Int.tokenLexer)
         if i < 0 || i > 255 {
             throw LexerError.miscellaneous("Expected integer between 0 and 255, found \(i) instead.")
@@ -421,7 +421,7 @@ public extension Lexer {
     /// reg-name      = *( unreserved / pct-encoded / sub-delims )
     /// ```
     @inlinable
-    public func regName() throws {
+    func regName() throws {
         try expect(atLeast: 0) { (lexer) -> Bool in
             if lexer.safeNextCharPasses(with: Lexer.isUnreserved) ||
                 lexer.safeNextCharPasses(with: Lexer.isSubDelim) {
@@ -444,7 +444,7 @@ public extension Lexer {
     ///               / path-empty      ; zero characters
     /// ```
     @inlinable
-    public func path() throws {
+    func path() throws {
         return try matchFirst(withEither: { lexer in
             try lexer.pathNoScheme()
         }, { lexer in
@@ -462,7 +462,7 @@ public extension Lexer {
     /// path-abempty  = *( "/" segment )
     /// ```
     @inlinable
-    public func pathAbEmpty() throws {
+    func pathAbEmpty() throws {
         try expect(atLeast: 0, of: { (lexer) -> Bool in
             try lexer.advance(expectingCurrent: "/")
             try segment()
@@ -474,7 +474,7 @@ public extension Lexer {
     /// path-absolute = "/" [ segment-nz *( "/" segment ) ]
     /// ```
     @inlinable
-    public func pathAbsolute() throws {
+    func pathAbsolute() throws {
         try advance(expectingCurrent: "/")
         
         optional { lexer -> Bool in
@@ -493,7 +493,7 @@ public extension Lexer {
     /// path-noscheme = segment-nz-nc *( "/" segment )
     /// ```
     @inlinable
-    public func pathNoScheme() throws {
+    func pathNoScheme() throws {
         try segmentNzNc()
         try expect(atLeast: 0, of: { (lexer) -> Bool in
             try lexer.advance(expectingCurrent: "/")
@@ -506,7 +506,7 @@ public extension Lexer {
     /// path-rootless = segment-nz *( "/" segment )
     /// ```
     @inlinable
-    public func pathRootless() throws {
+    func pathRootless() throws {
         try segmentNz()
         try expect(atLeast: 0, of: { (lexer) -> Bool in
             try lexer.advance(expectingCurrent: "/")
@@ -519,7 +519,7 @@ public extension Lexer {
     /// path-empty    = 0<pchar>
     /// ```
     @inlinable
-    public func pathEmpty() throws {
+    func pathEmpty() throws {
         do {
             try pchar()
             
@@ -534,7 +534,7 @@ public extension Lexer {
     /// segment       = *pchar
     /// ```
     @inlinable
-    public func segment() throws {
+    func segment() throws {
         try expect(atLeast: 0, of: { lexer in
             try lexer.pchar()
             return true
@@ -545,7 +545,7 @@ public extension Lexer {
     /// segment-nz    = 1*pchar
     /// ```
     @inlinable
-    public func segmentNz() throws {
+    func segmentNz() throws {
         try expect(atLeast: 1, of: { lexer in
             try lexer.pchar()
             return true
@@ -557,7 +557,7 @@ public extension Lexer {
     /// ; non-zero-length segment without any colon ":"
     /// ```
     @inlinable
-    public func segmentNzNc() throws {
+    func segmentNzNc() throws {
         try expect(atLeast: 1, of: { lexer in
             let p = try lexer.consumeString { try $0.pchar() }
             return p != ":"
@@ -568,7 +568,7 @@ public extension Lexer {
     /// query         = *( pchar / "/" / "?" )
     /// ```
     @inlinable
-    public func query() throws {
+    func query() throws {
         // !Implementation detail: Matches 'fragment' rule.
         try fragment()
     }
@@ -577,7 +577,7 @@ public extension Lexer {
     /// fragment      = *( pchar / "/" / "?" )
     /// ```
     @inlinable
-    public func fragment() throws {
+    func fragment() throws {
         try expect(atLeast: 0) { (lexer) -> Bool in
             let p = try lexer.peek()
             if p == "/" || p == "?" {
@@ -595,7 +595,7 @@ public extension Lexer {
     /// pct-encoded   = "%" HEXDIG HEXDIG
     /// ```
     @inlinable
-    public func pctEncoded() throws {
+    func pctEncoded() throws {
         if !safeIsNextChar(equalTo: "%") {
             throw LexerError.genericParseError
         }
@@ -610,7 +610,7 @@ public extension Lexer {
     ///     unreserved / pct-encoded / sub-delims / ":" / "@"
     /// ```
     @inlinable
-    public func pchar() throws {
+    func pchar() throws {
         let p = try peek()
         if Lexer.isUnreserved(p) || Lexer.isSubDelim(p) || p == ":" || p == "@" {
             try advance()
@@ -627,7 +627,7 @@ public extension Lexer {
     /// unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
     /// ```
     @inlinable
-    public static func isUnreserved(_ c: Atom) -> Bool {
+    static func isUnreserved(_ c: Atom) -> Bool {
         return Lexer.isAlphanumeric(c) || c == "-" || c == "." || c == "_" || c == "-"
     }
     
@@ -635,7 +635,7 @@ public extension Lexer {
     /// reserved = gen-delims / sub-delims
     /// ```
     @inlinable
-    public static func isReserved(_ c: Atom) -> Bool {
+    static func isReserved(_ c: Atom) -> Bool {
         return isGenDelim(c) || isSubDelim(c)
     }
     
@@ -643,7 +643,7 @@ public extension Lexer {
     /// gen-delims = ":" / "/" / "?" / "#" / "[" / "]" / "@"
     /// ```
     @inlinable
-    public static func isGenDelim(_ c: Atom) -> Bool {
+    static func isGenDelim(_ c: Atom) -> Bool {
         return
             c == ":" || c == "/" || c == "?" ||
                 c == "#" || c == "[" || c == "]" || c == "@"
@@ -654,7 +654,7 @@ public extension Lexer {
     ///            / "*" / "+" / "," / ";" / "="
     /// ```
     @inlinable
-    public static func isSubDelim(_ c: Atom) -> Bool {
+    static func isSubDelim(_ c: Atom) -> Bool {
         return
             c == "!" || c == "$" || c == "&" || c == "'" || c == "(" ||
                 c == ")" || c == "*" || c == "+" || c == "," || c == ";" || c == "="
@@ -668,7 +668,7 @@ public extension Lexer {
     /// HEXDIG         =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
     /// ```
     @inlinable
-    public static func isHexdig(_ c: Atom) -> Bool {
+    static func isHexdig(_ c: Atom) -> Bool {
         return Lexer.isDigit(c) || (c >= "a" && c <= "f") || (c >= "A" && c <= "F")
     }
 }

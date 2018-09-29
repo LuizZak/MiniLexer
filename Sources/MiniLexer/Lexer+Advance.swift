@@ -6,7 +6,7 @@ public extension Lexer {
     /// telling whether the advance was successful or whether the current index
     /// is pointing at the end of the string buffer
     @inlinable
-    public func safeAdvance() -> Bool {
+    func safeAdvance() -> Bool {
         if let next = inputSource.index(inputIndex, offsetBy: 1, limitedBy: inputSource.endIndex) {
             inputIndex = next
             return true
@@ -20,7 +20,7 @@ public extension Lexer {
     /// The char under `peek()` will be the char that the predicate returned `false`
     /// for.
     @inlinable
-    public func advance(while predicate: (Atom) throws -> Bool) rethrows {
+    func advance(while predicate: (Atom) throws -> Bool) rethrows {
         while try !isEof() && predicate(unsafePeek()) {
             unsafeAdvance()
         }
@@ -32,7 +32,7 @@ public extension Lexer {
     /// The char under `peek()` will be the char that the predicate returned `true`
     /// for.
     @inlinable
-    public func advance(until predicate: (Atom) throws -> Bool) rethrows {
+    func advance(until predicate: (Atom) throws -> Bool) rethrows {
         while try !isEof() && !predicate(unsafePeek()) {
             unsafeAdvance()
         }
@@ -40,7 +40,7 @@ public extension Lexer {
     
     /// Returns if the next characters in the read buffer equal to `match` accordin
     /// to the specified string comparison rules.
-    public func checkNext<S: StringProtocol>(matches match: S, options: String.CompareOptions = .literal) -> Bool {
+    func checkNext<S: StringProtocol>(matches match: S, options: String.CompareOptions = .literal) -> Bool {
         guard let endIndex = inputString.index(inputIndex, offsetBy: match.count, limitedBy: inputString.endIndex) else {
             return false
         }
@@ -53,7 +53,7 @@ public extension Lexer {
     /// current stream position does not match the given string.
     /// By default, the lexer does a `literal`, character-by-character match,
     /// which can be overriden by specifying the `options` parameter.
-    public func advanceIf<S: StringProtocol>(equals: S, options: String.CompareOptions = .literal) -> Bool {
+    func advanceIf<S: StringProtocol>(equals: S, options: String.CompareOptions = .literal) -> Bool {
         guard let endIndex = inputString.index(inputIndex, offsetBy: equals.count, limitedBy: inputString.endIndex) else {
             return false
         }
@@ -75,7 +75,7 @@ public extension Lexer {
     /// Throws an EoF error if the current offset is at the end of the character
     /// stream.
     @inlinable
-    public func advance() throws {
+    func advance() throws {
         if isEof() {
             throw endOfStringError()
         }
@@ -95,7 +95,7 @@ public extension Lexer {
     ///
     /// - precondition: `n > 0`
     @inlinable
-    public func advanceLength(_ n: Int) throws {
+    func advanceLength(_ n: Int) throws {
         precondition(n > 0)
         if isEof(offsetBy: n - 1) {
             throw endOfStringError()
@@ -109,7 +109,7 @@ public extension Lexer {
     /// The method throws an error if the current character is not the expected
     /// one, or advances to the next position, if it is.
     @inlinable
-    public func advance(expectingCurrent atom: Atom) throws {
+    func advance(expectingCurrent atom: Atom) throws {
         let prev = inputIndex
         let n = try next()
         if n != atom {
@@ -126,7 +126,7 @@ public extension Lexer {
     ///
     /// Calling when `isEoF() == true` results in an error thrown
     @inlinable
-    public func advance(validatingCurrent: (Atom) throws -> Bool) throws {
+    func advance(validatingCurrent: (Atom) throws -> Bool) throws {
         let prev = inputIndex
         let n = try next()
         if try !validatingCurrent(n) {
@@ -137,7 +137,7 @@ public extension Lexer {
     
     /// If the next characters in the read buffer do not ammount to `match`, an
     /// error is thrown.
-    public func expect<S: StringProtocol>(match: S, options: String.CompareOptions = .literal) throws {
+    func expect<S: StringProtocol>(match: S, options: String.CompareOptions = .literal) throws {
         if !advanceIf(equals: match, options: options) {
             throw unexpectedStringError("Expected '\(match)'")
         }

@@ -237,24 +237,24 @@ open class TokenizerLexer<T: TokenProtocol> {
 public extension TokenizerLexer where T: TokenWrapper {
     
     /// Returns `true` iff the current token is the one provided.
-    public func tokenType(is type: T.Token) -> Bool {
+    func tokenType(is type: T.Token) -> Bool {
         return tokenType() == type
     }
     
     /// Returns `true` if the current token type passes a given predicate
-    public func tokenType(matches predicate: (T.Token) -> Bool) -> Bool {
+    func tokenType(matches predicate: (T.Token) -> Bool) -> Bool {
         return predicate(tokenType())
     }
     
     /// Return the current token's type
-    public func tokenType() -> T.Token {
+    func tokenType() -> T.Token {
         return token().tokenType
     }
     
     /// Attempts to advance from the current point, reading a given token type.
     /// If the token cannot be matched, an error is thrown.
     @discardableResult
-    public func advance(overTokenType tokenType: T.Token) throws -> T {
+    func advance(overTokenType tokenType: T.Token) throws -> T {
         if self.tokenType() != tokenType {
             throw lexer.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(self.tokenType().tokenString)'")
         }
@@ -272,7 +272,7 @@ public extension TokenizerLexer where T: TokenWrapper {
     /// Returns the token read, or nil, in case the current token is not of the
     /// provided type.
     @discardableResult
-    public func consumeToken(ifTypeIs type: T.Token) -> T? {
+    func consumeToken(ifTypeIs type: T.Token) -> T? {
         let tok = self.token()
         
         if tok.tokenType != type {

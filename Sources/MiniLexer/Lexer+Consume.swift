@@ -6,7 +6,7 @@ public extension Lexer {
     /// The char under `peek()` will be the char that the predicate returned `false`
     /// for.
     @inlinable
-    public func consume(while predicate: (Atom) throws -> Bool) rethrows -> Substring {
+    func consume(while predicate: (Atom) throws -> Bool) rethrows -> Substring {
         let start = inputIndex
         try advance(while: predicate)
         return inputString[start..<inputIndex]
@@ -17,7 +17,7 @@ public extension Lexer {
     /// Returns an empty string, if the current character is already pointing at
     /// the end of the buffer.
     @inlinable
-    public func consumeRemaining() -> Substring {
+    func consumeRemaining() -> Substring {
         return consumeString { $0.inputIndex = $0.endIndex }
     }
     
@@ -27,7 +27,7 @@ public extension Lexer {
     /// The char under `peek()` will be the char that the predicate returned `true`
     /// for.
     @inlinable
-    public func consume(until predicate: (Atom) throws -> Bool) rethrows -> Substring {
+    func consume(until predicate: (Atom) throws -> Bool) rethrows -> Substring {
         let start = inputIndex
         try advance(until: predicate)
         return inputString[start..<inputIndex]
@@ -38,7 +38,7 @@ public extension Lexer {
     /// on this lexer.
     /// If no index change is made, an empty string is returned.
     @inlinable
-    public func consumeString(performing block: (Lexer) throws -> Void) rethrows -> Substring {
+    func consumeString(performing block: (Lexer) throws -> Void) rethrows -> Substring {
         let start = inputIndex
         try block(self)
         return inputString[start..<inputIndex]
@@ -52,7 +52,7 @@ public extension Lexer {
     ///
     /// - precondition: `n > 0`
     @inlinable
-    public func consumeLength(_ n: Int) throws -> Substring {
+    func consumeLength(_ n: Int) throws -> Substring {
         precondition(n > 0)
         if isEof(offsetBy: n - 1) {
             throw endOfStringError()

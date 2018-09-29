@@ -54,7 +54,7 @@ public extension LexerGrammarRule {
         }
     }
     
-    public func passes(in lexer: Lexer) -> Bool {
+    func passes(in lexer: Lexer) -> Bool {
         do {
             _=try lexer.withTemporaryIndex {
                 try stepThroughApplying(on: lexer)
@@ -301,12 +301,24 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             
             return
         case .sequence(let rules):
-            for (i, rule) in rules.enumerated() {
-                try rule.stepThroughApplying(on: lexer)
+            guard let first = rules.first else {
+                return
+            }
+            
+            try first.stepThroughApplying(on: lexer)
+            
+            for rule in rules.dropFirst() {
+                let whitespaceBacktrack = lexer.backtracker()
                 
                 // Skip whitespace between tokens
-                if i < rules.count - 1 {
-                    lexer.skipWhitespace()
+                lexer.skipWhitespace()
+                
+                let startIndex = lexer.inputIndex
+                try rule.stepThroughApplying(on: lexer)
+                
+                // If no tokens where consumed, rewind back from whitespace
+                if startIndex == lexer.inputIndex {
+                    whitespaceBacktrack.backtrack()
                 }
             }
             

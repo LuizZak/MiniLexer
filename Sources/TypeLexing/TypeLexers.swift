@@ -2,7 +2,7 @@ import Foundation
 import MiniLexer
 
 public extension SignedInteger where Self: FixedWidthInteger {
-    public static var tokenLexer: AnyGrammarRule<Self> {
+    static var tokenLexer: AnyGrammarRule<Self> {
         return AnyGrammarRule(rule: ["-"] + .digit+) { result, index in
             guard let value = Self.init(result) else {
                 throw LexerError.syntaxError(index, "Could not parse \(self) from string \(result)")
@@ -14,7 +14,7 @@ public extension SignedInteger where Self: FixedWidthInteger {
 }
 
 public extension UnsignedInteger where Self: FixedWidthInteger {
-    public static var tokenLexer: AnyGrammarRule<Self> {
+    static var tokenLexer: AnyGrammarRule<Self> {
         return AnyGrammarRule(rule: .digit+) { result, index in
             guard let value = Self(result) else {
                 throw LexerError.syntaxError(index, "Could not parse \(self) from string \(result)")
@@ -26,7 +26,7 @@ public extension UnsignedInteger where Self: FixedWidthInteger {
 }
 
 public extension Float {
-    public static var tokenLexer: AnyGrammarRule<Float> {
+    static var tokenLexer: AnyGrammarRule<Float> {
         let rule: GrammarRule =
             ["-"] + .digit+ + ["." + .digit+] + [("e" | "E") + ["+" | "-"] + .digit+]
         
@@ -41,7 +41,7 @@ public extension Float {
 }
 
 public extension Double {
-    public static var tokenLexer: AnyGrammarRule<Double> {
+    static var tokenLexer: AnyGrammarRule<Double> {
         let rule: GrammarRule =
             ["-"] + .digit+ + ["." + .digit+] + [("e" | "E") + ["+" | "-"] + .digit+]
         
