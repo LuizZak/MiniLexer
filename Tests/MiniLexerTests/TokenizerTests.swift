@@ -353,6 +353,16 @@ class TokenizerTests: XCTestCase {
         XCTAssertNoThrow(try sut.advance(overTokenType: .integer))
         XCTAssert(sut.tokenType(is: .comma))
     }
+    
+    func testAllTokensAtBeginningOfGrammar() {
+        let sut = TokenizerLexer<FullToken<TestToken2>>(input: "-270 0")
+        
+        let all = sut.allTokens()
+        
+        XCTAssertEqual(all.count, 2)
+        XCTAssertEqual(all[0].value, "-270")
+        XCTAssertEqual(all[1].value, "0")
+    }
 }
 
 struct TestStructToken: TokenProtocol {

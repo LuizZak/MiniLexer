@@ -144,6 +144,13 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertNil(rule.maximumLength(in: lexerNonMatching))
     }
     
+    func testGrammarRuleMaximumLengthIgnoresWhitespaceAfterToken() {
+        let rule: GrammarRule = ["-"] .. .digit+ .. ["."]
+        let lexer = Lexer(input: "-270 0")
+        
+        XCTAssertEqual(rule.maximumLength(in: lexer), 4)
+    }
+    
     func testGrammarRulePassesIn() {
         let rule = GrammarRule.digit
         let lexerMatching = Lexer(input: "123")
