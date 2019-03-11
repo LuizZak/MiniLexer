@@ -10,5 +10,5 @@ pool:
   vmImage: 'macOS-10.13'
 
 steps:
-- bash: 'sudo xcode-select -s $XCODE_10_DEVELOPER_DIR'
+- bash: 'sudo xcode-select -s /Applications/Xcode_10.1.app/Contents/Developer'
 - bash: 'swift test'
