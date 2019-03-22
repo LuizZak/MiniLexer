@@ -1,5 +1,7 @@
 ## MiniLexer
 
+[![Build Status](https://dev.azure.com/luiz-fs/MiniLexer/_apis/build/status/LuizZak.MiniLexer?branchName=master)](https://dev.azure.com/luiz-fs/MiniLexer/_build/latest?definitionId=2&branchName=master)
+
 A teeny-tiny-weeny lexer written in Swift available as a Swift Package.  
 Should be present in any programmer-who-likes-to-write-quick-script's toolbelt.
 
