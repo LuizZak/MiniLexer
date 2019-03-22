@@ -269,7 +269,7 @@ public final class Lexer {
     }
     
     /// Allows backtracking changes to a Lexer's state
-    public class Backtracker {
+    public struct Backtracker {
         private let lexer: Lexer
         private let state: LexerState
         
