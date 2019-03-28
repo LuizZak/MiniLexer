@@ -156,7 +156,7 @@ public final class Lexer {
     public func withTemporaryIndex<T>(changes: () throws -> T) rethrows -> T {
         let backtrack = backtracker()
         defer {
-            backtrack.backtrack()
+            backtrack.backtrack(lexer: self)
         }
         return try changes()
     }
@@ -172,7 +172,7 @@ public final class Lexer {
         do {
             return try changes()
         } catch {
-            backtrack.backtrack()
+            backtrack.backtrack(lexer: self)
             throw error
         }
     }
@@ -194,6 +194,7 @@ public final class Lexer {
     }
     
     /// Starts a textual range from the current position of this lexer
+    @inlinable
     public func startRange() -> RangeMarker {
         return RangeMarker(lexer: self)
     }
@@ -270,26 +271,28 @@ public final class Lexer {
     
     /// Allows backtracking changes to a Lexer's state
     public struct Backtracker {
-        private let lexer: Lexer
         private let state: LexerState
         
         init(lexer: Lexer) {
-            self.lexer = lexer
             self.state = lexer.state
         }
         
         /// Backtracks the state of the lexer associated with this backtracker
         /// back to the point at which it was created.
-        public func backtrack() {
+        public func backtrack(lexer: Lexer) {
             lexer.state = state
         }
     }
     
     /// Allows selecting ranges of a Lexer's input string
-    public class RangeMarker {
-        private let lexer: Lexer
-        private let state: LexerState
+    public struct RangeMarker {
+        @usableFromInline
+        let lexer: Lexer
         
+        @usableFromInline
+        let state: LexerState
+        
+        @usableFromInline
         init(lexer: Lexer) {
             self.lexer = lexer
             self.state = lexer.state
@@ -300,15 +303,13 @@ public final class Lexer {
         ///
         /// If the lexer's input index is less than the marker's initial index,
         /// an empty string is returned.
-        public func string() -> String {
-            guard state.index != lexer.inputIndex else {
-                return ""
-            }
-            
-            return String(lexer.inputString[range()])
+        @inlinable
+        public func string() -> Substring {
+            return lexer.inputString[range()]
         }
         
         /// Returns the closed range for this marker's range.
+        @inlinable
         public func range() -> Range<Lexer.Index> {
             let start = min(state.index, lexer.inputIndex)
             let end = max(state.index, lexer.inputIndex)
@@ -317,7 +318,9 @@ public final class Lexer {
         }
     }
     
-    private struct LexerState {
+    @usableFromInline
+    struct LexerState {
+        @usableFromInline
         var index: Lexer.Index
     }
     

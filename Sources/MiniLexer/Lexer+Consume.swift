@@ -7,9 +7,9 @@ public extension Lexer {
     /// for.
     @inlinable
     func consume(while predicate: (Atom) throws -> Bool) rethrows -> Substring {
-        let start = inputIndex
+        let index = inputIndex
         try advance(while: predicate)
-        return inputString[start..<inputIndex]
+        return inputString[index..<inputIndex]
     }
     
     /// Consumes the entire buffer from the current point up until the last
@@ -18,7 +18,11 @@ public extension Lexer {
     /// the end of the buffer.
     @inlinable
     func consumeRemaining() -> Substring {
-        return consumeString { $0.inputIndex = $0.endIndex }
+        defer {
+            inputIndex = endIndex
+        }
+        
+        return inputString[inputIndex..<endIndex]
     }
     
     /// Consumes the input string while a given predicate returns false.
@@ -28,9 +32,9 @@ public extension Lexer {
     /// for.
     @inlinable
     func consume(until predicate: (Atom) throws -> Bool) rethrows -> Substring {
-        let start = inputIndex
+        let index = inputIndex
         try advance(until: predicate)
-        return inputString[start..<inputIndex]
+        return inputString[index..<inputIndex]
     }
     
     /// Returns a string that starts from the current input index, all the way
@@ -39,9 +43,9 @@ public extension Lexer {
     /// If no index change is made, an empty string is returned.
     @inlinable
     func consumeString(performing block: (Lexer) throws -> Void) rethrows -> Substring {
-        let start = inputIndex
+        let range = startRange()
         try block(self)
-        return inputString[start..<inputIndex]
+        return range.string()
     }
 }
 

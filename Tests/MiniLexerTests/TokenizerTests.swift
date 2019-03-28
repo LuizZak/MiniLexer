@@ -576,7 +576,7 @@ private enum TestToken2: TokenProtocol {
                 return .integer
             }
             
-            backtracker.backtrack()
+            backtracker.backtrack(lexer: lexer)
         }
         
         if TestToken2.floatGrammar.passes(in: lexer) {

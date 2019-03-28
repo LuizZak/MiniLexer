@@ -318,7 +318,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
                 
                 // If no tokens where consumed, rewind back from whitespace
                 if startIndex == lexer.inputIndex {
-                    whitespaceBacktrack.backtrack()
+                    whitespaceBacktrack.backtrack(lexer: lexer)
                 }
             }
             
@@ -343,11 +343,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
                 return
             }
             
-            do {
-                try subRule.stepThroughApplying(on: lexer)
-            } catch {
-                
-            }
+            try? subRule.stepThroughApplying(on: lexer)
             
         case .char(let ch):
             try lexer.advance(expectingCurrent: ch)
@@ -443,8 +439,11 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
         case .char(let ch):
             return lexer.safeIsNextChar(equalTo: ch)
             
-        case .keyword:
-            return !lexer.isEof()
+        case .keyword(""):
+            return true
+            
+        case .keyword(let word):
+            return word.unicodeScalars.first == (try? lexer.peek())
             
         case .namedRule(_, let rule),
              .oneOrMore(let rule):

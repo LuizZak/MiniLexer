@@ -38,7 +38,7 @@ public extension Lexer {
         }
     }
     
-    /// Returns if the next characters in the read buffer equal to `match` accordin
+    /// Returns if the next characters in the read buffer equal to `match` according
     /// to the specified string comparison rules.
     func checkNext<S: StringProtocol>(matches match: S, options: String.CompareOptions = .literal) -> Bool {
         guard let endIndex = inputString.index(inputIndex, offsetBy: match.count, limitedBy: inputString.endIndex) else {
@@ -126,10 +126,10 @@ public extension Lexer {
     ///
     /// Calling when `isEoF() == true` results in an error thrown
     @inlinable
-    func advance(validatingCurrent: (Atom) throws -> Bool) throws {
+    func advance(validatingCurrent predicate: (Atom) throws -> Bool) throws {
         let prev = inputIndex
         let n = try next()
-        if try !validatingCurrent(n) {
+        if try !predicate(n) {
             inputIndex = prev
             throw unexpectedCharacterError(char: n, "Unexpected \(n)")
         }

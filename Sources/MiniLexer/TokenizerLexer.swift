@@ -338,11 +338,11 @@ extension FullToken: TokenProtocol {
             return nil
         }
         
-        bt.backtrack()
+        bt.backtrack(lexer: lexer)
         
         let length = t.length(in: lexer)
         
-        bt.backtrack()
+        bt.backtrack(lexer: lexer)
         
         if length > 0 {
             let range = lexer.inputIndex..<lexer.inputString.index(lexer.inputIndex, offsetBy: length)

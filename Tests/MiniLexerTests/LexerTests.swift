@@ -174,7 +174,7 @@ class LexerTests: XCTestCase {
         let bt = sut.backtracker()
         try sut.advance()
         
-        bt.backtrack()
+        bt.backtrack(lexer: sut)
         
         XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
     }
@@ -183,10 +183,10 @@ class LexerTests: XCTestCase {
         let sut = Lexer(input: "abc")
         let bt = sut.backtracker()
         try sut.advance()
-        bt.backtrack()
+        bt.backtrack(lexer: sut)
         try sut.advance()
         
-        bt.backtrack()
+        bt.backtrack(lexer: sut)
         
         XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
     }
