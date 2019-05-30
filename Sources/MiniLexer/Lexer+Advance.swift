@@ -1,4 +1,6 @@
+#if canImport(Foundation)
 import Foundation
+#endif
 
 // MARK: - Safe operations
 public extension Lexer {
@@ -38,6 +40,8 @@ public extension Lexer {
         }
     }
     
+    #if canImport(Foundation)
+    
     /// Returns if the next characters in the read buffer equal to `match` according
     /// to the specified string comparison rules.
     func checkNext<S: StringProtocol>(matches match: S, options: String.CompareOptions = .literal) -> Bool {
@@ -53,12 +57,12 @@ public extension Lexer {
     /// current stream position does not match the given string.
     /// By default, the lexer does a `literal`, character-by-character match,
     /// which can be overriden by specifying the `options` parameter.
-    func advanceIf<S: StringProtocol>(equals: S, options: String.CompareOptions = .literal) -> Bool {
-        guard let endIndex = inputString.index(inputIndex, offsetBy: equals.count, limitedBy: inputString.endIndex) else {
+    func advanceIf<S: StringProtocol>(equals match: S, options: String.CompareOptions = .literal) -> Bool {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: match.count, limitedBy: inputString.endIndex) else {
             return false
         }
         
-        if inputString[inputIndex..<endIndex].compare(equals, options: options) == .orderedSame {
+        if inputString[inputIndex..<endIndex].compare(match, options: options) == .orderedSame {
             // Match! Advance stream and proceed...
             inputIndex = endIndex
             return true
@@ -66,6 +70,36 @@ public extension Lexer {
         
         return false
     }
+    
+    #else
+    
+    /// Returns if the next characters in the read buffer equal to `match`.
+    func checkNext<S: StringProtocol>(matches match: S) -> Bool {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: match.count, limitedBy: inputString.endIndex) else {
+            return false
+        }
+        
+        return inputString[inputIndex..<endIndex] == match
+    }
+    
+    /// Advances the stream if the current string under it matches the given string.
+    /// The method checks the match, does nothing while returning false if the
+    /// current stream position does not match the given string.
+    func advanceIf<S: StringProtocol>(equals match: S) -> Bool {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: match.count, limitedBy: inputString.endIndex) else {
+            return false
+        }
+        
+        if inputString[inputIndex..<endIndex] == match {
+            // Match! Advance stream and proceed...
+            inputIndex = endIndex
+            return true
+        }
+        
+        return false
+    }
+    
+    #endif
 }
 
 // MARK: - Unsafe/throwing operations
@@ -135,6 +169,8 @@ public extension Lexer {
         }
     }
     
+    #if canImport(Foundation)
+    
     /// If the next characters in the read buffer do not ammount to `match`, an
     /// error is thrown.
     func expect<S: StringProtocol>(match: S, options: String.CompareOptions = .literal) throws {
@@ -142,4 +178,16 @@ public extension Lexer {
             throw unexpectedStringError("Expected '\(match)'")
         }
     }
+    
+    #else
+    
+    /// If the next characters in the read buffer do not ammount to `match`, an
+    /// error is thrown.
+    func expect<S: StringProtocol>(match: S) throws {
+        if !advanceIf(equals: match) {
+            throw unexpectedStringError("Expected '\(match)'")
+        }
+    }
+    
+    #endif
 }
