@@ -871,4 +871,52 @@ public class GrammarRuleTests: XCTestCase {
             }
         }
     }
+    
+    func testGrammarRuleBacktrackingFailedZeroOrMoreRule() {
+        // ansi-escape:
+        //      "\e[" digit-list? code
+        //
+        // digit-list:
+        //      digit (';' digit-list)*
+        //
+        // code:
+        //      'A'
+        //      'B'
+        //
+        let rule = .keyword("\u{001B}[") .. (.digit+ .. ";")* .. [.digit+] .. ("A" | "B")
+        
+        let lexer1 = Lexer(input: "\u{001B}[10A")
+        let lexer2 = Lexer(input: "\u{001B}[A")
+        let lexer3 = Lexer(input: "\u{001B}[10;11B")
+        let lexer4 = Lexer(input: "\u{001B}[3")
+        
+        XCTAssertEqual("\u{001B}[10A", try rule.consume(from: lexer1))
+        XCTAssertEqual("\u{001B}[A", try rule.consume(from: lexer2))
+        XCTAssertEqual("\u{001B}[10;11B", try rule.consume(from: lexer3))
+        XCTAssertThrowsError(try rule.consume(from: lexer4))
+    }
+    
+    func testGrammarRuleBacktrackingFailedOneOrMoreRule() {
+        // ansi-escape:
+        //      "\e[" digit-list digit? code
+        //
+        // digit-list:
+        //      (digit ';')+
+        //
+        // code:
+        //      'A'
+        //      'B'
+        //
+        let rule = .keyword("\u{001B}[") .. (.digit+ .. ";")+ .. [.digit+] .. ("A" | "B")
+        
+        let lexer1 = Lexer(input: "\u{001B}[10;A")
+        let lexer2 = Lexer(input: "\u{001B}[A")
+        let lexer3 = Lexer(input: "\u{001B}[10;11B")
+        let lexer4 = Lexer(input: "\u{001B}[3")
+        
+        XCTAssertEqual("\u{001B}[10;A", try rule.consume(from: lexer1))
+        XCTAssertThrowsError(try rule.consume(from: lexer2))
+        XCTAssertEqual("\u{001B}[10;11B", try rule.consume(from: lexer3))
+        XCTAssertThrowsError(try rule.consume(from: lexer4))
+    }
 }

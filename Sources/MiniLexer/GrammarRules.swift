@@ -373,8 +373,17 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
                 lexer.advance(while: { $0 == ch })
                 
             default:
+                try subRule.stepThroughApplying(on: lexer)
+                
                 repeat {
-                    try subRule.stepThroughApplying(on: lexer)
+                    let backtracker = lexer.backtracker()
+                    
+                    do {
+                        try subRule.stepThroughApplying(on: lexer)
+                    } catch {
+                        backtracker.backtrack(lexer: lexer)
+                        break
+                    }
                 } while subRule.canConsume(from: lexer)
             }
             
@@ -396,7 +405,14 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
                 }
                 
                 repeat {
-                    try subRule.stepThroughApplying(on: lexer)
+                    let backtracker = lexer.backtracker()
+                    
+                    do {
+                        try subRule.stepThroughApplying(on: lexer)
+                    } catch {
+                        backtracker.backtrack(lexer: lexer)
+                        break
+                    }
                 } while subRule.canConsume(from: lexer)
             }
             
