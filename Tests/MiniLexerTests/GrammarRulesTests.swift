@@ -108,7 +108,7 @@ public class GrammarRuleTests: XCTestCase {
         
         XCTAssertEqual("a", try rule.consume(from: lexer))
         XCTAssertEqual("1", try rule.consume(from: lexer))
-        XCTAssertEqual("[0-9] | [a-zA-Z]", rule.ruleDescription)
+        XCTAssertEqual("([0-9] | [a-zA-Z])", rule.ruleDescription)
         XCTAssertEqual(rule, .or([.digit, .letter]))
         XCTAssertNotEqual(rule, .or([.letter, .digit]))
     }

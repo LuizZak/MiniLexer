@@ -208,12 +208,12 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
     indirect case sequence([GrammarRule])
     indirect case directSequence([GrammarRule])
     
-    private var isRuleWithMany: Bool {
+    private var requiresParenthesis: Bool {
         switch self {
         case .digit, .letter, .whitespace, .oneOrMore, .zeroOrMore, .optional,
-             .keyword, .char, .recursive, .namedRule:
+             .keyword, .char, .recursive, .namedRule, .or:
             return false
-        case .or, .sequence, .directSequence:
+        case .sequence, .directSequence:
             return true
         }
     }
@@ -242,28 +242,28 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             return name
             
         case .optional(let rule):
-            if rule.isRuleWithMany {
+            if rule.requiresParenthesis {
                 return "(\(rule.ruleDescription))?"
             }
             
             return "\(rule.ruleDescription)?"
             
         case .oneOrMore(let rule):
-            if rule.isRuleWithMany {
+            if rule.requiresParenthesis {
                 return "(\(rule.ruleDescription))+"
             }
             
             return "\(rule.ruleDescription)+"
             
         case .zeroOrMore(let rule):
-            if rule.isRuleWithMany {
+            if rule.requiresParenthesis {
                 return "(\(rule.ruleDescription))*"
             }
             
             return "\(rule.ruleDescription)*"
             
         case .or(let rules):
-            return rules.map { $0.ruleDescription }.joined(separator: " | ")
+            return "(\(rules.map { $0.ruleDescription }.joined(separator: " | ")))"
         case .sequence(let rules):
             return rules.map { $0.ruleDescription }.joined(separator: " ")
         case .directSequence(let rules):
