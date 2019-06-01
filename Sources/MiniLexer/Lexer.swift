@@ -349,12 +349,12 @@ public final class Lexer {
     }
 }
 
-// MARK: - Find/skip to next methods
+// MARK: - Atom-wise find/skip methods
 extension Lexer {
     
     /// Returns the index of the next occurrence of a given input char.
     /// Method starts searching from current read index.
-    /// This method does not alter the current
+    /// This method does not alter the current index.
     @inlinable
     public func findNext(_ atom: Atom) -> Index? {
         return withTemporaryIndex {
@@ -374,7 +374,55 @@ extension Lexer {
     @inlinable
     public func skipToNext(_ atom: Atom) throws {
         guard let index = findNext(atom) else {
-            throw LexerError.notFound("Expected \(atom) but it was not found.")
+            throw LexerError.notFound("Expected to find \(atom) but it was not found.")
+        }
+        
+        inputIndex = index
+    }
+}
+
+// MARK: - String-wise find/skip methods
+extension Lexer {
+    
+    /// Returns the index of the next occurrence of a given input string.
+    /// Method starts searching from current read index.
+    /// This method does not alter the current index.
+    ///
+    /// If `string` is empty, `nil` is returned.
+    @inlinable
+    public func findNext<S: StringProtocol>(string: S) -> Index? {
+        guard let start = string.unicodeScalars.first else {
+            return nil
+        }
+        
+        return withTemporaryIndex {
+            while inputIndex != endIndex {
+                guard let index = findNext(start) else {
+                    return nil
+                }
+                
+                inputIndex = index
+                
+                if checkNext(matches: string) {
+                    return inputIndex
+                }
+                
+                _ = safeAdvance()
+            }
+            
+            return nil
+        }
+    }
+    
+    /// Skips all chars until the next occurrence of a given string.
+    /// Method starts searching from current read index.
+    /// If the string is not found after the current index, an error is thrown.
+    ///
+    /// If `string` is empty, an error is thrown.
+    @inlinable
+    public func skipToNext<S: StringProtocol>(string: S) throws {
+        guard let index = findNext(string: string) else {
+            throw LexerError.notFound("Expected to find \(string) but it was not found.")
         }
         
         inputIndex = index

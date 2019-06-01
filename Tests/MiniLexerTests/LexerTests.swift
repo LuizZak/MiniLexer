@@ -94,6 +94,7 @@ class LexerTests: XCTestCase {
         XCTAssertEqual(sut.findNext("a"), sut.inputString.startIndex)
         XCTAssertEqual(sut.findNext("c"), sut.inputString.index(sut.inputString.startIndex, offsetBy: 2))
         XCTAssertNil(sut.findNext("0"))
+        XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
     }
     
     func testSkipToNext() throws {
@@ -109,6 +110,37 @@ class LexerTests: XCTestCase {
         let sut = Lexer(input: "abc")
         
         XCTAssertThrowsError(try sut.skipToNext("0"))
+    }
+    
+    func testFindNextString() throws {
+        let sut = Lexer(input: "abc sub substring def")
+        
+        XCTAssertEqual(sut.findNext(string: "abc"), sut.inputString.startIndex)
+        XCTAssertEqual(sut.findNext(string: "substring"), sut.inputString.index(sut.inputString.startIndex, offsetBy: 8))
+        XCTAssertNil(sut.findNext(string: "0"))
+        XCTAssertNil(sut.findNext(string: ""))
+        XCTAssertEqual(sut.inputIndex, sut.inputString.startIndex)
+    }
+    
+    func testSkipToNextString() throws {
+        let sut = Lexer(input: "abc sub substring def")
+        let expectedIndex = sut.inputString.index(sut.inputString.startIndex, offsetBy: 8)
+        
+        try sut.skipToNext(string: "substring")
+        
+        XCTAssertEqual(sut.inputIndex, expectedIndex)
+    }
+    
+    func testSkipToNextStringFailsIfNotFound() {
+        let sut = Lexer(input: "abc def")
+        
+        XCTAssertThrowsError(try sut.skipToNext(string: "defg"))
+    }
+    
+    func testSkipToNextStringFailsIfParameterIsEmpty() {
+        let sut = Lexer(input: "abc def")
+        
+        XCTAssertThrowsError(try sut.skipToNext(string: ""))
     }
     
     func testNext() throws {
