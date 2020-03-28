@@ -16,12 +16,8 @@ public final class Lexer {
     }
     
     public var inputIndex: Index {
-        get {
-            return state.index
-        }
-        set {
-            state.index = newValue
-        }
+        get { return state.index }
+        set { state.index = newValue }
     }
     
     @usableFromInline
@@ -96,6 +92,11 @@ public final class Lexer {
     
     /// Reads a single character from the current stream position, and forwards
     /// the stream by 1 unit.
+    ///
+    /// Throws an error if currently at the end of the string buffer.
+    ///
+    /// - seealso: `peek()`
+    /// - seealso: `isEof()`
     @inlinable
     public func next() throws -> Atom {
         let atom = try peek()
@@ -103,7 +104,12 @@ public final class Lexer {
         return atom
     }
     
-    /// Peeks the current character at the current index
+    /// Peeks the current character at the current index.
+    ///
+    /// Throws an error if currently at the end of the string buffer.
+    ///
+    /// - seealso: `next()`
+    /// - seealso: `isEof()`
     @inlinable
     public func peek() throws -> Atom {
         if isEof() {

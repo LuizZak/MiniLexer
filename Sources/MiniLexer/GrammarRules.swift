@@ -208,7 +208,8 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
     indirect case sequence([GrammarRule])
     indirect case directSequence([GrammarRule])
     
-    private var requiresParenthesis: Bool {
+    @usableFromInline
+    internal var requiresParenthesis: Bool {
         switch self {
         case .digit, .letter, .whitespace, .oneOrMore, .zeroOrMore, .optional,
              .keyword, .char, .recursive, .namedRule, .or:
@@ -218,6 +219,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
         }
     }
     
+    @inlinable
     public var ruleDescription: String {
         switch self {
         case .digit:
@@ -286,10 +288,12 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
         }
     }
     
+    @inlinable
     public func consume(from lexer: Lexer) throws -> Substring {
         return try lexer.consumeString(performing: stepThroughApplying)
     }
     
+    @inlinable
     public func stepThroughApplying(on lexer: Lexer) throws {
         // Simplify sequence cases since we'll just have to run the lexers one
         // by one during canConsume, anyway.
@@ -443,6 +447,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
         }
     }
     
+    @inlinable
     public func canConsume(from lexer: Lexer) -> Bool {
         switch self {
         case .digit:

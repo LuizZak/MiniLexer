@@ -152,19 +152,19 @@ class Lexer_AdvanceTests: XCTestCase {
         XCTAssertFalse(lexer.checkNext(matches: "bc"))
     }
     
-    func testExpect() throws {
+    func testConsumeMatch() throws {
         let lexer = Lexer(input: "abc")
         let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
         
-        try lexer.expect(match: "ab")
+        try lexer.consume(match: "ab")
         
         XCTAssertEqual(lexer.inputIndex, expectedIndex)
     }
     
-    func testExpectThrowsErrorWhenNonMatching() throws {
+    func testConsumeMatchThrowsErrorWhenNonMatching() throws {
         let lexer = Lexer(input: "abc")
         
-        XCTAssertThrowsError(try lexer.expect(match: "bc"))
+        XCTAssertThrowsError(try lexer.consume(match: "bc"))
     }
     
     func testSafeAdvance() {

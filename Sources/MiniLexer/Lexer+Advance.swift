@@ -3,7 +3,7 @@ import Foundation
 // MARK: - Safe operations
 public extension Lexer {
     /// Attempts to advance the string index forward by one, returning a value
-    /// telling whether the advance was successful or whether the current index
+    /// telling true if the advance was successful or false if the current index
     /// is pointing at the end of the string buffer
     @inlinable
     func safeAdvance() -> Bool {
@@ -45,6 +45,10 @@ public extension Lexer {
             return false
         }
         
+        if options == .literal {
+            return inputString[inputIndex..<endIndex] == match
+        }
+        
         return inputString[inputIndex..<endIndex].compare(match, options: options) == .orderedSame
     }
     
@@ -53,13 +57,19 @@ public extension Lexer {
     /// current stream position does not match the given string.
     /// By default, the lexer does a `literal`, character-by-character match,
     /// which can be overriden by specifying the `options` parameter.
-    func advanceIf<S: StringProtocol>(equals: S, options: String.CompareOptions = .literal) -> Bool {
-        guard let endIndex = inputString.index(inputIndex, offsetBy: equals.count, limitedBy: inputString.endIndex) else {
+    func advanceIf<S: StringProtocol>(equals string: S, options: String.CompareOptions = .literal) -> Bool {
+        guard let endIndex = inputString.index(inputIndex, offsetBy: string.count, limitedBy: inputString.endIndex) else {
             return false
         }
         
-        if inputString[inputIndex..<endIndex].compare(equals, options: options) == .orderedSame {
-            // Match! Advance stream and proceed...
+        let match: Bool
+        if options == .literal {
+            match = inputString[inputIndex..<endIndex] == string
+        } else {
+            match = inputString[inputIndex..<endIndex].compare(string, options: options) == .orderedSame
+        }
+        
+        if match {
             inputIndex = endIndex
             return true
         }
@@ -110,12 +120,12 @@ public extension Lexer {
     /// one, or advances to the next position, if it is.
     @inlinable
     func advance(expectingCurrent atom: Atom) throws {
-        let prev = inputIndex
-        let n = try next()
-        if n != atom {
-            inputIndex = prev
-            throw unexpectedCharacterError(char: n, "Expected '\(atom)', received '\(n)' instead")
+        let next = try peek()
+        guard next == atom else {
+            throw unexpectedCharacterError(char: next, "Expected '\(atom)', received '\(next)' instead")
         }
+        
+        unsafeAdvance()
     }
     
     /// Advance the stream if the current string under it passes a given matcher
@@ -127,17 +137,19 @@ public extension Lexer {
     /// Calling when `isEoF() == true` results in an error thrown
     @inlinable
     func advance(validatingCurrent predicate: (Atom) throws -> Bool) throws {
-        let prev = inputIndex
-        let n = try next()
-        if try !predicate(n) {
-            inputIndex = prev
-            throw unexpectedCharacterError(char: n, "Unexpected \(n)")
+        let next = try peek()
+        guard try predicate(next) else {
+            throw unexpectedCharacterError(char: next, "Unexpected \(next)")
         }
+        
+        unsafeAdvance()
     }
     
     /// If the next characters in the read buffer do not ammount to `match`, an
     /// error is thrown.
-    func expect<S: StringProtocol>(match: S, options: String.CompareOptions = .literal) throws {
+    ///
+    /// The buffer advances if the string matches the current read buffer.
+    func consume<S: StringProtocol>(match: S, options: String.CompareOptions = .literal) throws {
         if !advanceIf(equals: match, options: options) {
             throw unexpectedStringError("Expected '\(match)'")
         }
