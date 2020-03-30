@@ -39,7 +39,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual(" ", try rule.consume(from: lexer))
         XCTAssertEqual("[\\s\\t\\r\\n]", rule.ruleDescription)
-        XCTAssertEqual("[\\s\\t\\r\\n]", rule.regexString())
+        XCTAssertEqual("\\s", rule.regexString())
     }
     
     func testGrammarRuleChar() throws {
@@ -130,7 +130,7 @@ public class GrammarRuleTests: XCTestCase {
         XCTAssertEqual("1", try rule.consume(from: lexer))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("([0-9] | [a-zA-Z])", rule.ruleDescription)
-        XCTAssertEqual("([0-9] | [a-zA-Z])", rule.regexString())
+        XCTAssertEqual("([0-9]|[a-zA-Z])", rule.regexString())
     }
     
     func testGrammarRuleMaximumLengthIn() {

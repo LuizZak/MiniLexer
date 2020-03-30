@@ -567,7 +567,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             return "[a-zA-Z]"
             
         case .whitespace:
-            return "\\s+"
+            return "\\s"
             
         case .char(let ch):
             return escapeRegex("\(ch)")
