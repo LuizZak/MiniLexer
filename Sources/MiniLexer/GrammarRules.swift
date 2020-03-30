@@ -1,3 +1,5 @@
+import Foundation
+
 /// A grammar rule that consumes from a Lexer and returns a resulting type
 public protocol LexerGrammarRule {
     associatedtype Result = Substring
@@ -5,6 +7,10 @@ public protocol LexerGrammarRule {
     /// A short, formal description of this grammar rule to be used during debugging
     /// and error reporting
     var ruleDescription: String { get }
+    
+    /// Returns `true` if this rule contains any subrule that is recursive, or if
+    /// this rule is recursive itself.
+    var containsRecursiveRule: Bool { get }
     
     /// Consumes the required rule from a lexer.
     /// Simply catches a substring from the lexer's current position all the way
@@ -85,10 +91,13 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
         return _ruleDescription()
     }
     
+    public let containsRecursiveRule: Bool
+    
     /// Creates a type-erased AnyGrammarRule<T> over a given grammar rule.
     @inlinable
     public init<U: LexerGrammarRule>(_ rule: U) where U.Result == T {
         _ruleDescription = { rule.ruleDescription }
+        containsRecursiveRule = rule.containsRecursiveRule
         _consume = rule.consume(from:)
         _stepThroughApplying = rule.stepThroughApplying(on:)
         _canConsume = rule.canConsume(from:)
@@ -101,6 +110,7 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     @inlinable
     public init<U: LexerGrammarRule, S: StringProtocol>(rule: U, transformer: @escaping (S, Lexer.Index) throws -> T) where U.Result == S {
         _ruleDescription = { rule.ruleDescription }
+        containsRecursiveRule = rule.containsRecursiveRule
         _consume = { lexer in
             let index = lexer.inputIndex
             let res = try rule.consume(from: lexer)
@@ -135,6 +145,10 @@ public final class RecursiveGrammarRule: LexerGrammarRule {
     
     public var ruleDescription: String {
         return _rule.ruleDescription
+    }
+    
+    public var containsRecursiveRule: Bool {
+        return true
     }
     
     public init(ruleName: String, rule: GrammarRule) {
@@ -216,6 +230,37 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             return false
         case .sequence, .directSequence:
             return true
+        }
+    }
+    
+    @usableFromInline
+    internal var requiresParenthesisInRegex: Bool {
+        switch self {
+        case .digit, .letter, .oneOrMore, .zeroOrMore, .optional,
+             .keyword, .char, .recursive, .namedRule, .or:
+            return false
+        case .whitespace, .sequence, .directSequence:
+            return true
+        }
+    }
+    
+    @inlinable
+    public var containsRecursiveRule: Bool {
+        switch self {
+        case .digit, .letter, .whitespace, .char, .keyword:
+            return false
+            
+        case .recursive:
+            return true
+            
+        case .namedRule(_, let rule),
+             .optional(let rule),
+             .oneOrMore(let rule),
+             .zeroOrMore(let rule):
+            return rule.containsRecursiveRule
+            
+        case .or(let rules), .sequence(let rules), .directSequence(let rules):
+            return rules.contains(where: { $0.containsRecursiveRule })
         }
     }
     
@@ -506,6 +551,79 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
                     return false
                 }
             }
+        }
+    }
+    
+    /// Returns a regex-compatible string describing this grammar rule.
+    /// Traps in case `containsRecursiveRule == true`.
+    ///
+    /// - seealso: `containsRecursiveRule`
+    public func regexString() -> String {
+        switch self {
+        case .digit:
+            return "[0-9]"
+            
+        case .letter:
+            return "[a-zA-Z]"
+            
+        case .whitespace:
+            return "\\s+"
+            
+        case .char(let ch):
+            return escapeRegex("\(ch)")
+            
+        case .keyword(let str):
+            return escapeRegex("\(str)")
+            
+        case .recursive:
+            fatalError("Cannot generate regex for recursive grammar rules")
+            
+        case .namedRule(_, let rule):
+            return rule.regexString()
+            
+        case .optional(let rule):
+            if rule.requiresParenthesisInRegex {
+                return "(\(rule.regexString()))?"
+            }
+            
+            return "\(rule.regexString())?"
+            
+        case .oneOrMore(let rule):
+            if rule.requiresParenthesisInRegex {
+                return "(\(rule.regexString()))+"
+            }
+            
+            return "\(rule.regexString())+"
+            
+        case .zeroOrMore(let rule):
+            if rule.requiresParenthesisInRegex {
+                return "(\(rule.regexString()))*"
+            }
+            
+            return "\(rule.regexString())*"
+            
+        case .or(let rules):
+            return "(\(rules.map { $0.regexString() }.joined(separator: "|")))"
+        case .sequence(let rules):
+            return rules.map { $0.regexString() }.joined(separator: "\\s*")
+        case .directSequence(let rules):
+            return rules.map { $0.regexString() }.joined(separator: "")
+        }
+    }
+    
+    func escapeRegex(_ string: String) -> String {
+        do {
+            let escapedCharacters = [
+                ".", "*", "+", "?", "^", "$", "\\", "{", "}", "(", ")", "[", "]"
+            ].map { "\\\($0)" }
+            
+            let pattern = "([\(escapedCharacters.joined())])"
+            let regex = try NSRegularExpression(pattern: pattern)
+            
+            let range = NSRange(string.startIndex..<string.endIndex, in: string)
+            return regex.stringByReplacingMatches(in: string, options: .anchored, range: range, withTemplate: "\\\\$1")
+        } catch {
+            return string
         }
     }
 }
