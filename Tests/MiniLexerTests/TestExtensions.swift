@@ -17,7 +17,7 @@ extension XCTestCase {
                               inFile: file, atLine: line, expected: true)
             }
         } catch {
-            recordFailure(withDescription: "Expected function to throw 'LexerError', but received: \(error)",
+            recordFailure(withDescription: "Expected function to throw 'ParserError', but received: \(error)",
                           inFile: file, atLine: line, expected: true)
         }
     }
