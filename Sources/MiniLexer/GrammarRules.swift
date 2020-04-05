@@ -505,7 +505,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
         case .char(let ch):
             return lexer.safeIsNextChar(equalTo: ch)
             
-        case .keyword(""):
+        case .keyword(let word) where word.isEmpty:
             return true
             
         case .keyword(let word):

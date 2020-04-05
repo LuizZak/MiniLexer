@@ -114,4 +114,36 @@ class TypeLexersTests: XCTestCase {
         XCTAssertThrowsError(try Double.tokenLexer.consume(from: lexerNotNumber))
         XCTAssertThrowsError(try Double.tokenLexer.consume(from: lexerEmpty))
     }
+    
+    func testPerformance() {
+        let tokenLexer = Double.tokenLexer
+        
+        measure {
+            do {
+                for _ in 0..<100 {
+                    let lexerInt = Lexer(input: "128")
+                    let lexerNegativeInt = Lexer(input: "-128")
+                    let lexerDecimalPlace = Lexer(input: "128.5")
+                    let lexerDecimalPlaceExponent = Lexer(input: "1.5e2")
+                    let lexerDecimalPlaceExponentCapitalE = Lexer(input: "1.5E2")
+                    let lexerDecimalPlacePositiveExponent = Lexer(input: "1.5e+2")
+                    let lexerDecimalPlaceNegativeExponent = Lexer(input: "1.5e-2")
+                    let lexerLargestPositiveValue = Lexer(input: "1.7976931348623157e+308")
+                    let lexerLargestNegativeValue = Lexer(input: "1.7976931348623157e-307")
+                    
+                    _ = try tokenLexer.consume(from: lexerInt)
+                    _ = try tokenLexer.consume(from: lexerNegativeInt)
+                    _ = try tokenLexer.consume(from: lexerDecimalPlace)
+                    _ = try tokenLexer.consume(from: lexerDecimalPlaceExponent)
+                    _ = try tokenLexer.consume(from: lexerDecimalPlaceExponentCapitalE)
+                    _ = try tokenLexer.consume(from: lexerDecimalPlacePositiveExponent)
+                    _ = try tokenLexer.consume(from: lexerDecimalPlaceNegativeExponent)
+                    _ = try tokenLexer.consume(from: lexerLargestPositiveValue)
+                    _ = try tokenLexer.consume(from: lexerLargestNegativeValue)
+                }
+            } catch {
+                
+            }
+        }
+    }
 }

@@ -11,9 +11,6 @@ let package = Package(
             name: "MiniLexer",
             targets: ["MiniLexer"]),
         .library(
-            name: "MiniParser",
-            targets: ["MiniParser"]),
-        .library(
             name: "TypeLexing",
             targets: ["TypeLexing"])
     ],
@@ -25,9 +22,6 @@ let package = Package(
             dependencies: []),
         .target(
             name: "TypeLexing",
-            dependencies: ["MiniLexer"]),
-        .target(
-            name: "MiniParser",
             dependencies: ["MiniLexer"]),
         .target(
             name: "URLParseSample",
