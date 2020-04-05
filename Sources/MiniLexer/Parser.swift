@@ -1,10 +1,10 @@
 /// Class capable of parsing tokens out of a string.
-public final class Lexer {
+public final class Parser {
     
     public typealias Atom = UnicodeScalar
     public typealias Index = String.Index
     
-    private var state: LexerState
+    private var state: ParserState
     
     public let inputString: String
     
@@ -22,14 +22,14 @@ public final class Lexer {
     internal let endIndex: Index
     
     public init(input: String) {
-        state = LexerState(index: input.startIndex)
+        state = ParserState(index: input.startIndex)
         
         inputString = input
         endIndex = inputString.endIndex
     }
     
     public init(input: String, index: Index) {
-        state = LexerState(index: index)
+        state = ParserState(index: index)
         
         inputString = input
         endIndex = inputString.endIndex
@@ -43,7 +43,7 @@ public final class Lexer {
     /// Advances the stream until the first non-whitespace character is found.
     @inlinable
     public func skipWhitespace() {
-        advance(while: Lexer.isWhitespace)
+        advance(while: Parser.isWhitespace)
     }
     
     /// Returns whether the current stream position points to the end of the input
@@ -120,7 +120,7 @@ public final class Lexer {
     /// Peeks a character forward `count` characters from the current position.
     ///
     /// - precondition: `count > 0`
-    /// - throws: `LexerError.endOfStringError`, if inputIndex + count >= endIndex
+    /// - throws: `ParserError.endOfStringError`, if inputIndex + count >= endIndex
     @inlinable
     public func peekForward(count: Int = 1) throws -> Atom {
         precondition(count >= 0)
@@ -146,11 +146,11 @@ public final class Lexer {
         return inputSource[newIndex]
     }
     
-    /// Parses the string by applying a given grammar rule on this lexer at the
+    /// Parses the string by applying a given grammar rule on this parser at the
     /// current position.
     /// Throws, if operation fails.
     @inlinable
-    public func parse<G: LexerGrammarRule>(with rule: G) throws -> G.Result {
+    public func parse<G: ParserGrammarRule>(with rule: G) throws -> G.Result {
         return try rule.consume(from: self)
     }
     
@@ -160,7 +160,7 @@ public final class Lexer {
     public func withTemporaryIndex<T>(changes: () throws -> T) rethrows -> T {
         let backtrack = backtracker()
         defer {
-            backtrack.backtrack(lexer: self)
+            backtrack.backtrack(parser: self)
         }
         return try changes()
     }
@@ -176,7 +176,7 @@ public final class Lexer {
         do {
             return try changes()
         } catch {
-            backtrack.backtrack(lexer: self)
+            backtrack.backtrack(parser: self)
             throw error
         }
     }
@@ -187,20 +187,20 @@ public final class Lexer {
     /// Can be used to record index after changes are made in conjunction to
     /// `withTemporaryIndex`
     @inlinable
-    public func withIndexAfter<T>(performing changes: () throws -> T) rethrows -> (T, Lexer.Index) {
+    public func withIndexAfter<T>(performing changes: () throws -> T) rethrows -> (T, Parser.Index) {
         return (try changes(), inputIndex)
     }
     
-    /// Returns a backtracker that is able to return the state of this lexer back
+    /// Returns a backtracker that is able to return the state of this parser back
     /// to the point at which this method was called.
     public func backtracker() -> Backtracker {
-        return Backtracker(lexer: self)
+        return Backtracker(parser: self)
     }
     
-    /// Starts a textual range from the current position of this lexer
+    /// Starts a textual range from the current position of this parser
     @inlinable
     public func startRange() -> RangeMarker {
-        return RangeMarker(lexer: self)
+        return RangeMarker(parser: self)
     }
     
     // MARK: Character checking
@@ -248,84 +248,84 @@ public final class Lexer {
     
     // MARK: Error methods
     @inlinable
-    public func unexpectedCharacterError(offset: Lexer.Index? = nil, char: Atom, _ message: String) -> Error {
+    public func unexpectedCharacterError(offset: Parser.Index? = nil, char: Atom, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
-        return LexerError.unexpectedCharacter(offset, char: char, message: message)
+        return ParserError.unexpectedCharacter(offset, char: char, message: message)
     }
     
     @inlinable
-    public func unexpectedStringError(offset: Lexer.Index? = nil, _ message: String) -> Error {
+    public func unexpectedStringError(offset: Parser.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
-        return LexerError.unexpectedString(offset, message: message)
+        return ParserError.unexpectedString(offset, message: message)
     }
     
     @inlinable
-    public func syntaxError(offset: Lexer.Index? = nil, _ message: String) -> Error {
+    public func syntaxError(offset: Parser.Index? = nil, _ message: String) -> Error {
         let offset = offset ?? inputIndex
         
-        return LexerError.syntaxError(offset, message)
+        return ParserError.syntaxError(offset, message)
     }
     
     @inlinable
     public func endOfStringError(_ message: String = "Reached unexpected end of input string") -> Error {
-        return LexerError.endOfStringError(message)
+        return ParserError.endOfStringError(message)
     }
     
-    /// Allows backtracking changes to a Lexer's state
+    /// Allows backtracking changes to a Parser's state
     public struct Backtracker {
-        private let state: LexerState
+        private let state: ParserState
         
-        init(lexer: Lexer) {
-            self.state = lexer.state
+        init(parser: Parser) {
+            self.state = parser.state
         }
         
-        /// Backtracks the state of the lexer associated with this backtracker
+        /// Backtracks the state of the parser associated with this backtracker
         /// back to the point at which it was created.
-        public func backtrack(lexer: Lexer) {
-            lexer.state = state
+        public func backtrack(parser: Parser) {
+            parser.state = state
         }
     }
     
-    /// Allows selecting ranges of a Lexer's input string
+    /// Allows selecting ranges of a Parser's input string
     public struct RangeMarker {
         @usableFromInline
-        let lexer: Lexer
+        let parser: Parser
         
         @usableFromInline
-        let state: LexerState
+        let state: ParserState
         
         @usableFromInline
-        init(lexer: Lexer) {
-            self.lexer = lexer
-            self.state = lexer.state
+        init(parser: Parser) {
+            self.parser = parser
+            self.state = parser.state
         }
         
         /// Returns the string that fits the entire range from the start of this
-        /// marker up to the lexer's current input index.
+        /// marker up to the parser's current input index.
         ///
-        /// If the lexer's input index is less than the marker's initial index,
+        /// If the parser's input index is less than the marker's initial index,
         /// an empty string is returned.
         @inlinable
         public func string() -> Substring {
-            return lexer.inputString[range()]
+            return parser.inputString[range()]
         }
         
         /// Returns the closed range for this marker's range.
         @inlinable
-        public func range() -> Range<Lexer.Index> {
-            let start = min(state.index, lexer.inputIndex)
-            let end = max(state.index, lexer.inputIndex)
+        public func range() -> Range<Parser.Index> {
+            let start = min(state.index, parser.inputIndex)
+            let end = max(state.index, parser.inputIndex)
             
             return start..<end
         }
     }
     
     @usableFromInline
-    struct LexerState {
+    struct ParserState {
         @usableFromInline
-        var index: Lexer.Index
+        var index: Parser.Index
     }
     
     @usableFromInline
@@ -354,7 +354,7 @@ public final class Lexer {
 }
 
 // MARK: - Atom-wise find/skip methods
-extension Lexer {
+extension Parser {
     
     /// Returns the index of the next occurrence of a given input char.
     /// Method starts searching from current read index.
@@ -378,7 +378,7 @@ extension Lexer {
     @inlinable
     public func skipToNext(_ atom: Atom) throws {
         guard let index = findNext(atom) else {
-            throw LexerError.notFound("Expected to find \(atom) but it was not found.")
+            throw ParserError.notFound("Expected to find \(atom) but it was not found.")
         }
         
         inputIndex = index
@@ -386,7 +386,7 @@ extension Lexer {
 }
 
 // MARK: - String-wise find/skip methods
-extension Lexer {
+extension Parser {
     
     /// Returns the index of the next occurrence of a given input string.
     /// Method starts searching from current read index.
@@ -426,31 +426,31 @@ extension Lexer {
     @inlinable
     public func skipToNext<S: StringProtocol>(string: S) throws {
         guard let index = findNext(string: string) else {
-            throw LexerError.notFound("Expected to find \(string) but it was not found.")
+            throw ParserError.notFound("Expected to find \(string) but it was not found.")
         }
         
         inputIndex = index
     }
 }
 
-public enum LexerError: Error {
-    case unexpectedCharacter(Lexer.Index, char: Lexer.Atom, message: String)
-    case unexpectedString(Lexer.Index, message: String)
-    case syntaxError(Lexer.Index, String)
+public enum ParserError: Error {
+    case unexpectedCharacter(Parser.Index, char: Parser.Atom, message: String)
+    case unexpectedString(Parser.Index, message: String)
+    case syntaxError(Parser.Index, String)
     case endOfStringError(String)
     case notFound(String)
     case miscellaneous(String)
     case genericParseError
 }
 
-extension LexerError: CustomStringConvertible {
+extension ParserError: CustomStringConvertible {
     public func description(withOffsetsIn string: String) -> String {
         switch self {
         case let .unexpectedCharacter(offset, _, message: message),
              let .unexpectedString(offset, message: message),
              let .syntaxError(offset, message):
-            let column = Lexer.columnOffset(at: offset, in: string)
-            let line = Lexer.lineNumber(at: offset, in: string)
+            let column = Parser.columnOffset(at: offset, in: string)
+            let line = Parser.lineNumber(at: offset, in: string)
             
             return "Error at line \(line) column \(column): \(message)"
         case .endOfStringError(let message),

@@ -12,11 +12,11 @@ import MiniLexer
 class TypeLexersTests: XCTestCase {
     
     func testLexInteger() throws {
-        let lexerInt = Lexer(input: "128")
-        let lexerNegativeInt = Lexer(input: "-128")
-        let lexerSpaceBetweenSign = Lexer(input: "- 128")
-        let lexerNotInt = Lexer(input: "a123")
-        let lexerEmpty = Lexer(input: "")
+        let lexerInt = Parser(input: "128")
+        let lexerNegativeInt = Parser(input: "-128")
+        let lexerSpaceBetweenSign = Parser(input: "- 128")
+        let lexerNotInt = Parser(input: "a123")
+        let lexerEmpty = Parser(input: "")
         
         XCTAssertEqual(128, try Int.tokenLexer.consume(from: lexerInt))
         XCTAssertEqual(-128, try Int.tokenLexer.consume(from: lexerNegativeInt))
@@ -26,11 +26,11 @@ class TypeLexersTests: XCTestCase {
     }
     
     func testLexInt8() throws {
-        let lexerInt = Lexer(input: "128")
-        let lexerNegativeInt = Lexer(input: "-128")
-        let lexerSpaceBetweenSign = Lexer(input: "- 128")
-        let lexerNotInt = Lexer(input: "a123")
-        let lexerEmpty = Lexer(input: "")
+        let lexerInt = Parser(input: "128")
+        let lexerNegativeInt = Parser(input: "-128")
+        let lexerSpaceBetweenSign = Parser(input: "- 128")
+        let lexerNotInt = Parser(input: "a123")
+        let lexerEmpty = Parser(input: "")
         
         XCTAssertThrowsError(try Int8.tokenLexer.consume(from: lexerInt))
         XCTAssertEqual(-128, try Int8.tokenLexer.consume(from: lexerNegativeInt))
@@ -40,12 +40,12 @@ class TypeLexersTests: XCTestCase {
     }
     
     func testLexUInt8() throws {
-        let lexerInt = Lexer(input: "128")
-        let lexerNegativeInt = Lexer(input: "-128")
-        let lexerOverflow = Lexer(input: "256")
-        let lexerSpaceBetweenSign = Lexer(input: "- 128")
-        let lexerNotInt = Lexer(input: "a123")
-        let lexerEmpty = Lexer(input: "")
+        let lexerInt = Parser(input: "128")
+        let lexerNegativeInt = Parser(input: "-128")
+        let lexerOverflow = Parser(input: "256")
+        let lexerSpaceBetweenSign = Parser(input: "- 128")
+        let lexerNotInt = Parser(input: "a123")
+        let lexerEmpty = Parser(input: "")
         
         XCTAssertEqual(128, try UInt8.tokenLexer.consume(from: lexerInt))
         XCTAssertThrowsError(try UInt8.tokenLexer.consume(from: lexerOverflow))
@@ -56,19 +56,19 @@ class TypeLexersTests: XCTestCase {
     }
     
     func testLexFloat() {
-        let lexerInt = Lexer(input: "128")
-        let lexerNegativeInt = Lexer(input: "-128")
-        let lexerDecimalPlace = Lexer(input: "128.5")
-        let lexerDecimalPlaceExponent = Lexer(input: "1.5e2")
-        let lexerDecimalPlaceExponentCapitalE = Lexer(input: "1.5E2")
-        let lexerDecimalPlacePositiveExponent = Lexer(input: "1.5e+2")
-        let lexerDecimalPlaceNegativeExponent = Lexer(input: "1.5e-2")
-        let lexerLargestPositiveValue = Lexer(input: "3.402823e+38")
-        let lexerLargestNegativeValue = Lexer(input: "3.402823e-38")
-        let lexerOverflow = Lexer(input: "3.402823e+39")
-        let lexerSpaceBetweenSign = Lexer(input: "- 128")
-        let lexerNotNumber = Lexer(input: "a123")
-        let lexerEmpty = Lexer(input: "")
+        let lexerInt = Parser(input: "128")
+        let lexerNegativeInt = Parser(input: "-128")
+        let lexerDecimalPlace = Parser(input: "128.5")
+        let lexerDecimalPlaceExponent = Parser(input: "1.5e2")
+        let lexerDecimalPlaceExponentCapitalE = Parser(input: "1.5E2")
+        let lexerDecimalPlacePositiveExponent = Parser(input: "1.5e+2")
+        let lexerDecimalPlaceNegativeExponent = Parser(input: "1.5e-2")
+        let lexerLargestPositiveValue = Parser(input: "3.402823e+38")
+        let lexerLargestNegativeValue = Parser(input: "3.402823e-38")
+        let lexerOverflow = Parser(input: "3.402823e+39")
+        let lexerSpaceBetweenSign = Parser(input: "- 128")
+        let lexerNotNumber = Parser(input: "a123")
+        let lexerEmpty = Parser(input: "")
         
         XCTAssertEqual(128, try Float.tokenLexer.consume(from: lexerInt))
         XCTAssertEqual(-128, try Float.tokenLexer.consume(from: lexerNegativeInt))
@@ -86,19 +86,19 @@ class TypeLexersTests: XCTestCase {
     }
     
     func testLexDouble() {
-        let lexerInt = Lexer(input: "128")
-        let lexerNegativeInt = Lexer(input: "-128")
-        let lexerDecimalPlace = Lexer(input: "128.5")
-        let lexerDecimalPlaceExponent = Lexer(input: "1.5e2")
-        let lexerDecimalPlaceExponentCapitalE = Lexer(input: "1.5E2")
-        let lexerDecimalPlacePositiveExponent = Lexer(input: "1.5e+2")
-        let lexerDecimalPlaceNegativeExponent = Lexer(input: "1.5e-2")
-        let lexerLargestPositiveValue = Lexer(input: "1.7976931348623157e+308")
-        let lexerLargestNegativeValue = Lexer(input: "1.7976931348623157e-307")
-        let lexerOverflow = Lexer(input: "1.7976931348623157e+309")
-        let lexerSpaceBetweenSign = Lexer(input: "- 128")
-        let lexerNotNumber = Lexer(input: "a123")
-        let lexerEmpty = Lexer(input: "")
+        let lexerInt = Parser(input: "128")
+        let lexerNegativeInt = Parser(input: "-128")
+        let lexerDecimalPlace = Parser(input: "128.5")
+        let lexerDecimalPlaceExponent = Parser(input: "1.5e2")
+        let lexerDecimalPlaceExponentCapitalE = Parser(input: "1.5E2")
+        let lexerDecimalPlacePositiveExponent = Parser(input: "1.5e+2")
+        let lexerDecimalPlaceNegativeExponent = Parser(input: "1.5e-2")
+        let lexerLargestPositiveValue = Parser(input: "1.7976931348623157e+308")
+        let lexerLargestNegativeValue = Parser(input: "1.7976931348623157e-307")
+        let lexerOverflow = Parser(input: "1.7976931348623157e+309")
+        let lexerSpaceBetweenSign = Parser(input: "- 128")
+        let lexerNotNumber = Parser(input: "a123")
+        let lexerEmpty = Parser(input: "")
         
         XCTAssertEqual(128, try Double.tokenLexer.consume(from: lexerInt))
         XCTAssertEqual(-128, try Double.tokenLexer.consume(from: lexerNegativeInt))
@@ -121,15 +121,15 @@ class TypeLexersTests: XCTestCase {
         measure {
             do {
                 for _ in 0..<100 {
-                    let lexerInt = Lexer(input: "128")
-                    let lexerNegativeInt = Lexer(input: "-128")
-                    let lexerDecimalPlace = Lexer(input: "128.5")
-                    let lexerDecimalPlaceExponent = Lexer(input: "1.5e2")
-                    let lexerDecimalPlaceExponentCapitalE = Lexer(input: "1.5E2")
-                    let lexerDecimalPlacePositiveExponent = Lexer(input: "1.5e+2")
-                    let lexerDecimalPlaceNegativeExponent = Lexer(input: "1.5e-2")
-                    let lexerLargestPositiveValue = Lexer(input: "1.7976931348623157e+308")
-                    let lexerLargestNegativeValue = Lexer(input: "1.7976931348623157e-307")
+                    let lexerInt = Parser(input: "128")
+                    let lexerNegativeInt = Parser(input: "-128")
+                    let lexerDecimalPlace = Parser(input: "128.5")
+                    let lexerDecimalPlaceExponent = Parser(input: "1.5e2")
+                    let lexerDecimalPlaceExponentCapitalE = Parser(input: "1.5E2")
+                    let lexerDecimalPlacePositiveExponent = Parser(input: "1.5e+2")
+                    let lexerDecimalPlaceNegativeExponent = Parser(input: "1.5e-2")
+                    let lexerLargestPositiveValue = Parser(input: "1.7976931348623157e+308")
+                    let lexerLargestNegativeValue = Parser(input: "1.7976931348623157e-307")
                     
                     _ = try tokenLexer.consume(from: lexerInt)
                     _ = try tokenLexer.consume(from: lexerNegativeInt)

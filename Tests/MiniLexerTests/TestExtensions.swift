@@ -7,7 +7,7 @@ extension XCTestCase {
             _=try block()
             recordFailure(withDescription: "Expected function to throw",
                           inFile: file, atLine: line, expected: true)
-        } catch let error as LexerError {
+        } catch let error as ParserError {
             switch error {
             case .endOfStringError:
                 // Success

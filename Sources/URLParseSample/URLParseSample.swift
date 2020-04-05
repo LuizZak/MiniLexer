@@ -60,7 +60,7 @@ public class URLParser {
         }
         
         do {
-            let lexer = Lexer(input: string)
+            let lexer = Parser(input: string)
             
             var scheme: Substring?
             var user: Substring?
@@ -75,7 +75,7 @@ public class URLParser {
             scheme = try lexer.consumeString { lexer in
                 while true {
                     let peek = try lexer.peek()
-                    guard Lexer.isLetter(peek) || peek == "+" || peek == "-" || peek == "." else {
+                    guard Parser.isLetter(peek) || peek == "+" || peek == "-" || peek == "." else {
                         if peek == ":" {
                             return
                         }
@@ -163,7 +163,7 @@ public class URLParser {
 // to allow testing without `@testable import` and consequently allow testing a
 // release mode build.
 
-public extension Lexer {
+public extension Parser {
     /// ```
     /// URI           = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
     /// ```
@@ -260,9 +260,9 @@ public extension Lexer {
     /// ```
     @inlinable
     func scheme() throws {
-        try advance(validatingCurrent: Lexer.isLetter)
+        try advance(validatingCurrent: Parser.isLetter)
         
-        advance(while: { Lexer.isAlphanumeric($0) || $0 == "+" || $0 == "-" || $0 == "." })
+        advance(while: { Parser.isAlphanumeric($0) || $0 == "+" || $0 == "-" || $0 == "." })
     }
     
     /// ```
@@ -294,7 +294,7 @@ public extension Lexer {
     func userinfo() throws {
         try expect(atLeast: 0) { lexer in
             let c = try lexer.peek()
-            if Lexer.isUnreserved(c) || Lexer.isSubDelim(c) || c == ":" {
+            if Parser.isUnreserved(c) || Parser.isSubDelim(c) || c == ":" {
                 try lexer.advance()
             } else {
                 try lexer.pctEncoded()
@@ -331,7 +331,7 @@ public extension Lexer {
     /// ```
     @inlinable
     func port() {
-        advance(while: Lexer.isDigit)
+        advance(while: Parser.isDigit)
     }
     
     /// Here, we abuse the fact we got braces to ease up parsing of the IP literals
@@ -366,7 +366,7 @@ public extension Lexer {
     @inlinable
     func h16() throws {
         try expect(between: 1, max: 4) { lexer -> Bool in
-            if !lexer.safeNextCharPasses(with: Lexer.isHexdig) {
+            if !lexer.safeNextCharPasses(with: Parser.isHexdig) {
                 return false
             }
             
@@ -413,7 +413,7 @@ public extension Lexer {
     func decOctet() throws {
         let i = try parse(with: Int.tokenLexer)
         if i < 0 || i > 255 {
-            throw LexerError.miscellaneous("Expected integer between 0 and 255, found \(i) instead.")
+            throw ParserError.miscellaneous("Expected integer between 0 and 255, found \(i) instead.")
         }
     }
     
@@ -423,8 +423,8 @@ public extension Lexer {
     @inlinable
     func regName() throws {
         try expect(atLeast: 0) { (lexer) -> Bool in
-            if lexer.safeNextCharPasses(with: Lexer.isUnreserved) ||
-                lexer.safeNextCharPasses(with: Lexer.isSubDelim) {
+            if lexer.safeNextCharPasses(with: Parser.isUnreserved) ||
+                lexer.safeNextCharPasses(with: Parser.isSubDelim) {
                 try lexer.advance()
             } else {
                 // Try pct-encoded
@@ -524,7 +524,7 @@ public extension Lexer {
             try pchar()
             
             // Should not have parsed!
-            throw LexerError.genericParseError
+            throw ParserError.genericParseError
         } catch {
             // Success!
         }
@@ -597,12 +597,12 @@ public extension Lexer {
     @inlinable
     func pctEncoded() throws {
         if !safeIsNextChar(equalTo: "%") {
-            throw LexerError.genericParseError
+            throw ParserError.genericParseError
         }
         
         try advance() // Skip '%'
-        try advance(validatingCurrent: Lexer.isHexdig)
-        try advance(validatingCurrent: Lexer.isHexdig)
+        try advance(validatingCurrent: Parser.isHexdig)
+        try advance(validatingCurrent: Parser.isHexdig)
     }
     
     /// ```
@@ -612,7 +612,7 @@ public extension Lexer {
     @inlinable
     func pchar() throws {
         let p = try peek()
-        if Lexer.isUnreserved(p) || Lexer.isSubDelim(p) || p == ":" || p == "@" {
+        if Parser.isUnreserved(p) || Parser.isSubDelim(p) || p == ":" || p == "@" {
             try advance()
         } else {
             try pctEncoded()
@@ -621,14 +621,14 @@ public extension Lexer {
 }
 
 /// URI syntax atoms
-public extension Lexer {
+public extension Parser {
     
     /// ```
     /// unreserved = ALPHA / DIGIT / "-" / "." / "_" / "~"
     /// ```
     @inlinable
     static func isUnreserved(_ c: Atom) -> Bool {
-        return Lexer.isAlphanumeric(c) || c == "-" || c == "." || c == "_" || c == "-"
+        return Parser.isAlphanumeric(c) || c == "-" || c == "." || c == "_" || c == "-"
     }
     
     /// ```
@@ -662,14 +662,14 @@ public extension Lexer {
 }
 
 /// RFC Core ABNF rules
-public extension Lexer {
+public extension Parser {
     
     /// ```
     /// HEXDIG         =  DIGIT / "A" / "B" / "C" / "D" / "E" / "F"
     /// ```
     @inlinable
     static func isHexdig(_ c: Atom) -> Bool {
-        return Lexer.isDigit(c) || (c >= "a" && c <= "f") || (c >= "A" && c <= "F")
+        return Parser.isDigit(c) || (c >= "a" && c <= "f") || (c >= "A" && c <= "F")
     }
 }
 

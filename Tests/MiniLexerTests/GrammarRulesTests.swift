@@ -5,8 +5,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleDigit() throws {
         let rule = GrammarRule.digit
-        let lexer = Lexer(input: "123")
-        let lexer2 = Lexer(input: "abc")
+        let lexer = Parser(input: "123")
+        let lexer2 = Parser(input: "abc")
         
         XCTAssert(rule.canConsume(from: lexer))
         XCTAssertFalse(rule.canConsume(from: lexer2))
@@ -18,8 +18,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleLetter() throws {
         let rule = GrammarRule.letter
-        let lexer = Lexer(input: "abc")
-        let lexer2 = Lexer(input: "1")
+        let lexer = Parser(input: "abc")
+        let lexer2 = Parser(input: "1")
         
         XCTAssert(rule.canConsume(from: lexer))
         XCTAssertFalse(rule.canConsume(from: lexer2))
@@ -31,8 +31,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleWhitespace() throws {
         let rule = GrammarRule.whitespace
-        let lexer = Lexer(input: " ")
-        let lexer2 = Lexer(input: "1")
+        let lexer = Parser(input: " ")
+        let lexer2 = Parser(input: "1")
         
         XCTAssert(rule.canConsume(from: lexer))
         XCTAssertFalse(rule.canConsume(from: lexer2))
@@ -44,10 +44,10 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleChar() throws {
         let rule = GrammarRule.char("@")
-        let lexer1 = Lexer(input: "@test")
-        let lexer2 = Lexer(input: " @test")
-        let lexer3 = Lexer(input: "test")
-        let lexer4 = Lexer(input: "")
+        let lexer1 = Parser(input: "@test")
+        let lexer2 = Parser(input: " @test")
+        let lexer3 = Parser(input: "test")
+        let lexer4 = Parser(input: "")
         
         XCTAssertEqual("@", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
@@ -60,10 +60,10 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleKeyword() throws {
         let rule = GrammarRule.keyword("test")
-        let lexer1 = Lexer(input: "test")
-        let lexer2 = Lexer(input: " test test")
-        let lexer3 = Lexer(input: "tes")
-        let lexer4 = Lexer(input: "testtest")
+        let lexer1 = Parser(input: "test")
+        let lexer2 = Parser(input: " test test")
+        let lexer3 = Parser(input: "tes")
+        let lexer4 = Parser(input: "testtest")
         
         XCTAssertEqual("test", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
@@ -76,8 +76,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarNamedRule() throws {
         let rule = GrammarRule.namedRule(name: "number", .digit+)
-        let lexer1 = Lexer(input: "123")
-        let lexer2 = Lexer(input: "a")
+        let lexer1 = Parser(input: "123")
+        let lexer2 = Parser(input: "a")
         
         XCTAssertEqual("123", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
@@ -88,8 +88,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarNamedOptional() throws {
         let rule = GrammarRule.optional(.digit)
-        let lexer1 = Lexer(input: "123")
-        let lexer2 = Lexer(input: "a")
+        let lexer1 = Parser(input: "123")
+        let lexer2 = Parser(input: "a")
         
         XCTAssertEqual("1", try rule.consume(from: lexer1))
         XCTAssertEqual("", try rule.consume(from: lexer2))
@@ -100,8 +100,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleOneOrMore() throws {
         let rule = GrammarRule.oneOrMore(.digit)
-        let lexer1 = Lexer(input: "123")
-        let lexer2 = Lexer(input: "a")
+        let lexer1 = Parser(input: "123")
+        let lexer2 = Parser(input: "a")
         
         XCTAssertEqual("123", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
@@ -112,8 +112,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleZeroOrMore() throws {
         let rule = GrammarRule.zeroOrMore(.digit)
-        let lexer1 = Lexer(input: "123")
-        let lexer2 = Lexer(input: "a")
+        let lexer1 = Parser(input: "123")
+        let lexer2 = Parser(input: "a")
         
         XCTAssertEqual("123", try rule.consume(from: lexer1))
         XCTAssertEqual("", try rule.consume(from: lexer2))
@@ -124,7 +124,7 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleOr() throws {
         let rule = GrammarRule.or([.digit, .letter])
-        let lexer = Lexer(input: "a1")
+        let lexer = Parser(input: "a1")
         
         XCTAssertEqual("a", try rule.consume(from: lexer))
         XCTAssertEqual("1", try rule.consume(from: lexer))
@@ -135,8 +135,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleMaximumLengthIn() {
         let rule = GrammarRule.digit
-        let lexerMatching = Lexer(input: "123")
-        let lexerNonMatching = Lexer(input: "a")
+        let lexerMatching = Parser(input: "123")
+        let lexerNonMatching = Parser(input: "a")
         
         XCTAssertEqual(rule.maximumLength(in: lexerMatching), 1)
         XCTAssertNil(rule.maximumLength(in: lexerNonMatching))
@@ -144,9 +144,9 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleMaximumLengthInWithZeroOrMoreRule() {
         let rule = GrammarRule.digit*
-        let lexerMatching = Lexer(input: "123")
-        let lexerMatchingPartial = Lexer(input: "123abc")
-        let lexerNonMatching = Lexer(input: "a")
+        let lexerMatching = Parser(input: "123")
+        let lexerMatchingPartial = Parser(input: "123abc")
+        let lexerNonMatching = Parser(input: "a")
         
         XCTAssertEqual(rule.maximumLength(in: lexerMatching), 3)
         XCTAssertEqual(rule.maximumLength(in: lexerMatchingPartial), 3)
@@ -155,9 +155,9 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleMaximumLengthInWithGreedyRule() {
         let rule = GrammarRule.digit+
-        let lexerMatching = Lexer(input: "123")
-        let lexerMatchingPartial = Lexer(input: "123abc")
-        let lexerNonMatching = Lexer(input: "a")
+        let lexerMatching = Parser(input: "123")
+        let lexerMatchingPartial = Parser(input: "123abc")
+        let lexerNonMatching = Parser(input: "a")
         
         XCTAssertEqual(rule.maximumLength(in: lexerMatching), 3)
         XCTAssertEqual(rule.maximumLength(in: lexerMatchingPartial), 3)
@@ -166,15 +166,15 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleMaximumLengthIgnoresWhitespaceAfterToken() {
         let rule: GrammarRule = ["-"] .. .digit+ .. ["."]
-        let lexer = Lexer(input: "-270 0")
+        let lexer = Parser(input: "-270 0")
         
         XCTAssertEqual(rule.maximumLength(in: lexer), 4)
     }
     
     func testGrammarRulePassesIn() {
         let rule = GrammarRule.digit
-        let lexerMatching = Lexer(input: "123")
-        let lexerNonMatching = Lexer(input: "a")
+        let lexerMatching = Parser(input: "123")
+        let lexerNonMatching = Parser(input: "a")
         
         XCTAssert(rule.passes(in: lexerMatching))
         XCTAssertFalse(rule.passes(in: lexerNonMatching))
@@ -182,8 +182,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRulePassesInWithZeroOrMoreRule() {
         let rule = GrammarRule.digit*
-        let lexerMatching = Lexer(input: "123")
-        let lexerNonMatching = Lexer(input: "a")
+        let lexerMatching = Parser(input: "123")
+        let lexerNonMatching = Parser(input: "a")
         
         XCTAssert(rule.passes(in: lexerMatching))
         XCTAssert(rule.passes(in: lexerNonMatching))
@@ -203,10 +203,10 @@ public class GrammarRuleTests: XCTestCase {
         let test =
             (.keyword("@keyword") .. .digit+) | (.keyword("@keyword") .. .keyword("abc")) | (.keyword("@keyword") .. "a")
         
-        let lexer1 = Lexer(input: "@keyword 123")
-        let lexer2 = Lexer(input: "@keyword abc")
-        let lexer3 = Lexer(input: "@keyword a")
-        let lexer4 = Lexer(input: "@keyword _abc")
+        let lexer1 = Parser(input: "@keyword 123")
+        let lexer2 = Parser(input: "@keyword abc")
+        let lexer3 = Parser(input: "@keyword a")
+        let lexer4 = Parser(input: "@keyword _abc")
         
         XCTAssertEqual("@keyword 123", try test.consume(from: lexer1))
         XCTAssertEqual("@keyword abc", try test.consume(from: lexer2))
@@ -216,8 +216,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleOneOrMoreOr() throws {
         let rule = GrammarRule.oneOrMore(.or([.digit, .letter]))
-        let lexer1 = Lexer(input: "ab123")
-        let lexer2 = Lexer(input: "ab 123")
+        let lexer1 = Parser(input: "ab123")
+        let lexer2 = Parser(input: "ab 123")
         
         XCTAssertEqual("ab123", try rule.consume(from: lexer1))
         XCTAssertEqual("ab", try rule.consume(from: lexer2))
@@ -228,9 +228,9 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleOptional() throws {
         let rule = GrammarRule.optional(.keyword("abc"))
-        let lexer1 = Lexer(input: "abc")
-        let lexer2 = Lexer(input: "ab")
-        let lexer3 = Lexer(input: "")
+        let lexer1 = Parser(input: "abc")
+        let lexer2 = Parser(input: "ab")
+        let lexer3 = Parser(input: "")
         
         XCTAssertEqual("abc", try rule.consume(from: lexer1))
         XCTAssertEqual("", try rule.consume(from: lexer2))
@@ -249,8 +249,8 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleSequence() throws {
         let rule = GrammarRule.sequence([.letter, .digit])
-        let lexer1 = Lexer(input: "a 1")
-        let lexer2 = Lexer(input: "aa 2")
+        let lexer1 = Parser(input: "a 1")
+        let lexer2 = Parser(input: "aa 2")
         
         XCTAssert(rule.canConsume(from: lexer1))
         XCTAssert(rule.canConsume(from: lexer2))
@@ -263,10 +263,10 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleDirectSequence() throws {
         let rule = GrammarRule.directSequence([.letter, .digit])
-        let lexer1 = Lexer(input: "a1")
-        let lexer2 = Lexer(input: "a 1")
-        let lexer3 = Lexer(input: "aa2")
-        let lexer4 = Lexer(input: " a2")
+        let lexer1 = Parser(input: "a1")
+        let lexer2 = Parser(input: "a 1")
+        let lexer3 = Parser(input: "aa2")
+        let lexer4 = Parser(input: " a2")
         
         XCTAssert(rule.canConsume(from: lexer1))
         XCTAssert(rule.canConsume(from: lexer2)) // TODO: these two could be easy to check as false,
@@ -302,7 +302,7 @@ public class GrammarRuleTests: XCTestCase {
         
         argList.setRule(rule: [arg, [",", recArg]* ])
         
-        let lexer1 = Lexer(input: "abc, def, ghi")
+        let lexer1 = Parser(input: "abc, def, ghi")
         // let lexer2 = Lexer(input: "abc, def,")
         
         // Act
@@ -521,8 +521,8 @@ public class GrammarRuleTests: XCTestCase {
             return .sequence([.letter, [",", .recursive(rec)]*])
         }
         
-        let lexer1 = Lexer(input: "a, b, c")
-        let lexer2 = Lexer(input: ", , b")
+        let lexer1 = Parser(input: "a, b, c")
+        let lexer2 = Parser(input: ", , b")
         
         XCTAssertEqual("a, b, c", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))
@@ -563,8 +563,8 @@ public class GrammarRuleTests: XCTestCase {
         let propertyModifierList =
             "(" .. modifierList .. ")"
         
-        let lexer1 = Lexer(input: "(mod1, mod2)")
-        let lexer2 = Lexer(input: "(mod1, )")
+        let lexer1 = Parser(input: "(mod1, mod2)")
+        let lexer2 = Parser(input: "(mod1, )")
         
         // Act/assert
         XCTAssertEqual("(mod1, mod2)", try propertyModifierList.consume(from: lexer1))
@@ -601,11 +601,11 @@ public class GrammarRuleTests: XCTestCase {
         let propertyModifierList =
             "(" .. modifierList .. ")"
         
-        let lexer1 = Lexer(input: "(mod1, mod2)")
-        let lexer2 = Lexer(input: "()")
-        let lexer3 = Lexer(input: "(mod1, )")
-        let lexer4 = Lexer(input: "(mod1, ")
-        let lexer5 = Lexer(input: "( ")
+        let lexer1 = Parser(input: "(mod1, mod2)")
+        let lexer2 = Parser(input: "()")
+        let lexer3 = Parser(input: "(mod1, )")
+        let lexer4 = Parser(input: "(mod1, ")
+        let lexer5 = Parser(input: "( ")
         
         // Act/assert
         XCTAssertEqual("(mod1, mod2)", try propertyModifierList.consume(from: lexer1))
@@ -651,12 +651,12 @@ public class GrammarRuleTests: XCTestCase {
         let propertyModifierList =
             "(" .. modifierList .. ")"
         
-        let lexer1 = Lexer(input: "(@keyword 123, @keyword abc, @keyword a)")
-        let lexer2 = Lexer(input: "(@keyword mod, @keyword 123, @keyword a, @keyword abc)")
-        let lexer3 = Lexer(input: "(@keyword ace)")
-        let lexer4 = Lexer(input: "(@keyword b)")
-        let lexer5 = Lexer(input: "(mod1, ")
-        let lexer6 = Lexer(input: "( ")
+        let lexer1 = Parser(input: "(@keyword 123, @keyword abc, @keyword a)")
+        let lexer2 = Parser(input: "(@keyword mod, @keyword 123, @keyword a, @keyword abc)")
+        let lexer3 = Parser(input: "(@keyword ace)")
+        let lexer4 = Parser(input: "(@keyword b)")
+        let lexer5 = Parser(input: "(mod1, ")
+        let lexer6 = Parser(input: "( ")
         
         // Act/assert
         XCTAssertEqual("(@keyword 123, @keyword abc, @keyword a)", try propertyModifierList.consume(from: lexer1))
@@ -687,10 +687,10 @@ public class GrammarRuleTests: XCTestCase {
         let test =
             ("a" .. ident) | ("a" .. number) | ("a" .. .keyword("@keyword"))
         
-        let lexer1 = Lexer(input: "a 123")
-        let lexer2 = Lexer(input: "a abc")
-        let lexer3 = Lexer(input: "a @keyword")
-        let lexer4 = Lexer(input: "a _abc")
+        let lexer1 = Parser(input: "a 123")
+        let lexer2 = Parser(input: "a abc")
+        let lexer3 = Parser(input: "a @keyword")
+        let lexer4 = Parser(input: "a _abc")
         
         XCTAssertEqual("a 123", try test.consume(from: lexer1))
         XCTAssertEqual("a abc", try test.consume(from: lexer2))
@@ -718,10 +718,10 @@ public class GrammarRuleTests: XCTestCase {
         let test =
             (.keyword("@keyword") .. ident) | (.keyword("@keyword") .. number) | (.keyword("@keyword") .. "a")
         
-        let lexer1 = Lexer(input: "@keyword 123")
-        let lexer2 = Lexer(input: "@keyword abc")
-        let lexer3 = Lexer(input: "@keyword a")
-        let lexer4 = Lexer(input: "@keyword _abc")
+        let lexer1 = Parser(input: "@keyword 123")
+        let lexer2 = Parser(input: "@keyword abc")
+        let lexer3 = Parser(input: "@keyword a")
+        let lexer4 = Parser(input: "@keyword _abc")
         
         XCTAssertEqual("@keyword 123", try test.consume(from: lexer1))
         XCTAssertEqual("@keyword abc", try test.consume(from: lexer2))
@@ -758,7 +758,7 @@ public class GrammarRuleTests: XCTestCase {
         
         measure {
             for _ in 0...100 {
-                let lexer = Lexer(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
                 _=try! propertyModifierList.consume(from: lexer)
             }
         }
@@ -783,7 +783,7 @@ public class GrammarRuleTests: XCTestCase {
         measure {
             do {
                 for _ in 0...100 {
-                    let lexer = Lexer(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                    let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
                     
                     _=try lexer.consumeString { lexer in
                         try lexer.advance(expectingCurrent: "(")
@@ -795,8 +795,8 @@ public class GrammarRuleTests: XCTestCase {
                             lexer.skipWhitespace()
                             
                             // Ident
-                            try lexer.advance(validatingCurrent: { Lexer.isLetter($0) || $0 == "_" })
-                            lexer.advance(while: { Lexer.isLetter($0) || Lexer.isDigit($0) || $0 == "_" })
+                            try lexer.advance(validatingCurrent: { Parser.isLetter($0) || $0 == "_" })
+                            lexer.advance(while: { Parser.isLetter($0) || Parser.isDigit($0) || $0 == "_" })
                             
                             lexer.skipWhitespace()
                             
@@ -850,7 +850,7 @@ public class GrammarRuleTests: XCTestCase {
         
         measure {
             for _ in 0...100 {
-                let lexer = Lexer(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
                 _=try! propertyModifierList.consume(from: lexer)
             }
         }
@@ -887,7 +887,7 @@ public class GrammarRuleTests: XCTestCase {
         
         measure {
             for _ in 0...100 {
-                let lexer = Lexer(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
                 _=try! propertyModifierList.consume(from: lexer)
             }
         }
@@ -906,10 +906,10 @@ public class GrammarRuleTests: XCTestCase {
         //
         let rule = .keyword("\u{001B}[") .. (.digit+ .. ";")* .. [.digit+] .. ("A" | "B")
         
-        let lexer1 = Lexer(input: "\u{001B}[10A")
-        let lexer2 = Lexer(input: "\u{001B}[A")
-        let lexer3 = Lexer(input: "\u{001B}[10;11B")
-        let lexer4 = Lexer(input: "\u{001B}[3")
+        let lexer1 = Parser(input: "\u{001B}[10A")
+        let lexer2 = Parser(input: "\u{001B}[A")
+        let lexer3 = Parser(input: "\u{001B}[10;11B")
+        let lexer4 = Parser(input: "\u{001B}[3")
         
         XCTAssertEqual("\u{001B}[10A", try rule.consume(from: lexer1))
         XCTAssertEqual("\u{001B}[A", try rule.consume(from: lexer2))
@@ -930,10 +930,10 @@ public class GrammarRuleTests: XCTestCase {
         //
         let rule = .keyword("\u{001B}[") .. (.digit+ .. ";")+ .. [.digit+] .. ("A" | "B")
         
-        let lexer1 = Lexer(input: "\u{001B}[10;A")
-        let lexer2 = Lexer(input: "\u{001B}[A")
-        let lexer3 = Lexer(input: "\u{001B}[10;11B")
-        let lexer4 = Lexer(input: "\u{001B}[3")
+        let lexer1 = Parser(input: "\u{001B}[10;A")
+        let lexer2 = Parser(input: "\u{001B}[A")
+        let lexer3 = Parser(input: "\u{001B}[10;11B")
+        let lexer4 = Parser(input: "\u{001B}[3")
         
         XCTAssertEqual("\u{001B}[10;A", try rule.consume(from: lexer1))
         XCTAssertThrowsError(try rule.consume(from: lexer2))

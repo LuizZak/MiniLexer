@@ -9,24 +9,24 @@ public protocol TokenProtocol: Equatable {
     /// sequences.
     static var eofToken: Self { get }
     
-    /// Returns a token at a given lexer index on a lexer.
+    /// Returns a token at a given parser index on a parser.
     /// Returns nil, if no token could be read.
     ///
-    /// It is not required for conformers to return the state of the lexer to the
-    /// previous state prior to the calling of this method (i.e. `lexer.withTemporaryIndex`).
+    /// It is not required for conformers to return the state of the parser to the
+    /// previous state prior to the calling of this method (i.e. `parser.withTemporaryIndex`).
     ///
-    /// - Parameter lexer: Lexer to attempt to tokenize.
-    /// - Returns: A token at the current lexer point, or nil, in case no token
+    /// - Parameter parser: Parser to attempt to tokenize.
+    /// - Returns: A token at the current parser point, or nil, in case no token
     /// could be read.
-    static func tokenType(at lexer: Lexer) -> Self?
+    static func tokenType(at parser: Parser) -> Self?
     
-    /// Requests the length of this token type when applied to a given lexer.
-    /// If this token cannot be possibly consumed from the lexer, conformers must
+    /// Requests the length of this token type when applied to a given parser.
+    /// If this token cannot be possibly consumed from the parser, conformers must
     /// return `0`.
     ///
-    /// It is not required for tokens to return the state of the lexer to the
+    /// It is not required for tokens to return the state of the parser to the
     /// previous state prior to the calling of this method.
-    func length(in lexer: Lexer) -> Int
+    func length(in parser: Parser) -> Int
     
     /// Gets the string representation of this token value
     var tokenString: Segment { get }

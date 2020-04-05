@@ -5,10 +5,10 @@ class TokenizerTests: XCTestCase {
     var sut: TokenizerLexer<TestToken>!
     
     func testInitWithLexer() {
-        let lexer = Lexer(input: "()")
+        let lexer = Parser(input: "()")
         sut = TokenizerLexer(lexer: lexer)
         
-        XCTAssert(sut.lexer === lexer)
+        XCTAssert(sut.parser === lexer)
     }
     
     func testTokenizeStream() {
@@ -145,7 +145,7 @@ class TokenizerTests: XCTestCase {
         do {
             try sut.advance(over: .comma)
             XCTFail("Should have thrown")
-        } catch let error as LexerError {
+        } catch let error as ParserError {
             XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString),
                            "Error at line 1 column 1: Expected token ',' but found '('")
         } catch {
@@ -159,7 +159,7 @@ class TokenizerTests: XCTestCase {
         do {
             try sut.advance(overTokenType: .comma)
             XCTFail("Should have thrown")
-        } catch let error as LexerError {
+        } catch let error as ParserError {
             XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString),
                            "Error at line 1 column 1: Expected token ',' but found '('")
         } catch {
@@ -207,7 +207,7 @@ class TokenizerTests: XCTestCase {
         }
         
         XCTAssertEqual(sut.token(), .openParens)
-        XCTAssertEqual(sut.lexer.inputIndex, sut.lexer.inputString.startIndex)
+        XCTAssertEqual(sut.parser.inputIndex, sut.parser.inputString.startIndex)
     }
     
     func testAllTokens() {
@@ -260,7 +260,7 @@ class TokenizerTests: XCTestCase {
         sut = TokenizerLexer(input: "(,)")
         _=sut.token()
         
-        try sut.lexer.advanceLength(1)
+        try sut.parser.advanceLength(1)
         
         XCTAssertEqual(sut.token().tokenString, ",")
         XCTAssertEqual(sut.token(), .comma)
@@ -371,11 +371,11 @@ struct TestStructToken: TokenProtocol {
     var isEof: Bool
     var tokenString: Substring
     
-    func length(in lexer: Lexer) -> Int {
+    func length(in lexer: Parser) -> Int {
         return tokenString.count
     }
     
-    static func tokenType(at lexer: Lexer) -> TestStructToken? {
+    static func tokenType(at lexer: Parser) -> TestStructToken? {
         do {
             if lexer.safeIsNextChar(equalTo: ".") {
                 return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
@@ -423,7 +423,7 @@ enum TestTokenWithIdentifier: String, TokenProtocol {
         }
     }
     
-    static func tokenType(at lexer: Lexer) -> TestTokenWithIdentifier? {
+    static func tokenType(at lexer: Parser) -> TestTokenWithIdentifier? {
         if lexer.safeIsNextChar(equalTo: "(") {
             return .openParens
         }
@@ -433,13 +433,13 @@ enum TestTokenWithIdentifier: String, TokenProtocol {
         if lexer.safeIsNextChar(equalTo: ",") {
             return .comma
         }
-        if lexer.safeNextCharPasses(with: Lexer.isLetter) {
+        if lexer.safeNextCharPasses(with: Parser.isLetter) {
             return .identifier
         }
         return nil
     }
     
-    func length(in lexer: Lexer) -> Int {
+    func length(in lexer: Parser) -> Int {
         switch self {
         case .openParens, .closeParens, .comma:
             return 1
@@ -472,7 +472,7 @@ enum TestToken: String, TokenProtocol {
         }
     }
     
-    static func tokenType(at lexer: Lexer) -> TestToken? {
+    static func tokenType(at lexer: Parser) -> TestToken? {
         if lexer.safeIsNextChar(equalTo: "(") {
             return .openParens
         }
@@ -485,7 +485,7 @@ enum TestToken: String, TokenProtocol {
         return nil
     }
     
-    func length(in lexer: Lexer) -> Int {
+    func length(in lexer: Parser) -> Int {
         switch self {
         case .openParens, .closeParens, .comma:
             return 1
@@ -530,7 +530,7 @@ private enum TestToken2: TokenProtocol {
         }
     }
     
-    func length(in lexer: Lexer) -> Int {
+    func length(in lexer: Parser) -> Int {
         switch self {
         case .eof:
             return 0
@@ -549,7 +549,7 @@ private enum TestToken2: TokenProtocol {
         }
     }
     
-    static func tokenType(at lexer: Lexer) -> TestToken2? {
+    static func tokenType(at lexer: Parser) -> TestToken2? {
         
         if lexer.checkNext(matches: ",") {
             return .comma
@@ -568,15 +568,15 @@ private enum TestToken2: TokenProtocol {
             return .ccw
         }
         
-        if lexer.safeNextCharPasses(with: Lexer.isDigit) {
+        if lexer.safeNextCharPasses(with: Parser.isDigit) {
             let backtracker = lexer.backtracker()
-            lexer.advance(while: Lexer.isDigit)
+            lexer.advance(while: Parser.isDigit)
             
             if !lexer.safeIsNextChar(equalTo: ".") {
                 return .integer
             }
             
-            backtracker.backtrack(lexer: lexer)
+            backtracker.backtrack(parser: lexer)
         }
         
         if TestToken2.floatGrammar.passes(in: lexer) {

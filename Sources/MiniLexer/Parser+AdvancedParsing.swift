@@ -1,5 +1,5 @@
 // MARK: - Advanced parsing operators
-public extension Lexer {
+public extension Parser {
     /// Tries to read from the current position using a given block, and skips
     /// advancing if either the block throws or returns `false`.
     ///
@@ -10,7 +10,7 @@ public extension Lexer {
     /// `true`).
     @discardableResult
     @inlinable
-    func optional(using block: (Lexer) throws -> Bool) -> Bool {
+    func optional(using block: (Parser) throws -> Bool) -> Bool {
         do {
             let (res, index) = try withTemporaryIndex {
                 (try block(self), inputIndex)
@@ -27,7 +27,7 @@ public extension Lexer {
         }
     }
     
-    /// Tries to read exactly `count` rounds lexer w/ the given `block`, stopping
+    /// Tries to read exactly `count` rounds parser w/ the given `block`, stopping
     /// at the first read attempt that results in a thrown error, or when it
     /// returns `false`.
     ///
@@ -35,11 +35,11 @@ public extension Lexer {
     /// If `!= count` rounds have been performed before the block failed/returned
     /// `false`, an error is thrown.
     @inlinable
-    func expect(exactly count: Int, of block: (Lexer) throws -> Bool) throws {
+    func expect(exactly count: Int, of block: (Parser) throws -> Bool) throws {
         return try expect(between: count, max: count, of: block)
     }
     
-    /// Tries to read as much as possible of the lexer w/ the given `block`,
+    /// Tries to read as much as possible of the parser w/ the given `block`,
     /// stopping at the first read attempt that results in a thrown error, or
     /// when it returns `false`.
     ///
@@ -47,11 +47,11 @@ public extension Lexer {
     /// If `< count` rounds have been performed before the block failed/returned
     /// `false`, an error is thrown.
     @inlinable
-    func expect(atLeast count: Int, of block: (Lexer) throws -> Bool) throws {
+    func expect(atLeast count: Int, of block: (Parser) throws -> Bool) throws {
         return try expect(between: count, max: Int.max, of: block)
     }
     
-    /// Tries to read between the given range #-count of rounds of the lexer w/
+    /// Tries to read between the given range #-count of rounds of the parser w/
     /// the given `block`, stopping at the first read attempt that results in a
     /// thrown error, or when it returns `false`.
     ///
@@ -59,27 +59,27 @@ public extension Lexer {
     /// If `< min` or `> max` rounds have been performed before the block
     /// failed/returned `false`, an error is thrown.
     @inlinable
-    func expect(between min: Int, max: Int, of block: (Lexer) throws -> Bool) throws {
+    func expect(between min: Int, max: Int, of block: (Parser) throws -> Bool) throws {
         let n = performGreedyRounds(block: { (l, r) in try r < max && block(l) })
         
         if n < min || n > max {
             if min == max {
-                throw LexerError.miscellaneous("Expected \(min) rounds, received \(n)")
+                throw ParserError.miscellaneous("Expected \(min) rounds, received \(n)")
             }
-            throw LexerError.miscellaneous("Expected between \(min) and \(max) rounds, received \(n)")
+            throw ParserError.miscellaneous("Expected between \(min) and \(max) rounds, received \(n)")
         }
     }
     
     /// Reads the current position as much as possible using the giving throwing
     /// block, returning the number of rounds that where performed.
     ///
-    /// Tries to read as much as possible of the lexer w/ the given `block`,
+    /// Tries to read as much as possible of the parser w/ the given `block`,
     /// stopping at the first read attempt that results in a thrown error, or
     /// when it returns `false`.
     ///
     /// The read head is then reset to before the last attempt.
     @inlinable
-    func performGreedyRounds(block: (Lexer, Int) throws -> Bool) -> Int {
+    func performGreedyRounds(block: (Parser, Int) throws -> Bool) -> Int {
         var rounds = 0
         repeat {
             do {
@@ -99,19 +99,19 @@ public extension Lexer {
         return rounds
     }
     
-    /// Given a list of lexer-consuming closures, returns when the first closure
+    /// Given a list of parser-consuming closures, returns when the first closure
     /// successfully parses without throwing errors, throwing an error of its
     /// own if none of the parsers succeeded.
     ///
     /// The method automatically deals w/ backtracking to the current position
     /// when parsing fails across closure attempts.
     @inlinable
-    func matchFirst(withEither options: (Lexer) throws -> Void...) throws {
+    func matchFirst(withEither options: (Parser) throws -> Void...) throws {
         var lastError: Error?
         for option in options {
-            if optional(using: { lexer -> Bool in
+            if optional(using: { parser -> Bool in
                 do {
-                    try option(lexer)
+                    try option(parser)
                 } catch {
                     lastError = error
                     throw error
@@ -126,6 +126,6 @@ public extension Lexer {
             throw error
         }
         
-        throw LexerError.genericParseError
+        throw ParserError.genericParseError
     }
 }

@@ -1,7 +1,7 @@
 import Foundation
 
 // MARK: - Safe operations
-public extension Lexer {
+public extension Parser {
     /// Attempts to advance the string index forward by one, returning a value
     /// telling true if the advance was successful or false if the current index
     /// is pointing at the end of the string buffer
@@ -55,7 +55,7 @@ public extension Lexer {
     /// Advances the stream if the current string under it matches the given string.
     /// The method checks the match, does nothing while returning false if the
     /// current stream position does not match the given string.
-    /// By default, the lexer does a `literal`, character-by-character match,
+    /// By default, the parser does a `literal`, character-by-character match,
     /// which can be overriden by specifying the `options` parameter.
     func advanceIf<S: StringProtocol>(equals string: S, options: String.CompareOptions = .literal) -> Bool {
         guard let endIndex = inputString.index(inputIndex, offsetBy: string.count, limitedBy: inputString.endIndex) else {
@@ -79,7 +79,7 @@ public extension Lexer {
 }
 
 // MARK: - Unsafe/throwing operations
-public extension Lexer {
+public extension Parser {
     
     /// Advances the stream without reading a character.
     /// Throws an EoF error if the current offset is at the end of the character

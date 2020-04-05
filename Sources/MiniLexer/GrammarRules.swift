@@ -1,7 +1,7 @@
 import Foundation
 
-/// A grammar rule that consumes from a Lexer and returns a resulting type
-public protocol LexerGrammarRule {
+/// A grammar rule that consumes from a Parser and returns a resulting type
+public protocol ParserGrammarRule {
     associatedtype Result = Substring
     
     /// A short, formal description of this grammar rule to be used during debugging
@@ -12,58 +12,58 @@ public protocol LexerGrammarRule {
     /// this rule is recursive itself.
     var containsRecursiveRule: Bool { get }
     
-    /// Consumes the required rule from a lexer.
-    /// Simply catches a substring from the lexer's current position all the way
-    /// to its later index after a call to `LexerGrammarRule.parse(with:)`
-    func consume(from lexer: Lexer) throws -> Result
+    /// Consumes the required rule from a parser.
+    /// Simply catches a substring from the parser's current position all the way
+    /// to its later index after a call to `ParserGrammarRule.parse(with:)`
+    func consume(from parser: Parser) throws -> Result
     
-    /// Parses with a given lexer, but does't return a result, simply advances the
-    /// lexer's offset as if it was parsed by `LexerGrammarRule.consume(from:)`.
-    func stepThroughApplying(on lexer: Lexer) throws
+    /// Parses with a given parser, but does't return a result, simply advances the
+    /// parser's offset as if it was parsed by `ParserGrammarRule.consume(from:)`.
+    func stepThroughApplying(on parser: Parser) throws
     
-    /// Whether this rule can consume its required data from a given lexer.
+    /// Whether this rule can consume its required data from a given parser.
     /// May not indicate a call to `consume(from:)` will be successful, that is,
     /// if `false`, indicates a call to `consume(from:)` will definitely fail,
     /// but if `true`, indicates a call to `consume(from:)` may be successful.
-    func canConsume(from lexer: Lexer) -> Bool
+    func canConsume(from parser: Parser) -> Bool
     
-    /// Returns the maximal length this grammar rule can consume from a given lexer,
-    /// if successful.
+    /// Returns the maximal length this grammar rule can consume from a given
+    /// parser, if successful.
     ///
     /// Returns nil, if an error ocurred while consuming the rule.
-    func maximumLength(in lexer: Lexer) -> Int?
+    func maximumLength(in parser: Parser) -> Int?
     
     /// Returns `true` if this grammar rule validates effectively when applied on
-    /// a given lexer.
+    /// a given parser.
     ///
     /// Gives a better guarantee than using `canConsume(from:)` since that method
     /// does a cheaper validation of whether an initial consumption attempt can
     /// be performed without immediate failures.
     ///
-    /// This method returns the lexer to the previous state before returning.
-    func passes(in lexer: Lexer) -> Bool
+    /// This method returns the parser to the previous state before returning.
+    func passes(in parser: Parser) -> Bool
 }
 
-public extension LexerGrammarRule {
-    func maximumLength(in lexer: Lexer) -> Int? {
+public extension ParserGrammarRule {
+    func maximumLength(in parser: Parser) -> Int? {
         do {
-            let start = lexer.inputIndex
+            let start = parser.inputIndex
             
-            let end: Lexer.Index = try lexer.withTemporaryIndex {
-                try stepThroughApplying(on: lexer)
-                return lexer.inputIndex
+            let end: Parser.Index = try parser.withTemporaryIndex {
+                try stepThroughApplying(on: parser)
+                return parser.inputIndex
             }
             
-            return lexer.inputString.distance(from: start, to: end)
+            return parser.inputString.distance(from: start, to: end)
         } catch {
             return nil
         }
     }
     
-    func passes(in lexer: Lexer) -> Bool {
+    func passes(in parser: Parser) -> Bool {
         do {
-            _=try lexer.withTemporaryIndex {
-                try stepThroughApplying(on: lexer)
+            _=try parser.withTemporaryIndex {
+                try stepThroughApplying(on: parser)
             }
             
             return true
@@ -74,18 +74,18 @@ public extension LexerGrammarRule {
 }
 
 
-/// Type-erasing type over `LexerGrammarRule`
-public struct AnyGrammarRule<T>: LexerGrammarRule {
+/// Type-erasing type over `ParserGrammarRule`
+public struct AnyGrammarRule<T>: ParserGrammarRule {
     public typealias Result = T
     
     @usableFromInline
     internal let _ruleDescription: () -> String
     @usableFromInline
-    internal let _consume: (Lexer) throws -> T
+    internal let _consume: (Parser) throws -> T
     @usableFromInline
-    internal let _stepThroughApplying: (Lexer) throws -> Void
+    internal let _stepThroughApplying: (Parser) throws -> Void
     @usableFromInline
-    internal let _canConsume: (Lexer) -> Bool
+    internal let _canConsume: (Parser) -> Bool
     
     public var ruleDescription: String {
         return _ruleDescription()
@@ -95,7 +95,7 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     
     /// Creates a type-erased AnyGrammarRule<T> over a given grammar rule.
     @inlinable
-    public init<U: LexerGrammarRule>(_ rule: U) where U.Result == T {
+    public init<U: ParserGrammarRule>(_ rule: U) where U.Result == T {
         _ruleDescription = { rule.ruleDescription }
         containsRecursiveRule = rule.containsRecursiveRule
         _consume = rule.consume(from:)
@@ -108,12 +108,12 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     /// into another type, which is then returned by `AnyGrammarRule`'s `consume`
     /// method.
     @inlinable
-    public init<U: LexerGrammarRule, S: StringProtocol>(rule: U, transformer: @escaping (S, Lexer.Index) throws -> T) where U.Result == S {
+    public init<U: ParserGrammarRule, S: StringProtocol>(rule: U, transformer: @escaping (S, Parser.Index) throws -> T) where U.Result == S {
         _ruleDescription = { rule.ruleDescription }
         containsRecursiveRule = rule.containsRecursiveRule
-        _consume = { lexer in
-            let index = lexer.inputIndex
-            let res = try rule.consume(from: lexer)
+        _consume = { parser in
+            let index = parser.inputIndex
+            let res = try rule.consume(from: parser)
             
             return try transformer(res, index)
         }
@@ -122,23 +122,23 @@ public struct AnyGrammarRule<T>: LexerGrammarRule {
     }
     
     @inlinable
-    public func consume(from lexer: Lexer) throws -> T {
-        return try _consume(lexer)
+    public func consume(from parser: Parser) throws -> T {
+        return try _consume(parser)
     }
     
     @inlinable
-    public func stepThroughApplying(on lexer: Lexer) throws {
-        return try _stepThroughApplying(lexer)
+    public func stepThroughApplying(on parser: Parser) throws {
+        return try _stepThroughApplying(parser)
     }
     
     @inlinable
-    public func canConsume(from lexer: Lexer) -> Bool {
-        return _canConsume(lexer)
+    public func canConsume(from parser: Parser) -> Bool {
+        return _canConsume(parser)
     }
 }
 
 /// Allows recursion into a `GrammarRule` node
-public final class RecursiveGrammarRule: LexerGrammarRule {
+public final class RecursiveGrammarRule: ParserGrammarRule {
     private var _rule: GrammarRule
     
     public var ruleName: String
@@ -160,16 +160,16 @@ public final class RecursiveGrammarRule: LexerGrammarRule {
         self._rule = rule
     }
     
-    public func consume(from lexer: Lexer) throws -> Substring {
-        return try _rule.consume(from: lexer)
+    public func consume(from parser: Parser) throws -> Substring {
+        return try _rule.consume(from: parser)
     }
     
-    public func stepThroughApplying(on lexer: Lexer) throws {
-        try _rule.stepThroughApplying(on: lexer)
+    public func stepThroughApplying(on parser: Parser) throws {
+        try _rule.stepThroughApplying(on: parser)
     }
     
-    public func canConsume(from lexer: Lexer) -> Bool {
-        return _rule.canConsume(from: lexer)
+    public func canConsume(from parser: Parser) -> Bool {
+        return _rule.canConsume(from: parser)
     }
     
     /// Calls a block that takes a recursive grammar rule and must return a grammar
@@ -207,11 +207,11 @@ public final class RecursiveGrammarRule: LexerGrammarRule {
 /// - directSequence: Attempts to parse a sequence of rules taking into consideration
 /// any whitespace between the tokens. Fails if an unexpected whitespace is found
 /// between rules.
-public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalarLiteral, ExpressibleByArrayLiteral {
+public enum GrammarRule: ParserGrammarRule, Equatable, ExpressibleByUnicodeScalarLiteral, ExpressibleByArrayLiteral {
     case digit
     case letter
     case whitespace
-    case char(Lexer.Atom)
+    case char(Parser.Atom)
     case keyword(String)
     case recursive(RecursiveGrammarRule)
     indirect case namedRule(name: String, GrammarRule)
@@ -318,7 +318,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
         }
     }
     
-    public init(unicodeScalarLiteral value: Lexer.Atom) {
+    public init(unicodeScalarLiteral value: Parser.Atom) {
         self = .char(value)
     }
     
@@ -334,18 +334,18 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
     }
     
     @inlinable
-    public func consume(from lexer: Lexer) throws -> Substring {
-        return try lexer.consumeString(performing: stepThroughApplying)
+    public func consume(from parser: Parser) throws -> Substring {
+        return try parser.consumeString(performing: stepThroughApplying)
     }
     
     @inlinable
-    public func stepThroughApplying(on lexer: Lexer) throws {
-        // Simplify sequence cases since we'll just have to run the lexers one
+    public func stepThroughApplying(on parser: Parser) throws {
+        // Simplify sequence cases since we'll just have to run the parser one
         // by one during canConsume, anyway.
         switch self {
         case .directSequence(let rules):
             for rule in rules {
-                try rule.stepThroughApplying(on: lexer)
+                try rule.stepThroughApplying(on: parser)
             }
             
             return
@@ -354,20 +354,20 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
                 return
             }
             
-            try first.stepThroughApplying(on: lexer)
+            try first.stepThroughApplying(on: parser)
             
             for rule in rules.dropFirst() {
-                let whitespaceBacktrack = lexer.backtracker()
+                let whitespaceBacktrack = parser.backtracker()
                 
                 // Skip whitespace between tokens
-                lexer.skipWhitespace()
+                parser.skipWhitespace()
                 
-                let startIndex = lexer.inputIndex
-                try rule.stepThroughApplying(on: lexer)
+                let startIndex = parser.inputIndex
+                try rule.stepThroughApplying(on: parser)
                 
                 // If no tokens where consumed, rewind back from whitespace
-                if startIndex == lexer.inputIndex {
-                    whitespaceBacktrack.backtrack(lexer: lexer)
+                if startIndex == parser.inputIndex {
+                    whitespaceBacktrack.backtrack(parser: parser)
                 }
             }
             
@@ -376,102 +376,102 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             break
         }
        
-        if !canConsume(from: lexer) {
-            throw lexer.unexpectedCharacterError(char: try lexer.peek(), "Expected \(self.ruleDescription)")
+        if !canConsume(from: parser) {
+            throw parser.unexpectedCharacterError(char: try parser.peek(), "Expected \(self.ruleDescription)")
         }
         
         switch self {
         case .digit, .letter, .whitespace:
-            lexer.unsafeAdvance()
+            parser.unsafeAdvance()
             
         case .namedRule(_, let rule):
-            try rule.stepThroughApplying(on: lexer)
+            try rule.stepThroughApplying(on: parser)
             
         case .optional(let subRule):
-            if !subRule.canConsume(from: lexer) {
+            if !subRule.canConsume(from: parser) {
                 return
             }
             
-            try? subRule.stepThroughApplying(on: lexer)
+            try? subRule.stepThroughApplying(on: parser)
             
         case .char(let ch):
-            try lexer.advance(expectingCurrent: ch)
+            try parser.advance(expectingCurrent: ch)
             
         case .keyword(let str):
-            if !lexer.advanceIf(equals: str) {
-                throw lexer.unexpectedStringError("Expected \(ruleDescription)")
+            if !parser.advanceIf(equals: str) {
+                throw parser.unexpectedStringError("Expected \(ruleDescription)")
             }
             
         case .recursive(let rec):
-            try rec.stepThroughApplying(on: lexer)
+            try rec.stepThroughApplying(on: parser)
             
         case .oneOrMore(let subRule):
             // Micro-optimization for .digit, .letter, .whitespace and .char rules
             switch subRule {
             case .digit:
-                try lexer.advance(validatingCurrent: Lexer.isDigit)
-                lexer.advance(while: Lexer.isDigit)
+                try parser.advance(validatingCurrent: Parser.isDigit)
+                parser.advance(while: Parser.isDigit)
             case .letter:
-                try lexer.advance(validatingCurrent: Lexer.isLetter)
-                lexer.advance(while: Lexer.isLetter)
+                try parser.advance(validatingCurrent: Parser.isLetter)
+                parser.advance(while: Parser.isLetter)
             case .whitespace:
-                try lexer.advance(validatingCurrent: Lexer.isWhitespace)
-                lexer.advance(while: Lexer.isWhitespace)
+                try parser.advance(validatingCurrent: Parser.isWhitespace)
+                parser.advance(while: Parser.isWhitespace)
             case .char(let ch):
-                try lexer.advance(expectingCurrent: ch)
-                lexer.advance(while: { $0 == ch })
+                try parser.advance(expectingCurrent: ch)
+                parser.advance(while: { $0 == ch })
                 
             default:
-                try subRule.stepThroughApplying(on: lexer)
+                try subRule.stepThroughApplying(on: parser)
                 
                 repeat {
-                    let backtracker = lexer.backtracker()
+                    let backtracker = parser.backtracker()
                     
                     do {
-                        try subRule.stepThroughApplying(on: lexer)
+                        try subRule.stepThroughApplying(on: parser)
                     } catch {
-                        backtracker.backtrack(lexer: lexer)
+                        backtracker.backtrack(parser: parser)
                         break
                     }
-                } while subRule.canConsume(from: lexer)
+                } while subRule.canConsume(from: parser)
             }
             
         case .zeroOrMore(let subRule):
             // Micro-optimization for .digit, .letter, .whitespace and .char rules
             switch subRule {
             case .digit:
-                lexer.advance(while: Lexer.isDigit)
+                parser.advance(while: Parser.isDigit)
             case .letter:
-                lexer.advance(while: Lexer.isLetter)
+                parser.advance(while: Parser.isLetter)
             case .whitespace:
-                lexer.advance(while: Lexer.isWhitespace)
+                parser.advance(while: Parser.isWhitespace)
             case .char(let ch):
-                lexer.advance(while: { $0 == ch })
+                parser.advance(while: { $0 == ch })
                 
             default:
-                if !subRule.canConsume(from: lexer) {
+                if !subRule.canConsume(from: parser) {
                     return
                 }
                 
                 repeat {
-                    let backtracker = lexer.backtracker()
+                    let backtracker = parser.backtracker()
                     
                     do {
-                        try subRule.stepThroughApplying(on: lexer)
+                        try subRule.stepThroughApplying(on: parser)
                     } catch {
-                        backtracker.backtrack(lexer: lexer)
+                        backtracker.backtrack(parser: parser)
                         break
                     }
-                } while subRule.canConsume(from: lexer)
+                } while subRule.canConsume(from: parser)
             }
             
         case .or(let rules):
-            var indexAfter: Lexer.Index?
+            var indexAfter: Parser.Index?
             for rule in rules {
                 do {
-                    let res = try lexer.withTemporaryIndex { () -> Lexer.Index in
-                        try rule.stepThroughApplying(on: lexer)
-                        return lexer.inputIndex
+                    let res = try parser.withTemporaryIndex { () -> Parser.Index in
+                        try rule.stepThroughApplying(on: parser)
+                        return parser.inputIndex
                     }
                     
                     indexAfter = res
@@ -482,10 +482,10 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             }
             
             guard let index = indexAfter else {
-                throw lexer.syntaxError("Failed to parse with rule \(ruleDescription)")
+                throw parser.syntaxError("Failed to parse with rule \(ruleDescription)")
             }
             
-            lexer.inputIndex = index
+            parser.inputIndex = index
             
         case .directSequence, .sequence:
             fatalError("Should have handled .directSequence/.sequence case at top")
@@ -493,30 +493,30 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
     }
     
     @inlinable
-    public func canConsume(from lexer: Lexer) -> Bool {
+    public func canConsume(from parser: Parser) -> Bool {
         switch self {
         case .digit:
-            return lexer.safeNextCharPasses(with: Lexer.isDigit)
+            return parser.safeNextCharPasses(with: Parser.isDigit)
         case .letter:
-            return lexer.safeNextCharPasses(with: Lexer.isLetter)
+            return parser.safeNextCharPasses(with: Parser.isLetter)
         case .whitespace:
-            return lexer.safeNextCharPasses(with: Lexer.isWhitespace)
+            return parser.safeNextCharPasses(with: Parser.isWhitespace)
             
         case .char(let ch):
-            return lexer.safeIsNextChar(equalTo: ch)
+            return parser.safeIsNextChar(equalTo: ch)
             
         case .keyword(let word) where word.isEmpty:
             return true
             
         case .keyword(let word):
-            return word.unicodeScalars.first == (try? lexer.peek())
+            return word.unicodeScalars.first == (try? parser.peek())
             
         case .namedRule(_, let rule),
              .oneOrMore(let rule):
-            return rule.canConsume(from: lexer)
+            return rule.canConsume(from: parser)
             
         case .recursive(let rule):
-            return rule.canConsume(from: lexer)
+            return rule.canConsume(from: parser)
             
         case .zeroOrMore, .optional:
             // Zero or more and optional can always consume
@@ -524,7 +524,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             
         case .or(let rules):
             for rule in rules {
-                if rule.canConsume(from: lexer) {
+                if rule.canConsume(from: parser) {
                     return true
                 }
             }
@@ -532,7 +532,7 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
             return false
             
         case .sequence(let rules), .directSequence(let rules):
-            return lexer.withTemporaryIndex {
+            return parser.withTemporaryIndex {
                 // If the first consumer works, assume the remaining will as well
                 // and try on.
                 // This will aid in avoiding extreme recursions.
@@ -540,12 +540,12 @@ public enum GrammarRule: LexerGrammarRule, Equatable, ExpressibleByUnicodeScalar
                     return false
                 }
                 
-                if !rule.canConsume(from: lexer) {
+                if !rule.canConsume(from: parser) {
                     return false
                 }
                 
                 do {
-                    try rule.stepThroughApplying(on: lexer)
+                    try rule.stepThroughApplying(on: parser)
                     return true
                 } catch {
                     return false

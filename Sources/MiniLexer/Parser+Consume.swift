@@ -1,5 +1,5 @@
 // MARK: - Safe operations
-public extension Lexer {
+public extension Parser {
     /// Consumes the input string while a given predicate returns true.
     /// Stops when reaching end-of-string, or the when the predicate returns false.
     ///
@@ -39,10 +39,10 @@ public extension Lexer {
     
     /// Returns a string that starts from the current input index, all the way
     /// until the index after the given block performs index-advancing operations
-    /// on this lexer.
+    /// on this parser.
     /// If no index change is made, an empty string is returned.
     @inlinable
-    func consumeString(performing block: (Lexer) throws -> Void) rethrows -> Substring {
+    func consumeString(performing block: (Parser) throws -> Void) rethrows -> Substring {
         let range = startRange()
         try block(self)
         return range.string()
@@ -50,7 +50,7 @@ public extension Lexer {
 }
 
 // MARK: - Unsafe/throwing operations
-public extension Lexer {
+public extension Parser {
     /// Attempts to consume a string of 'n' length from the current index.
     /// Throws, if less than 'n' characters are available to read.
     ///
@@ -62,8 +62,8 @@ public extension Lexer {
             throw endOfStringError()
         }
         
-        return consumeString { lexer in
-            inputIndex = inputSource.index(inputIndex, offsetBy: n)
+        return consumeString { parser in
+            parser.inputIndex = parser.inputSource.index(parser.inputIndex, offsetBy: n)
         }
     }
 }

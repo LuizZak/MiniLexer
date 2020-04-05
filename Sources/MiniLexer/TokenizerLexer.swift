@@ -1,32 +1,32 @@
-/// A tokenizer lexer provides tokenization support by wrapping a bare text lexer
+/// A tokenizer lexer provides tokenization support by wrapping a bare text parser
 /// with token recognition capabilities through a parametrized token type.
 open class TokenizerLexer<T: TokenProtocol> {
     public typealias Token = T
     
-    /// Used to check and re-tokenize a lexer if its index is changed externally.
-    private var lastLexerIndex: Lexer.Index?
+    /// Used to check and re-tokenize a parser if its index is changed externally.
+    private var lastParserIndex: Parser.Index?
     
     private var current: T = T.eofToken
     
-    /// The lexer associated with this tokenizer lexer
-    public let lexer: Lexer
+    /// The parser associated with this tokenizer lexer
+    public let parser: Parser
     
     /// Whether the tokenizer is at the end of the input stream.
     /// When the end is reached, no more tokens can be read.
     public var isEof: Bool {
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
         return current == T.eofToken
     }
     
-    /// Initializes this tokenizer with a given lexer.
-    public init(lexer: Lexer) {
-        self.lexer = lexer
+    /// Initializes this tokenizer with a given parser.
+    public init(parser: Parser) {
+        self.parser = parser
     }
     
     /// Initializes this tokenizer with a given input string.
     public convenience init(input: String) {
-        self.init(lexer: Lexer(input: input))
+        self.init(parser: Parser(input: input))
     }
     
     /// Gets all remaining tokens
@@ -40,21 +40,21 @@ open class TokenizerLexer<T: TokenProtocol> {
             skipToken()
         }
         
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
         return current
     }
     
     /// Skips to the next available token in the stream.
     public func skipToken() {
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
-        let length: Int = lexer.withTemporaryIndex {
-            lexer.skipWhitespace()
-            return current.length(in: lexer)
+        let length: Int = parser.withTemporaryIndex {
+            parser.skipWhitespace()
+            return current.length(in: parser)
         }
         if length > 0 {
-            recordingLexerState {
+            recordingParserState {
                 do {
                     $0.skipWhitespace()
                     try $0.advanceLength(length)
@@ -72,13 +72,13 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// If the token cannot be matched, an error is thrown.
     @discardableResult
     public func advance(over token: T) throws -> T {
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
         if current != token {
-            throw lexer.syntaxError("Expected token '\(token.tokenString)' but found '\(current.tokenString)'")
+            throw parser.syntaxError("Expected token '\(token.tokenString)' but found '\(current.tokenString)'")
         }
         
-        recordingLexerState {
+        recordingParserState {
             $0.skipWhitespace()
         }
         
@@ -90,16 +90,16 @@ open class TokenizerLexer<T: TokenProtocol> {
     ///
     /// - Parameter predicate: A predicate for validating the current token.
     /// - Returns: The token read that passed through the precidate.
-    /// - Throws: A `LexerError` in case the predicate returns false.
+    /// - Throws: A `ParserError` in case the predicate returns false.
     @discardableResult
     public func advance(matching predicate: (T) -> Bool) throws -> T {
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
         if !predicate(current) {
-            throw lexer.syntaxError("Unexpected token \(current)")
+            throw parser.syntaxError("Unexpected token \(current)")
         }
         
-        recordingLexerState {
+        recordingParserState {
             $0.skipWhitespace()
         }
         
@@ -108,7 +108,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     
     /// Returns the current token.
     public func token() -> T {
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
         return current
     }
@@ -130,7 +130,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     ///
     /// - Returns: An iterator for reading the tokens from this lexer.
     public func makeIterator() -> AnyIterator<T> {
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
         return AnyIterator {
             if self.isEof {
@@ -156,28 +156,28 @@ open class TokenizerLexer<T: TokenProtocol> {
         }
     }
     
-    /// Applies changes to the state of the lexer, making sure we record the final
-    /// state correctly so we can later compare states to ensure lexer consistency.
-    private func recordingLexerState(do closure: (Lexer) -> Void) {
-        closure(lexer)
-        lastLexerIndex = lexer.inputIndex
+    /// Applies changes to the state of the parser, making sure we record the final
+    /// state correctly so we can later compare states to ensure parser consistency.
+    private func recordingParserState(do closure: (Parser) -> Void) {
+        closure(parser)
+        lastParserIndex = parser.inputIndex
     }
     
-    private func ensureLexerIndexConsistent() {
-        if lexer.inputIndex == lastLexerIndex {
+    private func ensureParserIndexConsistent() {
+        if parser.inputIndex == lastParserIndex {
             return
         }
         
-        lastLexerIndex = lexer.inputIndex
+        lastParserIndex = parser.inputIndex
         readToken()
     }
     
     private func readToken() {
-        lexer.withTemporaryIndex {
-            lexer.skipWhitespace()
+        parser.withTemporaryIndex {
+            parser.skipWhitespace()
             
             // Check all available tokens
-            guard let token = lexer.withTemporaryIndex(changes: { T.tokenType(at: lexer) }) else {
+            guard let token = parser.withTemporaryIndex(changes: { T.tokenType(at: parser) }) else {
                 current = T.eofToken
                 return
             }
@@ -189,7 +189,7 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// Provides a backtracker which can be used to backtrack this tokenizer lexer's
     /// state to the point at which this method was called.
     public func backtracker() -> Backtrack {
-        ensureLexerIndexConsistent()
+        ensureParserIndexConsistent()
         
         return Backtrack(lexer: self)
     }
@@ -209,13 +209,13 @@ open class TokenizerLexer<T: TokenProtocol> {
     /// A backtracker instance from a `.backtracker()` call.
     public class Backtrack {
         let lexer: TokenizerLexer
-        let index: Lexer.Index
+        let index: Parser.Index
         let token: T
         private var didBacktrack: Bool
         
         fileprivate init(lexer: TokenizerLexer) {
             self.lexer = lexer
-            self.index = lexer.lexer.inputIndex
+            self.index = lexer.parser.inputIndex
             token = lexer.current
             didBacktrack = false
         }
@@ -227,7 +227,7 @@ open class TokenizerLexer<T: TokenProtocol> {
                 return
             }
             
-            lexer.lexer.inputIndex = index
+            lexer.parser.inputIndex = index
             lexer.current = token
             didBacktrack = true
         }
@@ -256,10 +256,10 @@ public extension TokenizerLexer where T: TokenWrapper {
     @discardableResult
     func advance(overTokenType tokenType: T.Token) throws -> T {
         if self.tokenType() != tokenType {
-            throw lexer.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(self.tokenType().tokenString)'")
+            throw parser.syntaxError("Expected token '\(tokenType.tokenString)' but found '\(self.tokenType().tokenString)'")
         }
         
-        recordingLexerState {
+        recordingParserState {
             $0.skipWhitespace()
         }
         
@@ -279,7 +279,7 @@ public extension TokenizerLexer where T: TokenWrapper {
             return nil
         }
         
-        recordingLexerState {
+        recordingParserState {
             $0.skipWhitespace()
         }
         
@@ -304,15 +304,15 @@ public struct FullToken<T: TokenProtocol>: TokenWrapper {
     
     /// Range of the string the token occupies.
     /// Is nil, in case this token is a non representable token, like `.eof`.
-    public var range: Range<Lexer.Index>?
+    public var range: Range<Parser.Index>?
     
-    public init(value: Substring, tokenType: T, range: Range<Lexer.Index>?) {
+    public init(value: Substring, tokenType: T, range: Range<Parser.Index>?) {
         self.value = value
         self.tokenType = tokenType
         self.range = range
     }
     
-    public init(value: String, tokenType: T, range: Range<Lexer.Index>?) {
+    public init(value: String, tokenType: T, range: Range<Parser.Index>?) {
         self.value = Substring(value)
         self.tokenType = tokenType
         self.range = range
@@ -324,30 +324,30 @@ extension FullToken: TokenProtocol {
         return FullToken(value: "", tokenType: T.eofToken, range: nil)
     }
     
-    public func length(in lexer: Lexer) -> Int {
-        return tokenType.length(in: lexer)
+    public func length(in parser: Parser) -> Int {
+        return tokenType.length(in: parser)
     }
     
     public var tokenString: T.Segment {
         return tokenType.tokenString
     }
     
-    public static func tokenType(at lexer: Lexer) -> FullToken<T>? {
-        let bt = lexer.backtracker()
-        guard let t = T.tokenType(at: lexer) else {
+    public static func tokenType(at parser: Parser) -> FullToken<T>? {
+        let bt = parser.backtracker()
+        guard let t = T.tokenType(at: parser) else {
             return nil
         }
         
-        bt.backtrack(lexer: lexer)
+        bt.backtrack(parser: parser)
         
-        let length = t.length(in: lexer)
+        let length = t.length(in: parser)
         
-        bt.backtrack(lexer: lexer)
+        bt.backtrack(parser: parser)
         
         if length > 0 {
-            let range = lexer.inputIndex..<lexer.inputString.index(lexer.inputIndex, offsetBy: length)
+            let range = parser.inputIndex..<parser.inputString.index(parser.inputIndex, offsetBy: length)
             
-            return FullToken(value: lexer.inputString[range], tokenType: t, range: range)
+            return FullToken(value: parser.inputString[range], tokenType: t, range: range)
         }
         
         return nil
