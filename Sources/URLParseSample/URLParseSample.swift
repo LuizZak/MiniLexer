@@ -60,7 +60,7 @@ public class URLParser {
         }
         
         do {
-            let lexer = Parser(input: string)
+            let parser = Parser(input: string)
             
             var scheme: Substring?
             var user: Substring?
@@ -72,81 +72,81 @@ public class URLParser {
             var fragment: Substring?
             
             // <scheme> := [a-z\+\-\.]+
-            scheme = try lexer.consumeString { lexer in
+            scheme = try parser.consumeString { parser in
                 while true {
-                    let peek = try lexer.peek()
+                    let peek = try parser.peek()
                     guard Parser.isLetter(peek) || peek == "+" || peek == "-" || peek == "." else {
                         if peek == ":" {
                             return
                         }
-                        throw lexer.unexpectedCharacterError(char: peek, "Expected Scheme")
+                        throw parser.unexpectedCharacterError(char: peek, "Expected Scheme")
                     }
                     
-                    try lexer.advance()
+                    try parser.advance()
                 }
             }
             
             // Skip ':'
-            try lexer.advance()
+            try parser.advance()
             
             // `//<user>:<password>@<host>:<port>/<url-path>`
             
             // Skip '//'
-            try lexer.advance(expectingCurrent: "/")
-            try lexer.advance(expectingCurrent: "/")
+            try parser.advance(expectingCurrent: "/")
+            try parser.advance(expectingCurrent: "/")
             
             // Check if we have a user:password specifier
-            let hasUserPass: Bool = lexer.withTemporaryIndex {
-                lexer.advance(until: { $0 == "@" || $0 == "/" })
+            let hasUserPass: Bool = parser.withTemporaryIndex {
+                parser.advance(until: { $0 == "@" || $0 == "/" })
                 
-                return lexer.safeIsNextChar(equalTo: "@")
+                return parser.safeIsNextChar(equalTo: "@")
             }
             
             if hasUserPass {
-                user = lexer.consume(until: { $0 == "@" || $0 == ":" })
+                user = parser.consume(until: { $0 == "@" || $0 == ":" })
                 
-                if try lexer.peek() == ":" { // Password
-                    try lexer.advance() // Skip ':'
-                    password = lexer.consume(until: { $0 == "@" })
+                if try parser.peek() == ":" { // Password
+                    try parser.advance() // Skip ':'
+                    password = parser.consume(until: { $0 == "@" })
                 }
                 
-                try lexer.advance() // Skip '@'
+                try parser.advance() // Skip '@'
             }
             
             // Detect IPv6 address
-            if try lexer.peek() == "[" {
-                host = lexer.consume(until: { $0 == "]" })
-                try lexer.advance() // Skip ']'
+            if try parser.peek() == "[" {
+                host = parser.consume(until: { $0 == "]" })
+                try parser.advance() // Skip ']'
             } else {
-                host = lexer.consume(until: { $0 == "/" || $0 == ":" })
+                host = parser.consume(until: { $0 == "/" || $0 == ":" })
             }
             
             // Detect port
-            if lexer.safeIsNextChar(equalTo: ":") {
-                try lexer.advance() // Skip ':'
-                port = Int(try lexer.parse(with: GrammarRule.digit+))
+            if parser.safeIsNextChar(equalTo: ":") {
+                try parser.advance() // Skip ':'
+                port = Int(try parser.parse(with: GrammarRule.digit+))
             }
             
             // End here, without path
-            if lexer.isEof() {
+            if parser.isEof() {
                 return URL(scheme: tostr(scheme), user: tostr(user),
                            password: tostr(password), host: tostr(host),
                            port: port)
             }
             
             // Continue on w/ URL path
-            path = lexer.consume(until: { $0 == "#" || $0 == "?" })
+            path = parser.consume(until: { $0 == "#" || $0 == "?" })
             
             // Check query
-            if lexer.safeIsNextChar(equalTo: "?") {
-                try lexer.advance() // Skip '?'
-                query = lexer.consume(until: { $0 == "#" })
+            if parser.safeIsNextChar(equalTo: "?") {
+                try parser.advance() // Skip '?'
+                query = parser.consume(until: { $0 == "#" })
             }
             
             // Check fragment
-            if lexer.safeIsNextChar(equalTo: "#") {
-                try lexer.advance() // Skip '#'
-                fragment = lexer.consumeRemaining()
+            if parser.safeIsNextChar(equalTo: "#") {
+                try parser.advance() // Skip '#'
+                fragment = parser.consumeRemaining()
             }
             
             return URL(scheme: tostr(scheme), user: tostr(user),
@@ -169,18 +169,18 @@ public extension Parser {
     /// ```
     @inlinable
     func URI() throws -> Substring {
-        return try consumeString { lexer in
-            try lexer.scheme()
-            try lexer.advance(expectingCurrent: ":")
-            try lexer.hierPart()
+        return try consumeString { parser in
+            try parser.scheme()
+            try parser.advance(expectingCurrent: ":")
+            try parser.hierPart()
             
-            if lexer.safeIsNextChar(equalTo: "?") {
-                try lexer.advance() // Skip '?'
-                try lexer.query()
+            if parser.safeIsNextChar(equalTo: "?") {
+                try parser.advance() // Skip '?'
+                try parser.query()
             }
-            if lexer.safeIsNextChar(equalTo: "#") {
-                try lexer.advance() // Skip '#'
-                try lexer.fragment()
+            if parser.safeIsNextChar(equalTo: "#") {
+                try parser.advance() // Skip '#'
+                try parser.fragment()
             }
         }
     }
@@ -246,12 +246,12 @@ public extension Parser {
             return
         }
         
-        try matchFirst(withEither: { lexer in
-            try lexer.pathAbsolute()
-        }, { lexer in
-            try lexer.pathNoScheme()
-        }, { lexer in
-            try lexer.pathEmpty()
+        try matchFirst(withEither: { parser in
+            try parser.pathAbsolute()
+        }, { parser in
+            try parser.pathNoScheme()
+        }, { parser in
+            try parser.pathEmpty()
         })
     }
     
@@ -272,9 +272,9 @@ public extension Parser {
     func authority() throws {
         // Try to find '@', then match user info
         if findNext("@") != nil {
-            optional { lexer in
-                _=try lexer.userinfo()
-                try lexer.advance(expectingCurrent: "@")
+            optional { parser in
+                _=try parser.userinfo()
+                try parser.advance(expectingCurrent: "@")
                 return true
             }
         }
@@ -292,12 +292,12 @@ public extension Parser {
     /// ```
     @inlinable
     func userinfo() throws {
-        try expect(atLeast: 0) { lexer in
-            let c = try lexer.peek()
+        try expect(atLeast: 0) { parser in
+            let c = try parser.peek()
             if Parser.isUnreserved(c) || Parser.isSubDelim(c) || c == ":" {
-                try lexer.advance()
+                try parser.advance()
             } else {
-                try lexer.pctEncoded()
+                try parser.pctEncoded()
             }
             
             return true
@@ -309,15 +309,15 @@ public extension Parser {
     /// ```
     @inlinable
     func host() throws {
-        if optional(using: { lexer -> Bool in
-            try lexer.regName()
+        if optional(using: { parser -> Bool in
+            try parser.regName()
             return true
         }) {
             return
         }
     
-        if optional(using: { lexer -> Bool in
-            try lexer.ipv4Address()
+        if optional(using: { parser -> Bool in
+            try parser.ipv4Address()
             return true
         }) {
             return
@@ -365,12 +365,12 @@ public extension Parser {
     /// ```
     @inlinable
     func h16() throws {
-        try expect(between: 1, max: 4) { lexer -> Bool in
-            if !lexer.safeNextCharPasses(with: Parser.isHexdig) {
+        try expect(between: 1, max: 4) { parser -> Bool in
+            if !parser.safeNextCharPasses(with: Parser.isHexdig) {
                 return false
             }
             
-            try lexer.advance()
+            try parser.advance()
             return true
         }
     }
@@ -422,13 +422,13 @@ public extension Parser {
     /// ```
     @inlinable
     func regName() throws {
-        try expect(atLeast: 0) { (lexer) -> Bool in
-            if lexer.safeNextCharPasses(with: Parser.isUnreserved) ||
-                lexer.safeNextCharPasses(with: Parser.isSubDelim) {
-                try lexer.advance()
+        try expect(atLeast: 0) { (parser) -> Bool in
+            if parser.safeNextCharPasses(with: Parser.isUnreserved) ||
+                parser.safeNextCharPasses(with: Parser.isSubDelim) {
+                try parser.advance()
             } else {
                 // Try pct-encoded
-                try lexer.pctEncoded()
+                try parser.pctEncoded()
             }
             
             return true
@@ -445,16 +445,16 @@ public extension Parser {
     /// ```
     @inlinable
     func path() throws {
-        return try matchFirst(withEither: { lexer in
-            try lexer.pathNoScheme()
-        }, { lexer in
-            try lexer.pathRootless()
-        }, { lexer in
-            try lexer.pathAbsolute()
-        }, { lexer in
-            try lexer.pathAbEmpty()
-        }, { lexer in
-            try lexer.pathEmpty()
+        return try matchFirst(withEither: { parser in
+            try parser.pathNoScheme()
+        }, { parser in
+            try parser.pathRootless()
+        }, { parser in
+            try parser.pathAbsolute()
+        }, { parser in
+            try parser.pathAbEmpty()
+        }, { parser in
+            try parser.pathEmpty()
         })
     }
     
@@ -463,8 +463,8 @@ public extension Parser {
     /// ```
     @inlinable
     func pathAbEmpty() throws {
-        try expect(atLeast: 0, of: { (lexer) -> Bool in
-            try lexer.advance(expectingCurrent: "/")
+        try expect(atLeast: 0, of: { (parser) -> Bool in
+            try parser.advance(expectingCurrent: "/")
             try segment()
             return true
         })
@@ -477,11 +477,11 @@ public extension Parser {
     func pathAbsolute() throws {
         try advance(expectingCurrent: "/")
         
-        optional { lexer -> Bool in
-            try lexer.segmentNz()
-            try expect(atLeast: 0, of: { (lexer) -> Bool in
-                try lexer.advance(expectingCurrent: "/")
-                try lexer.segment()
+        optional { parser -> Bool in
+            try parser.segmentNz()
+            try expect(atLeast: 0, of: { (parser) -> Bool in
+                try parser.advance(expectingCurrent: "/")
+                try parser.segment()
                 return true
             })
             
@@ -495,9 +495,9 @@ public extension Parser {
     @inlinable
     func pathNoScheme() throws {
         try segmentNzNc()
-        try expect(atLeast: 0, of: { (lexer) -> Bool in
-            try lexer.advance(expectingCurrent: "/")
-            try lexer.segment()
+        try expect(atLeast: 0, of: { (parser) -> Bool in
+            try parser.advance(expectingCurrent: "/")
+            try parser.segment()
             return true
         })
     }
@@ -508,9 +508,9 @@ public extension Parser {
     @inlinable
     func pathRootless() throws {
         try segmentNz()
-        try expect(atLeast: 0, of: { (lexer) -> Bool in
-            try lexer.advance(expectingCurrent: "/")
-            try lexer.segment()
+        try expect(atLeast: 0, of: { (parser) -> Bool in
+            try parser.advance(expectingCurrent: "/")
+            try parser.segment()
             return true
         })
     }
@@ -535,8 +535,8 @@ public extension Parser {
     /// ```
     @inlinable
     func segment() throws {
-        try expect(atLeast: 0, of: { lexer in
-            try lexer.pchar()
+        try expect(atLeast: 0, of: { parser in
+            try parser.pchar()
             return true
         })
     }
@@ -546,8 +546,8 @@ public extension Parser {
     /// ```
     @inlinable
     func segmentNz() throws {
-        try expect(atLeast: 1, of: { lexer in
-            try lexer.pchar()
+        try expect(atLeast: 1, of: { parser in
+            try parser.pchar()
             return true
         })
     }
@@ -558,8 +558,8 @@ public extension Parser {
     /// ```
     @inlinable
     func segmentNzNc() throws {
-        try expect(atLeast: 1, of: { lexer in
-            let p = try lexer.consumeString { try $0.pchar() }
+        try expect(atLeast: 1, of: { parser in
+            let p = try parser.consumeString { try $0.pchar() }
             return p != ":"
         })
     }
@@ -578,13 +578,13 @@ public extension Parser {
     /// ```
     @inlinable
     func fragment() throws {
-        try expect(atLeast: 0) { (lexer) -> Bool in
-            let p = try lexer.peek()
+        try expect(atLeast: 0) { (parser) -> Bool in
+            let p = try parser.peek()
             if p == "/" || p == "?" {
-                try lexer.advance()
+                try parser.advance()
             } else {
                 // Try to consume pchar
-                try lexer.pchar()
+                try parser.pchar()
             }
             
             return true

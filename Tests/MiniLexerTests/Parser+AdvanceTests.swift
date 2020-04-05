@@ -4,249 +4,249 @@ import MiniLexer
 class Parser_AdvanceTests: XCTestCase {
     
     func testAdvance() throws {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.index(after: lexer.inputString.startIndex)
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.index(after: parser.inputString.startIndex)
         
-        try lexer.advance()
+        try parser.advance()
         
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testAdvanceThrowsErrorWhenAtEndOfString() throws {
-        let lexer = Parser(input: "")
+        let parser = Parser(input: "")
         
-        assertThrowsEof(try lexer.advance())
+        assertThrowsEof(try parser.advance())
     }
     
     func testAdvanceExpectingCurrent() throws {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.index(parser.inputString.startIndex, offsetBy: 2)
         
-        try lexer.advance(expectingCurrent: "a")
-        try lexer.advance(expectingCurrent: "b")
+        try parser.advance(expectingCurrent: "a")
+        try parser.advance(expectingCurrent: "b")
         
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testAdvanceExpectingCurrentThrowsWhenAtEndOfString() throws {
-        let lexer = Parser(input: "")
+        let parser = Parser(input: "")
         
-        assertThrowsEof(try lexer.advance(expectingCurrent: "a"))
+        assertThrowsEof(try parser.advance(expectingCurrent: "a"))
     }
     
     func testAdvanceExpectingCurrentThrowsWhenNonMatching() throws {
-        let lexer = Parser(input: "abc")
+        let parser = Parser(input: "abc")
         
-        XCTAssertThrowsError(try lexer.advance(expectingCurrent: "b"))
+        XCTAssertThrowsError(try parser.advance(expectingCurrent: "b"))
     }
     
-    func testAdvanceExpectingDoesNotAdvanceLexerIndexOnError() throws {
-        let lexer = Parser(input: "abc")
+    func testAdvanceExpectingDoesNotAdvanceParserIndexOnError() throws {
+        let parser = Parser(input: "abc")
         
-        try? lexer.advance(expectingCurrent: "b")
+        try? parser.advance(expectingCurrent: "b")
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.startIndex)
+        XCTAssertEqual(parser.inputIndex, parser.inputString.startIndex)
     }
     
     func testAdvanceValidatingCurrent() throws {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.index(parser.inputString.startIndex, offsetBy: 2)
         
-        try lexer.advance(validatingCurrent: { $0 == "a" })
-        try lexer.advance(validatingCurrent: { $0 == "b" })
+        try parser.advance(validatingCurrent: { $0 == "a" })
+        try parser.advance(validatingCurrent: { $0 == "b" })
         
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testAdvanceValidatingCurrentThrowsWhenAtEndOfString() throws {
-        let lexer = Parser(input: "")
+        let parser = Parser(input: "")
         
-        assertThrowsEof(try lexer.advance(validatingCurrent: { $0 == "a" }))
+        assertThrowsEof(try parser.advance(validatingCurrent: { $0 == "a" }))
     }
     
     func testAdvanceValidatingCurrentThrowsWhenNonMatching() throws {
-        let lexer = Parser(input: "abc")
+        let parser = Parser(input: "abc")
         
-        XCTAssertThrowsError(try lexer.advance(validatingCurrent: { $0 == "b" }))
+        XCTAssertThrowsError(try parser.advance(validatingCurrent: { $0 == "b" }))
     }
     
-    func testAdvanceValidatingDoesNotAdvanceLexerIndexOnError() throws {
-        let lexer = Parser(input: "abc")
+    func testAdvanceValidatingDoesNotAdvanceParserIndexOnError() throws {
+        let parser = Parser(input: "abc")
         
-        try? lexer.advance(validatingCurrent: { $0 == "b" })
+        try? parser.advance(validatingCurrent: { $0 == "b" })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.startIndex)
+        XCTAssertEqual(parser.inputIndex, parser.inputString.startIndex)
     }
     
     func testAdvanceIf() {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.index(parser.inputString.startIndex, offsetBy: 2)
         
-        let advanced = lexer.advanceIf(equals: "ab")
+        let advanced = parser.advanceIf(equals: "ab")
         
         XCTAssert(advanced)
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testAdvanceIfUsesOffset() throws {
-        let lexer = Parser(input: "abcdef")
-        try lexer.advanceLength(2)
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 5)
+        let parser = Parser(input: "abcdef")
+        try parser.advanceLength(2)
+        let expectedIndex = parser.inputString.index(parser.inputString.startIndex, offsetBy: 5)
         
-        let advanced = lexer.advanceIf(equals: "cde")
+        let advanced = parser.advanceIf(equals: "cde")
         
         XCTAssert(advanced)
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testAdvanceIfOptions() {
-        let lexer = Parser(input: "áBc")
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        let parser = Parser(input: "áBc")
+        let expectedIndex = parser.inputString.index(parser.inputString.startIndex, offsetBy: 2)
         
-        let advanced = lexer.advanceIf(equals: "ab", options: [.caseInsensitive, .diacriticInsensitive])
+        let advanced = parser.advanceIf(equals: "ab", options: [.caseInsensitive, .diacriticInsensitive])
         
         XCTAssert(advanced)
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testNonMatchingAdvanceIf() {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.startIndex
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.startIndex
         
-        let advanced = lexer.advanceIf(equals: "bc")
+        let advanced = parser.advanceIf(equals: "bc")
         
         XCTAssertFalse(advanced)
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testCheckNext() {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputIndex
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputIndex
         
-        let matches = lexer.checkNext(matches: "ab")
+        let matches = parser.checkNext(matches: "ab")
         
         XCTAssert(matches)
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testCheckNextUsesOffset() throws {
-        let lexer = Parser(input: "abcdef")
-        try lexer.advanceLength(2)
-        let expectedIndex = lexer.inputIndex
+        let parser = Parser(input: "abcdef")
+        try parser.advanceLength(2)
+        let expectedIndex = parser.inputIndex
         
-        let matches = lexer.checkNext(matches: "cd")
+        let matches = parser.checkNext(matches: "cd")
         
         XCTAssert(matches)
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testCheckNextOptions() {
-        let lexer = Parser(input: "áBc")
+        let parser = Parser(input: "áBc")
         
-        XCTAssert(lexer.checkNext(matches: "ab", options: [.caseInsensitive, .diacriticInsensitive]))
+        XCTAssert(parser.checkNext(matches: "ab", options: [.caseInsensitive, .diacriticInsensitive]))
     }
     
     func testNonMatchingCheckNext() {
-        let lexer = Parser(input: "abc")
+        let parser = Parser(input: "abc")
         
-        XCTAssertFalse(lexer.checkNext(matches: "bc"))
+        XCTAssertFalse(parser.checkNext(matches: "bc"))
     }
     
     func testConsumeMatch() throws {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.index(parser.inputString.startIndex, offsetBy: 2)
         
-        try lexer.consume(match: "ab")
+        try parser.consume(match: "ab")
         
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testConsumeMatchThrowsErrorWhenNonMatching() throws {
-        let lexer = Parser(input: "abc")
+        let parser = Parser(input: "abc")
         
-        XCTAssertThrowsError(try lexer.consume(match: "bc"))
+        XCTAssertThrowsError(try parser.consume(match: "bc"))
     }
     
     func testSafeAdvance() {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.index(after: lexer.inputString.startIndex)
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.index(after: parser.inputString.startIndex)
         
-        XCTAssert(lexer.safeAdvance())
+        XCTAssert(parser.safeAdvance())
         
-        XCTAssertEqual(lexer.inputIndex, expectedIndex)
+        XCTAssertEqual(parser.inputIndex, expectedIndex)
     }
     
     func testSafeAdvanceStopsAtEndOfString() {
-        let lexer = Parser(input: "ab")
+        let parser = Parser(input: "ab")
         
-        XCTAssert(lexer.safeAdvance())
-        XCTAssert(lexer.safeAdvance())
-        XCTAssertFalse(lexer.safeAdvance())
+        XCTAssert(parser.safeAdvance())
+        XCTAssert(parser.safeAdvance())
+        XCTAssertFalse(parser.safeAdvance())
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.endIndex)
+        XCTAssertEqual(parser.inputIndex, parser.inputString.endIndex)
     }
     
     func testAdvanceWhile() throws {
-        let lexer = Parser(input: "aaaaabc")
+        let parser = Parser(input: "aaaaabc")
         
-        lexer.advance(while: { $0 == "a" })
+        parser.advance(while: { $0 == "a" })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 5))
-        XCTAssertEqual(try lexer.peek(), "b")
+        XCTAssertEqual(parser.inputIndex, parser.inputString.index(parser.inputString.startIndex, offsetBy: 5))
+        XCTAssertEqual(try parser.peek(), "b")
     }
     
     func testAdvanceUntil() throws {
-        let lexer = Parser(input: "aaaaabc")
+        let parser = Parser(input: "aaaaabc")
         
-        lexer.advance(until: { $0 == "b" })
+        parser.advance(until: { $0 == "b" })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 5))
-        XCTAssertEqual(try lexer.peek(), "b")
+        XCTAssertEqual(parser.inputIndex, parser.inputString.index(parser.inputString.startIndex, offsetBy: 5))
+        XCTAssertEqual(try parser.peek(), "b")
     }
     
     func testAdvanceWhileRespectsEndOfString() {
-        let lexer = Parser(input: "abc")
+        let parser = Parser(input: "abc")
         
-        lexer.advance(while: { _ in true })
+        parser.advance(while: { _ in true })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.endIndex)
+        XCTAssertEqual(parser.inputIndex, parser.inputString.endIndex)
     }
     
     func testAdvanceUntilRespectsEndOfString() {
-        let lexer = Parser(input: "abc")
+        let parser = Parser(input: "abc")
         
-        lexer.advance(until: { _ in false })
+        parser.advance(until: { _ in false })
         
-        XCTAssertEqual(lexer.inputIndex, lexer.inputString.endIndex)
+        XCTAssertEqual(parser.inputIndex, parser.inputString.endIndex)
     }
     
     func testAdvanceLength() throws {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.index(lexer.inputString.startIndex, offsetBy: 2)
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.index(parser.inputString.startIndex, offsetBy: 2)
         
-        try lexer.advanceLength(2)
+        try parser.advanceLength(2)
         
-        XCTAssertEqual(expectedIndex, lexer.inputIndex)
+        XCTAssertEqual(expectedIndex, parser.inputIndex)
     }
     
     func testAdvanceLengthAdvancingToEndOfString() throws {
-        let lexer = Parser(input: "abc")
-        let expectedIndex = lexer.inputString.endIndex
+        let parser = Parser(input: "abc")
+        let expectedIndex = parser.inputString.endIndex
         
-        try lexer.advanceLength(3)
+        try parser.advanceLength(3)
         
-        XCTAssertEqual(expectedIndex, lexer.inputIndex)
+        XCTAssertEqual(expectedIndex, parser.inputIndex)
     }
     
     func testAdvanceLengthThrowsErrorWhenPastEndOfString() throws {
-        let lexer = Parser(input: "abc")
+        let parser = Parser(input: "abc")
         
-        assertThrowsEof(try lexer.advanceLength(4))
+        assertThrowsEof(try parser.advanceLength(4))
     }
     
     func testAdvanceWithLengthEndingInEndIndex() throws {
-        let lexer = Parser(input: "(")
+        let parser = Parser(input: "(")
         
-        try lexer.advanceLength(1)
+        try parser.advanceLength(1)
     }
 }

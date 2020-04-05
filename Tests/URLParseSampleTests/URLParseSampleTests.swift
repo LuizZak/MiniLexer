@@ -68,61 +68,61 @@ class URLParseSampleTests: XCTestCase {
     }
     
     func testParseIPV4() throws {
-        let lexer = Parser(input: "255.255.255.255")
+        let parser = Parser(input: "255.255.255.255")
         
-        try XCTAssertEqual(lexer.consumeString { try $0.ipv4Address() }, "255.255.255.255")
+        try XCTAssertEqual(parser.consumeString { try $0.ipv4Address() }, "255.255.255.255")
         
-        let lexerFail = Parser(input: "255.255.255.256")
+        let parserFail = Parser(input: "255.255.255.256")
         
-        XCTAssertThrowsError(try lexerFail.ipv4Address())
+        XCTAssertThrowsError(try parserFail.ipv4Address())
     }
     
     func testParsePath() throws {
         do {
-            let lexer = Parser(input: "/a//b/c")
-            try XCTAssertEqual(lexer.consumeString { try $0.path() }, "/a//b/c")
+            let parser = Parser(input: "/a//b/c")
+            try XCTAssertEqual(parser.consumeString { try $0.path() }, "/a//b/c")
         }
         
         do {
-            let lexer = Parser(input: "a//b/c")
-            try XCTAssertEqual(lexer.consumeString { try $0.path() }, "a//b/c")
+            let parser = Parser(input: "a//b/c")
+            try XCTAssertEqual(parser.consumeString { try $0.path() }, "a//b/c")
         }
         
         do {
-            let lexer = Parser(input: "//b/c") // path-absolute = "/" [ segment-nz *( "/" segment ) ]
-            try XCTAssertEqual(lexer.consumeString { try $0.path() }, "/")
+            let parser = Parser(input: "//b/c") // path-absolute = "/" [ segment-nz *( "/" segment ) ]
+            try XCTAssertEqual(parser.consumeString { try $0.path() }, "/")
         }
     }
     
     func testParseURI() throws {
         do {
-            let lexer = Parser(input: "http://www.google.com")
-            try XCTAssertEqual(lexer.URI(), "http://www.google.com")
+            let parser = Parser(input: "http://www.google.com")
+            try XCTAssertEqual(parser.URI(), "http://www.google.com")
         }
         
         do {
-            let lexer = Parser(input: "http://google")
-            try XCTAssertEqual(lexer.URI(), "http://google")
+            let parser = Parser(input: "http://google")
+            try XCTAssertEqual(parser.URI(), "http://google")
         }
         
         do {
-            let lexer = Parser(input: "http://www.google.com/search?q=123#abc")
-            try XCTAssertEqual(lexer.URI(), "http://www.google.com/search?q=123#abc")
+            let parser = Parser(input: "http://www.google.com/search?q=123#abc")
+            try XCTAssertEqual(parser.URI(), "http://www.google.com/search?q=123#abc")
         }
         
         do {
-            let lexer = Parser(input: "http://www.google.com:80/")
-            try XCTAssertEqual(lexer.URI(), "http://www.google.com:80/")
+            let parser = Parser(input: "http://www.google.com:80/")
+            try XCTAssertEqual(parser.URI(), "http://www.google.com:80/")
         }
         
         do {
-            let lexer = Parser(input: "http://www.google.com:/")
-            try XCTAssertEqual(lexer.URI(), "http://www.google.com:/")
+            let parser = Parser(input: "http://www.google.com:/")
+            try XCTAssertEqual(parser.URI(), "http://www.google.com:/")
         }
         
         do {
-            let lexer = Parser(input: "https://51.176.251.128:9/&@=/;/%ED/@#")
-            try XCTAssertEqual(lexer.URI(), "https://51.176.251.128:9/&@=/;/%ED/@#")
+            let parser = Parser(input: "https://51.176.251.128:9/&@=/;/%ED/@#")
+            try XCTAssertEqual(parser.URI(), "https://51.176.251.128:9/&@=/;/%ED/@#")
         }
     }
     
@@ -130,8 +130,8 @@ class URLParseSampleTests: XCTestCase {
         continueAfterFailure = false
         
         for url in testURLs {
-            let lexer = Parser(input: url)
-            guard let parsedURI = try? lexer.URI() else {
+            let parser = Parser(input: url)
+            guard let parsedURI = try? parser.URI() else {
                 XCTFail("Failed to parse valid URL: \(url)")
                 return
             }
@@ -145,8 +145,8 @@ class URLParseSampleTests: XCTestCase {
         measure {
             let multiURLs = repeatElement(testURLs, count: 10).flatMap { $0 }
             for url in multiURLs {
-                let lexer = Parser(input: url)
-                _=try? lexer.URI()
+                let parser = Parser(input: url)
+                _=try? parser.URI()
             }
         }
     }

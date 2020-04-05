@@ -5,10 +5,10 @@ class TokenizerTests: XCTestCase {
     var sut: TokenizerLexer<TestToken>!
     
     func testInitWithLexer() {
-        let lexer = Parser(input: "()")
-        sut = TokenizerLexer(lexer: lexer)
+        let parser = Parser(input: "()")
+        sut = TokenizerLexer(parser: parser)
         
-        XCTAssert(sut.parser === lexer)
+        XCTAssert(sut.parser === parser)
     }
     
     func testTokenizeStream() {
@@ -146,7 +146,7 @@ class TokenizerTests: XCTestCase {
             try sut.advance(over: .comma)
             XCTFail("Should have thrown")
         } catch let error as ParserError {
-            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString),
+            XCTAssertEqual(error.description(withOffsetsIn: sut.parser.inputString),
                            "Error at line 1 column 1: Expected token ',' but found '('")
         } catch {
             XCTFail("Unexpected error \(error)")
@@ -160,7 +160,7 @@ class TokenizerTests: XCTestCase {
             try sut.advance(overTokenType: .comma)
             XCTFail("Should have thrown")
         } catch let error as ParserError {
-            XCTAssertEqual(error.description(withOffsetsIn: sut.lexer.inputString),
+            XCTAssertEqual(error.description(withOffsetsIn: sut.parser.inputString),
                            "Error at line 1 column 1: Expected token ',' but found '('")
         } catch {
             XCTFail("Unexpected error \(error)")
@@ -371,23 +371,23 @@ struct TestStructToken: TokenProtocol {
     var isEof: Bool
     var tokenString: Substring
     
-    func length(in lexer: Parser) -> Int {
+    func length(in parser: Parser) -> Int {
         return tokenString.count
     }
     
-    static func tokenType(at lexer: Parser) -> TestStructToken? {
+    static func tokenType(at parser: Parser) -> TestStructToken? {
         do {
-            if lexer.safeIsNextChar(equalTo: ".") {
-                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            if parser.safeIsNextChar(equalTo: ".") {
+                return TestStructToken(isEof: false, tokenString: try parser.consumeLength(1))
             }
-            if lexer.safeIsNextChar(equalTo: ",") {
-                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            if parser.safeIsNextChar(equalTo: ",") {
+                return TestStructToken(isEof: false, tokenString: try parser.consumeLength(1))
             }
-            if lexer.safeIsNextChar(equalTo: "(") {
-                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            if parser.safeIsNextChar(equalTo: "(") {
+                return TestStructToken(isEof: false, tokenString: try parser.consumeLength(1))
             }
-            if lexer.safeIsNextChar(equalTo: ")") {
-                return TestStructToken(isEof: false, tokenString: try lexer.consumeLength(1))
+            if parser.safeIsNextChar(equalTo: ")") {
+                return TestStructToken(isEof: false, tokenString: try parser.consumeLength(1))
             }
         } catch {
             
@@ -423,28 +423,28 @@ enum TestTokenWithIdentifier: String, TokenProtocol {
         }
     }
     
-    static func tokenType(at lexer: Parser) -> TestTokenWithIdentifier? {
-        if lexer.safeIsNextChar(equalTo: "(") {
+    static func tokenType(at parser: Parser) -> TestTokenWithIdentifier? {
+        if parser.safeIsNextChar(equalTo: "(") {
             return .openParens
         }
-        if lexer.safeIsNextChar(equalTo: ")") {
+        if parser.safeIsNextChar(equalTo: ")") {
             return .closeParens
         }
-        if lexer.safeIsNextChar(equalTo: ",") {
+        if parser.safeIsNextChar(equalTo: ",") {
             return .comma
         }
-        if lexer.safeNextCharPasses(with: Parser.isLetter) {
+        if parser.safeNextCharPasses(with: Parser.isLetter) {
             return .identifier
         }
         return nil
     }
     
-    func length(in lexer: Parser) -> Int {
+    func length(in parser: Parser) -> Int {
         switch self {
         case .openParens, .closeParens, .comma:
             return 1
         case .identifier:
-            return TestTokenWithIdentifier.identifierLexer.maximumLength(in: lexer) ?? 0
+            return TestTokenWithIdentifier.identifierLexer.maximumLength(in: parser) ?? 0
         case .eof:
             return 0
         }
@@ -472,20 +472,20 @@ enum TestToken: String, TokenProtocol {
         }
     }
     
-    static func tokenType(at lexer: Parser) -> TestToken? {
-        if lexer.safeIsNextChar(equalTo: "(") {
+    static func tokenType(at parser: Parser) -> TestToken? {
+        if parser.safeIsNextChar(equalTo: "(") {
             return .openParens
         }
-        if lexer.safeIsNextChar(equalTo: ",") {
+        if parser.safeIsNextChar(equalTo: ",") {
             return .comma
         }
-        if lexer.safeIsNextChar(equalTo: ")") {
+        if parser.safeIsNextChar(equalTo: ")") {
             return .closeParens
         }
         return nil
     }
     
-    func length(in lexer: Parser) -> Int {
+    func length(in parser: Parser) -> Int {
         switch self {
         case .openParens, .closeParens, .comma:
             return 1
@@ -530,7 +530,7 @@ private enum TestToken2: TokenProtocol {
         }
     }
     
-    func length(in lexer: Parser) -> Int {
+    func length(in parser: Parser) -> Int {
         switch self {
         case .eof:
             return 0
@@ -543,43 +543,43 @@ private enum TestToken2: TokenProtocol {
         case .force, .color:
             return 5
         case .integer:
-            return (GrammarRule.digit+).maximumLength(in: lexer) ?? 0
+            return (GrammarRule.digit+).maximumLength(in: parser) ?? 0
         case .float:
-            return TestToken2.floatGrammar.maximumLength(in: lexer) ?? 0
+            return TestToken2.floatGrammar.maximumLength(in: parser) ?? 0
         }
     }
     
-    static func tokenType(at lexer: Parser) -> TestToken2? {
+    static func tokenType(at parser: Parser) -> TestToken2? {
         
-        if lexer.checkNext(matches: ",") {
+        if parser.checkNext(matches: ",") {
             return .comma
         }
         
-        if lexer.checkNext(matches: "force") {
+        if parser.checkNext(matches: "force") {
             return .force
         }
-        if lexer.checkNext(matches: "color") {
+        if parser.checkNext(matches: "color") {
             return .color
         }
-        if lexer.checkNext(matches: "cw") {
+        if parser.checkNext(matches: "cw") {
             return .cw
         }
-        if lexer.checkNext(matches: "ccw") {
+        if parser.checkNext(matches: "ccw") {
             return .ccw
         }
         
-        if lexer.safeNextCharPasses(with: Parser.isDigit) {
-            let backtracker = lexer.backtracker()
-            lexer.advance(while: Parser.isDigit)
+        if parser.safeNextCharPasses(with: Parser.isDigit) {
+            let backtracker = parser.backtracker()
+            parser.advance(while: Parser.isDigit)
             
-            if !lexer.safeIsNextChar(equalTo: ".") {
+            if !parser.safeIsNextChar(equalTo: ".") {
                 return .integer
             }
             
-            backtracker.backtrack(parser: lexer)
+            backtracker.backtrack(parser: parser)
         }
         
-        if TestToken2.floatGrammar.passes(in: lexer) {
+        if TestToken2.floatGrammar.passes(in: parser) {
             return .float
         }
         

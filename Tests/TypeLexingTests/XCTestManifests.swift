@@ -11,6 +11,7 @@ extension TypeLexersTests {
         ("testLexInt8", testLexInt8),
         ("testLexInteger", testLexInteger),
         ("testLexUInt8", testLexUInt8),
+        ("testPerformance", testPerformance),
     ]
 }
 

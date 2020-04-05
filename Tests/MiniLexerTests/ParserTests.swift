@@ -4,14 +4,14 @@ import MiniLexer
 class ParserTests: XCTestCase {
     
     func testInitState() {
-        let lexer1 = Parser(input: "abc")
-        let lexer2 = Parser(input: "abc", index: "abc".index(after: "abc".startIndex))
+        let parser1 = Parser(input: "abc")
+        let parser2 = Parser(input: "abc", index: "abc".index(after: "abc".startIndex))
         
-        XCTAssertEqual(lexer1.inputString, "abc")
-        XCTAssertEqual(lexer1.inputIndex, "abc".startIndex)
+        XCTAssertEqual(parser1.inputString, "abc")
+        XCTAssertEqual(parser1.inputIndex, "abc".startIndex)
         
-        XCTAssertEqual(lexer2.inputString, "abc")
-        XCTAssertEqual(lexer2.inputIndex, "abc".index(after: "abc".startIndex))
+        XCTAssertEqual(parser2.inputString, "abc")
+        XCTAssertEqual(parser2.inputIndex, "abc".index(after: "abc".startIndex))
     }
     
     func testRewindToStart() {

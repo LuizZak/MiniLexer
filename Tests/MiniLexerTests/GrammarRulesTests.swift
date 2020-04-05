@@ -5,54 +5,54 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleDigit() throws {
         let rule = GrammarRule.digit
-        let lexer = Parser(input: "123")
-        let lexer2 = Parser(input: "abc")
+        let parser = Parser(input: "123")
+        let parser2 = Parser(input: "abc")
         
-        XCTAssert(rule.canConsume(from: lexer))
-        XCTAssertFalse(rule.canConsume(from: lexer2))
+        XCTAssert(rule.canConsume(from: parser))
+        XCTAssertFalse(rule.canConsume(from: parser2))
         XCTAssertFalse(rule.containsRecursiveRule)
-        XCTAssertEqual("1", try rule.consume(from: lexer))
+        XCTAssertEqual("1", try rule.consume(from: parser))
         XCTAssertEqual("[0-9]", rule.ruleDescription)
         XCTAssertEqual("[0-9]", rule.regexString())
     }
     
     func testGrammarRuleLetter() throws {
         let rule = GrammarRule.letter
-        let lexer = Parser(input: "abc")
-        let lexer2 = Parser(input: "1")
+        let parser = Parser(input: "abc")
+        let parser2 = Parser(input: "1")
         
-        XCTAssert(rule.canConsume(from: lexer))
-        XCTAssertFalse(rule.canConsume(from: lexer2))
+        XCTAssert(rule.canConsume(from: parser))
+        XCTAssertFalse(rule.canConsume(from: parser2))
         XCTAssertFalse(rule.containsRecursiveRule)
-        XCTAssertEqual("a", try rule.consume(from: lexer))
+        XCTAssertEqual("a", try rule.consume(from: parser))
         XCTAssertEqual("[a-zA-Z]", rule.ruleDescription)
         XCTAssertEqual("[a-zA-Z]", rule.regexString())
     }
     
     func testGrammarRuleWhitespace() throws {
         let rule = GrammarRule.whitespace
-        let lexer = Parser(input: " ")
-        let lexer2 = Parser(input: "1")
+        let parser = Parser(input: " ")
+        let parser2 = Parser(input: "1")
         
-        XCTAssert(rule.canConsume(from: lexer))
-        XCTAssertFalse(rule.canConsume(from: lexer2))
+        XCTAssert(rule.canConsume(from: parser))
+        XCTAssertFalse(rule.canConsume(from: parser2))
         XCTAssertFalse(rule.containsRecursiveRule)
-        XCTAssertEqual(" ", try rule.consume(from: lexer))
+        XCTAssertEqual(" ", try rule.consume(from: parser))
         XCTAssertEqual("[\\s\\t\\r\\n]", rule.ruleDescription)
         XCTAssertEqual("\\s", rule.regexString())
     }
     
     func testGrammarRuleChar() throws {
         let rule = GrammarRule.char("@")
-        let lexer1 = Parser(input: "@test")
-        let lexer2 = Parser(input: " @test")
-        let lexer3 = Parser(input: "test")
-        let lexer4 = Parser(input: "")
+        let parser1 = Parser(input: "@test")
+        let parser2 = Parser(input: " @test")
+        let parser3 = Parser(input: "test")
+        let parser4 = Parser(input: "")
         
-        XCTAssertEqual("@", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
-        XCTAssertThrowsError(try rule.consume(from: lexer3))
-        XCTAssertThrowsError(try rule.consume(from: lexer4))
+        XCTAssertEqual("@", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
+        XCTAssertThrowsError(try rule.consume(from: parser3))
+        XCTAssertThrowsError(try rule.consume(from: parser4))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("'@'", rule.ruleDescription)
         XCTAssertEqual("@", rule.regexString())
@@ -60,15 +60,15 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleKeyword() throws {
         let rule = GrammarRule.keyword("test")
-        let lexer1 = Parser(input: "test")
-        let lexer2 = Parser(input: " test test")
-        let lexer3 = Parser(input: "tes")
-        let lexer4 = Parser(input: "testtest")
+        let parser1 = Parser(input: "test")
+        let parser2 = Parser(input: " test test")
+        let parser3 = Parser(input: "tes")
+        let parser4 = Parser(input: "testtest")
         
-        XCTAssertEqual("test", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
-        XCTAssertThrowsError(try rule.consume(from: lexer3))
-        XCTAssertEqual("test", try rule.consume(from: lexer4))
+        XCTAssertEqual("test", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
+        XCTAssertThrowsError(try rule.consume(from: parser3))
+        XCTAssertEqual("test", try rule.consume(from: parser4))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("'test'", rule.ruleDescription)
         XCTAssertEqual("test", rule.regexString())
@@ -76,11 +76,11 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarNamedRule() throws {
         let rule = GrammarRule.namedRule(name: "number", .digit+)
-        let lexer1 = Parser(input: "123")
-        let lexer2 = Parser(input: "a")
+        let parser1 = Parser(input: "123")
+        let parser2 = Parser(input: "a")
         
-        XCTAssertEqual("123", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
+        XCTAssertEqual("123", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("number", rule.ruleDescription)
         XCTAssertEqual("[0-9]+", rule.regexString())
@@ -88,11 +88,11 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarNamedOptional() throws {
         let rule = GrammarRule.optional(.digit)
-        let lexer1 = Parser(input: "123")
-        let lexer2 = Parser(input: "a")
+        let parser1 = Parser(input: "123")
+        let parser2 = Parser(input: "a")
         
-        XCTAssertEqual("1", try rule.consume(from: lexer1))
-        XCTAssertEqual("", try rule.consume(from: lexer2))
+        XCTAssertEqual("1", try rule.consume(from: parser1))
+        XCTAssertEqual("", try rule.consume(from: parser2))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("[0-9]?", rule.ruleDescription)
         XCTAssertEqual("[0-9]?", rule.regexString())
@@ -100,11 +100,11 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleOneOrMore() throws {
         let rule = GrammarRule.oneOrMore(.digit)
-        let lexer1 = Parser(input: "123")
-        let lexer2 = Parser(input: "a")
+        let parser1 = Parser(input: "123")
+        let parser2 = Parser(input: "a")
         
-        XCTAssertEqual("123", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
+        XCTAssertEqual("123", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("[0-9]+", rule.ruleDescription)
         XCTAssertEqual("[0-9]+", rule.regexString())
@@ -112,11 +112,11 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleZeroOrMore() throws {
         let rule = GrammarRule.zeroOrMore(.digit)
-        let lexer1 = Parser(input: "123")
-        let lexer2 = Parser(input: "a")
+        let parser1 = Parser(input: "123")
+        let parser2 = Parser(input: "a")
         
-        XCTAssertEqual("123", try rule.consume(from: lexer1))
-        XCTAssertEqual("", try rule.consume(from: lexer2))
+        XCTAssertEqual("123", try rule.consume(from: parser1))
+        XCTAssertEqual("", try rule.consume(from: parser2))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("[0-9]*", rule.ruleDescription)
         XCTAssertEqual("[0-9]*", rule.regexString())
@@ -124,10 +124,10 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleOr() throws {
         let rule = GrammarRule.or([.digit, .letter])
-        let lexer = Parser(input: "a1")
+        let parser = Parser(input: "a1")
         
-        XCTAssertEqual("a", try rule.consume(from: lexer))
-        XCTAssertEqual("1", try rule.consume(from: lexer))
+        XCTAssertEqual("a", try rule.consume(from: parser))
+        XCTAssertEqual("1", try rule.consume(from: parser))
         XCTAssertFalse(rule.containsRecursiveRule)
         XCTAssertEqual("([0-9] | [a-zA-Z])", rule.ruleDescription)
         XCTAssertEqual("([0-9]|[a-zA-Z])", rule.regexString())
@@ -135,58 +135,58 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleMaximumLengthIn() {
         let rule = GrammarRule.digit
-        let lexerMatching = Parser(input: "123")
-        let lexerNonMatching = Parser(input: "a")
+        let parserMatching = Parser(input: "123")
+        let parserNonMatching = Parser(input: "a")
         
-        XCTAssertEqual(rule.maximumLength(in: lexerMatching), 1)
-        XCTAssertNil(rule.maximumLength(in: lexerNonMatching))
+        XCTAssertEqual(rule.maximumLength(in: parserMatching), 1)
+        XCTAssertNil(rule.maximumLength(in: parserNonMatching))
     }
     
     func testGrammarRuleMaximumLengthInWithZeroOrMoreRule() {
         let rule = GrammarRule.digit*
-        let lexerMatching = Parser(input: "123")
-        let lexerMatchingPartial = Parser(input: "123abc")
-        let lexerNonMatching = Parser(input: "a")
+        let parserMatching = Parser(input: "123")
+        let parserMatchingPartial = Parser(input: "123abc")
+        let parserNonMatching = Parser(input: "a")
         
-        XCTAssertEqual(rule.maximumLength(in: lexerMatching), 3)
-        XCTAssertEqual(rule.maximumLength(in: lexerMatchingPartial), 3)
-        XCTAssertEqual(rule.maximumLength(in: lexerNonMatching), 0)
+        XCTAssertEqual(rule.maximumLength(in: parserMatching), 3)
+        XCTAssertEqual(rule.maximumLength(in: parserMatchingPartial), 3)
+        XCTAssertEqual(rule.maximumLength(in: parserNonMatching), 0)
     }
     
     func testGrammarRuleMaximumLengthInWithGreedyRule() {
         let rule = GrammarRule.digit+
-        let lexerMatching = Parser(input: "123")
-        let lexerMatchingPartial = Parser(input: "123abc")
-        let lexerNonMatching = Parser(input: "a")
+        let parserMatching = Parser(input: "123")
+        let parserMatchingPartial = Parser(input: "123abc")
+        let parserNonMatching = Parser(input: "a")
         
-        XCTAssertEqual(rule.maximumLength(in: lexerMatching), 3)
-        XCTAssertEqual(rule.maximumLength(in: lexerMatchingPartial), 3)
-        XCTAssertNil(rule.maximumLength(in: lexerNonMatching))
+        XCTAssertEqual(rule.maximumLength(in: parserMatching), 3)
+        XCTAssertEqual(rule.maximumLength(in: parserMatchingPartial), 3)
+        XCTAssertNil(rule.maximumLength(in: parserNonMatching))
     }
     
     func testGrammarRuleMaximumLengthIgnoresWhitespaceAfterToken() {
         let rule: GrammarRule = ["-"] .. .digit+ .. ["."]
-        let lexer = Parser(input: "-270 0")
+        let parser = Parser(input: "-270 0")
         
-        XCTAssertEqual(rule.maximumLength(in: lexer), 4)
+        XCTAssertEqual(rule.maximumLength(in: parser), 4)
     }
     
     func testGrammarRulePassesIn() {
         let rule = GrammarRule.digit
-        let lexerMatching = Parser(input: "123")
-        let lexerNonMatching = Parser(input: "a")
+        let parserMatching = Parser(input: "123")
+        let parserNonMatching = Parser(input: "a")
         
-        XCTAssert(rule.passes(in: lexerMatching))
-        XCTAssertFalse(rule.passes(in: lexerNonMatching))
+        XCTAssert(rule.passes(in: parserMatching))
+        XCTAssertFalse(rule.passes(in: parserNonMatching))
     }
     
     func testGrammarRulePassesInWithZeroOrMoreRule() {
         let rule = GrammarRule.digit*
-        let lexerMatching = Parser(input: "123")
-        let lexerNonMatching = Parser(input: "a")
+        let parserMatching = Parser(input: "123")
+        let parserNonMatching = Parser(input: "a")
         
-        XCTAssert(rule.passes(in: lexerMatching))
-        XCTAssert(rule.passes(in: lexerNonMatching))
+        XCTAssert(rule.passes(in: parserMatching))
+        XCTAssert(rule.passes(in: parserNonMatching))
     }
     
     func testGramarRuleOrStopsAtFirstMatchFound() throws {
@@ -203,24 +203,24 @@ public class GrammarRuleTests: XCTestCase {
         let test =
             (.keyword("@keyword") .. .digit+) | (.keyword("@keyword") .. .keyword("abc")) | (.keyword("@keyword") .. "a")
         
-        let lexer1 = Parser(input: "@keyword 123")
-        let lexer2 = Parser(input: "@keyword abc")
-        let lexer3 = Parser(input: "@keyword a")
-        let lexer4 = Parser(input: "@keyword _abc")
+        let parser1 = Parser(input: "@keyword 123")
+        let parser2 = Parser(input: "@keyword abc")
+        let parser3 = Parser(input: "@keyword a")
+        let parser4 = Parser(input: "@keyword _abc")
         
-        XCTAssertEqual("@keyword 123", try test.consume(from: lexer1))
-        XCTAssertEqual("@keyword abc", try test.consume(from: lexer2))
-        XCTAssertEqual("@keyword a", try test.consume(from: lexer3))
-        XCTAssertThrowsError(try test.consume(from: lexer4))
+        XCTAssertEqual("@keyword 123", try test.consume(from: parser1))
+        XCTAssertEqual("@keyword abc", try test.consume(from: parser2))
+        XCTAssertEqual("@keyword a", try test.consume(from: parser3))
+        XCTAssertThrowsError(try test.consume(from: parser4))
     }
     
     func testGrammarRuleOneOrMoreOr() throws {
         let rule = GrammarRule.oneOrMore(.or([.digit, .letter]))
-        let lexer1 = Parser(input: "ab123")
-        let lexer2 = Parser(input: "ab 123")
+        let parser1 = Parser(input: "ab123")
+        let parser2 = Parser(input: "ab 123")
         
-        XCTAssertEqual("ab123", try rule.consume(from: lexer1))
-        XCTAssertEqual("ab", try rule.consume(from: lexer2))
+        XCTAssertEqual("ab123", try rule.consume(from: parser1))
+        XCTAssertEqual("ab", try rule.consume(from: parser2))
         XCTAssertEqual("([0-9] | [a-zA-Z])+", rule.ruleDescription)
         XCTAssertEqual(rule, .oneOrMore(.or([.digit, .letter])))
         XCTAssertNotEqual(rule, .oneOrMore(.or([.letter, .digit])))
@@ -228,13 +228,13 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleOptional() throws {
         let rule = GrammarRule.optional(.keyword("abc"))
-        let lexer1 = Parser(input: "abc")
-        let lexer2 = Parser(input: "ab")
-        let lexer3 = Parser(input: "")
+        let parser1 = Parser(input: "abc")
+        let parser2 = Parser(input: "ab")
+        let parser3 = Parser(input: "")
         
-        XCTAssertEqual("abc", try rule.consume(from: lexer1))
-        XCTAssertEqual("", try rule.consume(from: lexer2))
-        XCTAssertEqual("", try rule.consume(from: lexer3))
+        XCTAssertEqual("abc", try rule.consume(from: parser1))
+        XCTAssertEqual("", try rule.consume(from: parser2))
+        XCTAssertEqual("", try rule.consume(from: parser3))
         XCTAssertEqual("'abc'?", rule.ruleDescription)
         XCTAssertEqual(rule, .optional(.keyword("abc")))
         XCTAssertNotEqual(rule, .optional(.keyword("def")))
@@ -249,13 +249,13 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleSequence() throws {
         let rule = GrammarRule.sequence([.letter, .digit])
-        let lexer1 = Parser(input: "a 1")
-        let lexer2 = Parser(input: "aa 2")
+        let parser1 = Parser(input: "a 1")
+        let parser2 = Parser(input: "aa 2")
         
-        XCTAssert(rule.canConsume(from: lexer1))
-        XCTAssert(rule.canConsume(from: lexer2))
-        XCTAssertEqual("a 1", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
+        XCTAssert(rule.canConsume(from: parser1))
+        XCTAssert(rule.canConsume(from: parser2))
+        XCTAssertEqual("a 1", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
         XCTAssertEqual("[a-zA-Z] [0-9]", rule.ruleDescription)
         XCTAssertEqual(rule, .sequence([.letter, .digit]))
         XCTAssertNotEqual(rule, .sequence([.digit, .letter]))
@@ -263,18 +263,18 @@ public class GrammarRuleTests: XCTestCase {
     
     func testGrammarRuleDirectSequence() throws {
         let rule = GrammarRule.directSequence([.letter, .digit])
-        let lexer1 = Parser(input: "a1")
-        let lexer2 = Parser(input: "a 1")
-        let lexer3 = Parser(input: "aa2")
-        let lexer4 = Parser(input: " a2")
+        let parser1 = Parser(input: "a1")
+        let parser2 = Parser(input: "a 1")
+        let parser3 = Parser(input: "aa2")
+        let parser4 = Parser(input: " a2")
         
-        XCTAssert(rule.canConsume(from: lexer1))
-        XCTAssert(rule.canConsume(from: lexer2)) // TODO: these two could be easy to check as false,
-        XCTAssert(rule.canConsume(from: lexer3)) // should we ignore possible recursions and do it anyway?
-        XCTAssertFalse(rule.canConsume(from: lexer4))
-        XCTAssertEqual("a1", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
-        XCTAssertThrowsError(try rule.consume(from: lexer3))
+        XCTAssert(rule.canConsume(from: parser1))
+        XCTAssert(rule.canConsume(from: parser2)) // TODO: these two could be easy to check as false,
+        XCTAssert(rule.canConsume(from: parser3)) // should we ignore possible recursions and do it anyway?
+        XCTAssertFalse(rule.canConsume(from: parser4))
+        XCTAssertEqual("a1", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
+        XCTAssertThrowsError(try rule.consume(from: parser3))
         XCTAssertEqual("[a-zA-Z][0-9]", rule.ruleDescription)
         XCTAssertEqual(rule, .directSequence([.letter, .digit]))
         XCTAssertNotEqual(rule, .directSequence([.digit, .letter]))
@@ -302,14 +302,14 @@ public class GrammarRuleTests: XCTestCase {
         
         argList.setRule(rule: [arg, [",", recArg]* ])
         
-        let lexer1 = Parser(input: "abc, def, ghi")
-        // let lexer2 = Lexer(input: "abc, def,")
+        let parser1 = Parser(input: "abc, def, ghi")
+        // let parser2 = parser(input: "abc, def,")
         
         // Act
-        let result = try argList.consume(from: lexer1)
+        let result = try argList.consume(from: parser1)
         
         // Assert
-        // XCTAssertThrowsError(try argList.consume(from: lexer2)) // TODO: Should this error or not?
+        // XCTAssertThrowsError(try argList.consume(from: parser2)) // TODO: Should this error or not?
         XCTAssert(argList.containsRecursiveRule)
         XCTAssertEqual("abc, def, ghi", result)
         XCTAssertEqual("arg (',' argList)*", argList.ruleDescription)
@@ -521,11 +521,11 @@ public class GrammarRuleTests: XCTestCase {
             return .sequence([.letter, [",", .recursive(rec)]*])
         }
         
-        let lexer1 = Parser(input: "a, b, c")
-        let lexer2 = Parser(input: ", , b")
+        let parser1 = Parser(input: "a, b, c")
+        let parser2 = Parser(input: ", , b")
         
-        XCTAssertEqual("a, b, c", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
+        XCTAssertEqual("a, b, c", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
     }
     
     func testRecursiveGrammarRuleDescription() {
@@ -563,12 +563,12 @@ public class GrammarRuleTests: XCTestCase {
         let propertyModifierList =
             "(" .. modifierList .. ")"
         
-        let lexer1 = Parser(input: "(mod1, mod2)")
-        let lexer2 = Parser(input: "(mod1, )")
+        let parser1 = Parser(input: "(mod1, mod2)")
+        let parser2 = Parser(input: "(mod1, )")
         
         // Act/assert
-        XCTAssertEqual("(mod1, mod2)", try propertyModifierList.consume(from: lexer1))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer2))
+        XCTAssertEqual("(mod1, mod2)", try propertyModifierList.consume(from: parser1))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser2))
     }
     
     func testGrammarRuleComplexRecursive() throws {
@@ -601,18 +601,18 @@ public class GrammarRuleTests: XCTestCase {
         let propertyModifierList =
             "(" .. modifierList .. ")"
         
-        let lexer1 = Parser(input: "(mod1, mod2)")
-        let lexer2 = Parser(input: "()")
-        let lexer3 = Parser(input: "(mod1, )")
-        let lexer4 = Parser(input: "(mod1, ")
-        let lexer5 = Parser(input: "( ")
+        let parser1 = Parser(input: "(mod1, mod2)")
+        let parser2 = Parser(input: "()")
+        let parser3 = Parser(input: "(mod1, )")
+        let parser4 = Parser(input: "(mod1, ")
+        let parser5 = Parser(input: "( ")
         
         // Act/assert
-        XCTAssertEqual("(mod1, mod2)", try propertyModifierList.consume(from: lexer1))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer2))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer3))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer4))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer5))
+        XCTAssertEqual("(mod1, mod2)", try propertyModifierList.consume(from: parser1))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser2))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser3))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser4))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser5))
     }
     
     func testGrammarRuleComplexRecursiveWithLookaheadWithKeyword() throws {
@@ -651,20 +651,20 @@ public class GrammarRuleTests: XCTestCase {
         let propertyModifierList =
             "(" .. modifierList .. ")"
         
-        let lexer1 = Parser(input: "(@keyword 123, @keyword abc, @keyword a)")
-        let lexer2 = Parser(input: "(@keyword mod, @keyword 123, @keyword a, @keyword abc)")
-        let lexer3 = Parser(input: "(@keyword ace)")
-        let lexer4 = Parser(input: "(@keyword b)")
-        let lexer5 = Parser(input: "(mod1, ")
-        let lexer6 = Parser(input: "( ")
+        let parser1 = Parser(input: "(@keyword 123, @keyword abc, @keyword a)")
+        let parser2 = Parser(input: "(@keyword mod, @keyword 123, @keyword a, @keyword abc)")
+        let parser3 = Parser(input: "(@keyword ace)")
+        let parser4 = Parser(input: "(@keyword b)")
+        let parser5 = Parser(input: "(mod1, ")
+        let parser6 = Parser(input: "( ")
         
         // Act/assert
-        XCTAssertEqual("(@keyword 123, @keyword abc, @keyword a)", try propertyModifierList.consume(from: lexer1))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer2))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer3))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer4))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer5))
-        XCTAssertThrowsError(try propertyModifierList.consume(from: lexer6))
+        XCTAssertEqual("(@keyword 123, @keyword abc, @keyword a)", try propertyModifierList.consume(from: parser1))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser2))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser3))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser4))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser5))
+        XCTAssertThrowsError(try propertyModifierList.consume(from: parser6))
     }
     
     func testGramarRuleLookahead() throws {
@@ -687,15 +687,15 @@ public class GrammarRuleTests: XCTestCase {
         let test =
             ("a" .. ident) | ("a" .. number) | ("a" .. .keyword("@keyword"))
         
-        let lexer1 = Parser(input: "a 123")
-        let lexer2 = Parser(input: "a abc")
-        let lexer3 = Parser(input: "a @keyword")
-        let lexer4 = Parser(input: "a _abc")
+        let parser1 = Parser(input: "a 123")
+        let parser2 = Parser(input: "a abc")
+        let parser3 = Parser(input: "a @keyword")
+        let parser4 = Parser(input: "a _abc")
         
-        XCTAssertEqual("a 123", try test.consume(from: lexer1))
-        XCTAssertEqual("a abc", try test.consume(from: lexer2))
-        XCTAssertEqual("a @keyword", try test.consume(from: lexer3))
-        XCTAssertThrowsError(try test.consume(from: lexer4))
+        XCTAssertEqual("a 123", try test.consume(from: parser1))
+        XCTAssertEqual("a abc", try test.consume(from: parser2))
+        XCTAssertEqual("a @keyword", try test.consume(from: parser3))
+        XCTAssertThrowsError(try test.consume(from: parser4))
     }
     
     func testGramarRuleLookaheadWithKeyword() throws {
@@ -718,15 +718,15 @@ public class GrammarRuleTests: XCTestCase {
         let test =
             (.keyword("@keyword") .. ident) | (.keyword("@keyword") .. number) | (.keyword("@keyword") .. "a")
         
-        let lexer1 = Parser(input: "@keyword 123")
-        let lexer2 = Parser(input: "@keyword abc")
-        let lexer3 = Parser(input: "@keyword a")
-        let lexer4 = Parser(input: "@keyword _abc")
+        let parser1 = Parser(input: "@keyword 123")
+        let parser2 = Parser(input: "@keyword abc")
+        let parser3 = Parser(input: "@keyword a")
+        let parser4 = Parser(input: "@keyword _abc")
         
-        XCTAssertEqual("@keyword 123", try test.consume(from: lexer1))
-        XCTAssertEqual("@keyword abc", try test.consume(from: lexer2))
-        XCTAssertEqual("@keyword a", try test.consume(from: lexer3))
-        XCTAssertThrowsError(try test.consume(from: lexer4))
+        XCTAssertEqual("@keyword 123", try test.consume(from: parser1))
+        XCTAssertEqual("@keyword abc", try test.consume(from: parser2))
+        XCTAssertEqual("@keyword a", try test.consume(from: parser3))
+        XCTAssertThrowsError(try test.consume(from: parser4))
     }
     
     func testGrammarRulePerformance() {
@@ -758,8 +758,8 @@ public class GrammarRuleTests: XCTestCase {
         
         measure {
             for _ in 0...100 {
-                let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
-                _=try! propertyModifierList.consume(from: lexer)
+                let parser = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                _=try! propertyModifierList.consume(from: parser)
             }
         }
     }
@@ -783,34 +783,34 @@ public class GrammarRuleTests: XCTestCase {
         measure {
             do {
                 for _ in 0...100 {
-                    let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                    let parser = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
                     
-                    _=try lexer.consumeString { lexer in
-                        try lexer.advance(expectingCurrent: "(")
+                    _=try parser.consumeString { parser in
+                        try parser.advance(expectingCurrent: "(")
                         
                         var expIdent = true
-                        while !lexer.safeIsNextChar(equalTo: ")") {
+                        while !parser.safeIsNextChar(equalTo: ")") {
                             expIdent = false
                             
-                            lexer.skipWhitespace()
+                            parser.skipWhitespace()
                             
                             // Ident
-                            try lexer.advance(validatingCurrent: { Parser.isLetter($0) || $0 == "_" })
-                            lexer.advance(while: { Parser.isLetter($0) || Parser.isDigit($0) || $0 == "_" })
+                            try parser.advance(validatingCurrent: { Parser.isLetter($0) || $0 == "_" })
+                            parser.advance(while: { Parser.isLetter($0) || Parser.isDigit($0) || $0 == "_" })
                             
-                            lexer.skipWhitespace()
+                            parser.skipWhitespace()
                             
-                            if try lexer.peek() == "," {
-                                lexer.unsafeAdvance()
+                            if try parser.peek() == "," {
+                                parser.unsafeAdvance()
                                 expIdent = true
                             }
                         }
                         
                         if expIdent {
-                            throw lexer.syntaxError("Expected identifier")
+                            throw parser.syntaxError("Expected identifier")
                         }
                         
-                        try lexer.advance(expectingCurrent: ")")
+                        try parser.advance(expectingCurrent: ")")
                     }
                 }
             } catch {
@@ -850,8 +850,8 @@ public class GrammarRuleTests: XCTestCase {
         
         measure {
             for _ in 0...100 {
-                let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
-                _=try! propertyModifierList.consume(from: lexer)
+                let parser = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                _=try! propertyModifierList.consume(from: parser)
             }
         }
     }
@@ -887,8 +887,8 @@ public class GrammarRuleTests: XCTestCase {
         
         measure {
             for _ in 0...100 {
-                let lexer = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
-                _=try! propertyModifierList.consume(from: lexer)
+                let parser = Parser(input: "(mod1, mod2, mod3, mod4, mod5, mod6, mod7, mod8, mod9, mod10)")
+                _=try! propertyModifierList.consume(from: parser)
             }
         }
     }
@@ -906,15 +906,15 @@ public class GrammarRuleTests: XCTestCase {
         //
         let rule = .keyword("\u{001B}[") .. (.digit+ .. ";")* .. [.digit+] .. ("A" | "B")
         
-        let lexer1 = Parser(input: "\u{001B}[10A")
-        let lexer2 = Parser(input: "\u{001B}[A")
-        let lexer3 = Parser(input: "\u{001B}[10;11B")
-        let lexer4 = Parser(input: "\u{001B}[3")
+        let parser1 = Parser(input: "\u{001B}[10A")
+        let parser2 = Parser(input: "\u{001B}[A")
+        let parser3 = Parser(input: "\u{001B}[10;11B")
+        let parser4 = Parser(input: "\u{001B}[3")
         
-        XCTAssertEqual("\u{001B}[10A", try rule.consume(from: lexer1))
-        XCTAssertEqual("\u{001B}[A", try rule.consume(from: lexer2))
-        XCTAssertEqual("\u{001B}[10;11B", try rule.consume(from: lexer3))
-        XCTAssertThrowsError(try rule.consume(from: lexer4))
+        XCTAssertEqual("\u{001B}[10A", try rule.consume(from: parser1))
+        XCTAssertEqual("\u{001B}[A", try rule.consume(from: parser2))
+        XCTAssertEqual("\u{001B}[10;11B", try rule.consume(from: parser3))
+        XCTAssertThrowsError(try rule.consume(from: parser4))
     }
     
     func testGrammarRuleBacktrackingFailedOneOrMoreRule() {
@@ -930,14 +930,14 @@ public class GrammarRuleTests: XCTestCase {
         //
         let rule = .keyword("\u{001B}[") .. (.digit+ .. ";")+ .. [.digit+] .. ("A" | "B")
         
-        let lexer1 = Parser(input: "\u{001B}[10;A")
-        let lexer2 = Parser(input: "\u{001B}[A")
-        let lexer3 = Parser(input: "\u{001B}[10;11B")
-        let lexer4 = Parser(input: "\u{001B}[3")
+        let parser1 = Parser(input: "\u{001B}[10;A")
+        let parser2 = Parser(input: "\u{001B}[A")
+        let parser3 = Parser(input: "\u{001B}[10;11B")
+        let parser4 = Parser(input: "\u{001B}[3")
         
-        XCTAssertEqual("\u{001B}[10;A", try rule.consume(from: lexer1))
-        XCTAssertThrowsError(try rule.consume(from: lexer2))
-        XCTAssertEqual("\u{001B}[10;11B", try rule.consume(from: lexer3))
-        XCTAssertThrowsError(try rule.consume(from: lexer4))
+        XCTAssertEqual("\u{001B}[10;A", try rule.consume(from: parser1))
+        XCTAssertThrowsError(try rule.consume(from: parser2))
+        XCTAssertEqual("\u{001B}[10;11B", try rule.consume(from: parser3))
+        XCTAssertThrowsError(try rule.consume(from: parser4))
     }
 }

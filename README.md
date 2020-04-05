@@ -2,19 +2,19 @@
 
 [![Build Status](https://dev.azure.com/luiz-fs/MiniLexer/_apis/build/status/LuizZak.MiniLexer?branchName=master)](https://dev.azure.com/luiz-fs/MiniLexer/_build/latest?definitionId=2&branchName=master)
 
-A teeny-tiny-weeny lexer written in Swift available as a Swift Package.  
+A teeny-tiny-weeny parser-lexer written in Swift available as a Swift Package.  
 Should be present in any programmer-who-likes-to-write-quick-script's toolbelt.
 
 Sample usage:
 
 ```swift
 let text = "123 test"
-let lexer = Lexer(input: text)
+let parser = Lexer(input: text)
 
 do {
-    let oneTwoThree = try lexer.parseInt()
-    lexer.skipWhitespace()
-    let test = try lexer.nextIdent()
+    let oneTwoThree = try parser.parseInt()
+    parser.skipWhitespace()
+    let test = try parser.nextIdent()
     
     print("\(oneTwoThree) \(test)")
 } catch {
