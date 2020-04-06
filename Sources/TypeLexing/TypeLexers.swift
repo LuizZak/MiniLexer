@@ -25,29 +25,14 @@ public extension UnsignedInteger where Self: FixedWidthInteger {
     }
 }
 
-public extension Float {
-    static var tokenLexer: AnyGrammarRule<Float> {
+public extension FloatingPoint where Self: BinaryFloatingPoint & LosslessStringConvertible {
+    static var tokenLexer: AnyGrammarRule<Self> {
         let rule: GrammarRule =
             ["-"] + .digit+ + ["." + .digit+] + [("e" | "E") + ["+" | "-"] + .digit+]
         
         return AnyGrammarRule(rule: rule) { result, index in
-            guard let value = Float(result) else {
+            guard let value = Self(String(result)) else {
                 throw LexerError.syntaxError(index, "Could not parse Float from string \(result)")
-            }
-            
-            return value
-        }
-    }
-}
-
-public extension Double {
-    static var tokenLexer: AnyGrammarRule<Double> {
-        let rule: GrammarRule =
-            ["-"] + .digit+ + ["." + .digit+] + [("e" | "E") + ["+" | "-"] + .digit+]
-        
-        return AnyGrammarRule(rule: rule) { result, index in
-            guard let value = Double(result) else {
-                throw LexerError.syntaxError(index, "Could not parse Double from string \(result)")
             }
             
             return value
