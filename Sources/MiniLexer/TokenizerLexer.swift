@@ -211,25 +211,18 @@ open class TokenizerLexer<T: TokenProtocol> {
         let lexer: TokenizerLexer
         let index: Lexer.Index
         let token: T
-        private var didBacktrack: Bool
         
         fileprivate init(lexer: TokenizerLexer) {
             self.lexer = lexer
             self.index = lexer.lexer.inputIndex
             token = lexer.current
-            didBacktrack = false
         }
         
         /// Backtracks the associated lexer's state to the point at which this
         /// backtracker was created.
         public func backtrack() {
-            if didBacktrack {
-                return
-            }
-            
             lexer.lexer.inputIndex = index
             lexer.current = token
-            didBacktrack = true
         }
     }
 }
