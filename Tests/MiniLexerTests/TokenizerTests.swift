@@ -89,7 +89,7 @@ class TokenizerTests: XCTestCase {
         XCTAssertEqual(sut.token(), .openParens)
     }
     
-    func testBacktrackerWontWorkTwice() {
+    func testBacktrackerWorksTwice() {
         sut = TokenizerLexer(input: "(,)")
         let bt = sut.backtracker()
         sut.skipToken()
@@ -98,7 +98,7 @@ class TokenizerTests: XCTestCase {
         
         bt.backtrack()
         
-        XCTAssertEqual(sut.token(), .comma)
+        XCTAssertEqual(sut.token(), .openParens)
     }
     
     func testBacktrackerWontEraseHasReadFirstTokenState() throws {
