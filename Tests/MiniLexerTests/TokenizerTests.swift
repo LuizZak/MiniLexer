@@ -366,8 +366,8 @@ class TokenizerTests: XCTestCase {
 }
 
 struct TestStructToken: TokenProtocol {
-    static var eofToken: TestStructToken = TestStructToken(isEof: true, tokenString: "")
-    
+    static let eofToken: TestStructToken = TestStructToken(isEof: true, tokenString: "")
+
     var isEof: Bool
     var tokenString: Substring
     
@@ -398,16 +398,16 @@ struct TestStructToken: TokenProtocol {
 }
 
 enum TestTokenWithIdentifier: String, TokenProtocol {
-    private static let identifierLexer = (.letter | "_") + (.letter | "_" | .digit)*
-    
+    private static var identifierLexer: GrammarRule { (.letter | "_") + (.letter | "_" | .digit)* }
+
     case openParens = "("
     case closeParens = ")"
     case identifier
     case comma
     case eof
     
-    static var eofToken = TestTokenWithIdentifier.eof
-    
+    static let eofToken = TestTokenWithIdentifier.eof
+
     var tokenString: String {
         switch self {
         case .openParens:
@@ -457,8 +457,8 @@ enum TestToken: String, TokenProtocol {
     case closeParens = ")"
     case eof = ""
     
-    static var eofToken = TestToken.eof
-    
+    static let eofToken = TestToken.eof
+
     var tokenString: String {
         switch self {
         case .openParens:
@@ -496,8 +496,8 @@ enum TestToken: String, TokenProtocol {
 }
 
 private enum TestToken2: TokenProtocol {
-    fileprivate static let floatGrammar: GrammarRule = ["-"] .. .digit+ .. ["." .. .digit+]
-    
+    fileprivate static var floatGrammar: GrammarRule { ["-"] .. .digit+ .. ["." .. .digit+] }
+
     case eof
     case comma
     case force
@@ -507,8 +507,8 @@ private enum TestToken2: TokenProtocol {
     case integer
     case float
     
-    static var eofToken: TestToken2 = .eof
-    
+    static let eofToken: TestToken2 = .eof
+
     var tokenString: String {
         switch self {
         case .eof:

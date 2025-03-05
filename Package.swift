@@ -36,5 +36,5 @@ let package = Package(
             name: "URLParseSampleTests",
             dependencies: ["URLParseSample", "MiniLexer"]),
     ],
-    swiftLanguageModes: [.v5]
+    swiftLanguageModes: [.v6]
 )
